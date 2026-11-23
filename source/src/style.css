@@ -661,3 +661,9 @@ body[data-tut=bench] .bcard.fit { animation: tglow .8s infinite; }
 /* iOS Home Screen app: stretch the full-screen layers to the real screen when the viewport comes up short (see fixViewport) */
 html.vfix, html.vfix body { height: var(--app-h); }
 html.vfix #app, html.vfix #battle, html.vfix #modal-root, html.vfix .copen, html.vfix .co-flash { bottom: auto; height: var(--app-h); }
+/* backdrop overhangs the screen (shake / zoom), board may grow past its box during the slow-mo zoom; top bar and bottom row stay on top */
+#bbg { inset: auto; left: -28px; top: -28px; width: calc(100% + 56px); height: calc(100% + 56px); }
+#battle { overflow: hidden; }
+#battle > .bboard { overflow: visible; z-index: 1; }
+#battle > .bhud, #battle > .bpanel { z-index: 2; }
+#bbg { transition: transform .3s cubic-bezier(.2,.8,.3,1); }

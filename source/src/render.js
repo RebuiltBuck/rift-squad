@@ -85,7 +85,8 @@ function heroImg(hid, cls, locked) { return `<img class="${cls || 'spr'}" src="$
 function icon(name, cls) { return `<img class="${cls || ''}" src="${sprURL(name)}" alt="">`; }
 
 // ---------- floor ----------
-const TILE = 18, PADT = 5; // PADT: headroom above the top row for tall sprites
+const TILE = 18, PADT = 12; // PADT: headroom above the top row for tall sprites, health bars and numbers
+const BG_PAD = 28; // the arena backdrop runs this far past every screen edge, so shakes and zooms never show what's behind it
 function drawFloorTile(g, ax, ay, x, y, arena, seed) {
   const A = ARENAS[arena], [c1, c2, c3] = A.floor;
   g.fillStyle = (x + y) % 2 ? c1 : c2; g.fillRect(ax, ay, TILE, TILE);
@@ -180,7 +181,7 @@ function bvInit(canvas) {
 function bvLayout() {
   const box = BV.cv.parentElement.getBoundingClientRect();
   // smaller than the space allows, with clear room above and below, so the arena shows all around it
-  const s = Math.max(1, Math.min(box.width * 0.8 / (BW * TILE), (box.height - 36) / (BH * TILE + PADT)));
+  const s = Math.max(1, Math.min(box.width * 0.76 / (BW * TILE), (box.height - 30) / (BH * TILE + PADT)));
   BV.dpr = window.devicePixelRatio || 1; BV.scale = s;
   const W = Math.floor(BW * TILE * s), H = Math.floor((BH * TILE + PADT) * s);
   BV.cv.style.width = W + 'px'; BV.cv.style.height = H + 'px';
@@ -191,7 +192,7 @@ function bvLayout() {
 function bvBackdrop() {
   const bg = document.getElementById('bbg'); if (!bg || !BV.cv || typeof M === 'undefined' || !M || !M.setup) return;
   // layout positions (not getBoundingClientRect: the slow-mo zoom scales the canvas)
-  const hostEl = bg.parentElement, bb = BV.cv.parentElement, host = { width: hostEl.clientWidth, height: hostEl.clientHeight, top: 0, left: 0 }, cr = { left: bb.offsetLeft + BV.cv.offsetLeft, top: bb.offsetTop + BV.cv.offsetTop, width: BV.cv.offsetWidth };
+  const hostEl = bg.parentElement, bb = BV.cv.parentElement, host = { width: hostEl.clientWidth + BG_PAD * 2, height: hostEl.clientHeight + BG_PAD * 2, top: 0, left: 0 }, cr = { left: bb.offsetLeft + BV.cv.offsetLeft + BG_PAD, top: bb.offsetTop + BV.cv.offsetTop + BG_PAD, width: BV.cv.offsetWidth };
   const s = BV.scale, dpr = BV.dpr, arena = M.setup.arena, A = ARENAS[arena];
   if (!host.width || !cr.width) return;
   bg.width = Math.ceil(host.width * dpr); bg.height = Math.ceil(host.height * dpr);
@@ -201,14 +202,15 @@ function bvBackdrop() {
   const o = off.getContext('2d'); o.imageSmoothingEnabled = false;
   const seed = (M.setup.seed || 1) ^ 0x51ed, prop = sprCanvas(A.obs, A.obsPal);
   // no props behind the top bar or the bottom buttons
-  const hb = $('.bhud'), pb = $('.bpanel'), uiTop = hb ? hb.offsetTop + hb.offsetHeight : 0, uiBot = pb ? pb.offsetTop : host.height;
+  const hb = $('.bhud'), pb = $('.bpanel'), uiTop = hb ? hb.offsetTop + hb.offsetHeight + BG_PAD : 0, uiBot = pb ? pb.offsetTop + BG_PAD : host.height;
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
-    const ax = (x - x0) * TILE, ay = (y - y0) * TILE, onBoard = x >= 0 && x < BW && y >= 0 && y < BH; if (onBoard) continue;
+    const ax = (x - x0) * TILE, ay = (y - y0) * TILE, onBoard = x >= 0 && x < BW && y >= 0 && y < BH; if (onBoard) continue; // the board itself is drawn after the dimming
     drawFloorTile(o, ax, ay, x, y, arena, seed);
     const near = x >= -1 && x <= BW && y >= -1 && y <= BH; // keep the tiles right around the board clear
     const ty = oy + y * ts; if (!near && ty > uiTop && ty + ts < uiBot && mulberry32(seed + (x + 50) * 73 + (y + 50) * 191)() < 0.16) { o.fillStyle = '#0000002a'; o.fillRect(ax + 3, ay + 14, 12, 3); o.drawImage(prop, ax + 1, ay + 1, 16, 16); }
   }
   o.fillStyle = '#0b071655'; o.fillRect(0, 0, off.width, off.height); // dim everything off the board
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) drawFloorTile(o, (x - x0) * TILE, (y - y0) * TILE, x, y, arena, seed); // plain floor under the board (only seen mid-zoom)
   // an even frame on all four sides so the board reads as the place to play
   const bx = -x0 * TILE, by = -y0 * TILE, W = BW * TILE, H = BH * TILE, ring = (d, c) => { o.fillStyle = c; o.fillRect(bx - d, by - d, W + d * 2, d); o.fillRect(bx - d, by + H, W + d * 2, d); o.fillRect(bx - d, by, d, H); o.fillRect(bx + W, by, d, H); };
   ring(4, '#0b071640'); ring(3, '#0b07168c'); ring(2, '#0b0716d0'); ring(1, A.floor[2] || '#ffffff55');
@@ -486,7 +488,8 @@ function bvDraw(V, now) {
   }
   const G = BV.g, S = BV.scale * BV.dpr;
   G.imageSmoothingEnabled = false; G.clearRect(0, 0, BV.cv.width, BV.cv.height);
-  let shx = 0, shy = 0; if (BV.shake && now < BV.shake.t0 + BV.shake.dur) { const m = BV.shake.mag * (1 - (now - BV.shake.t0) / BV.shake.dur) * S; shx = Math.round((Math.random() - 0.5) * 2 * m); shy = Math.round((Math.random() - 0.5) * 2 * m); }
+  const shx = 0, shy = 0; let kx = 0, ky = 0; if (BV.shake && now < BV.shake.t0 + BV.shake.dur) { const m = BV.shake.mag * (1 - (now - BV.shake.t0) / BV.shake.dur) * BV.scale; kx = Math.round((Math.random() - 0.5) * 2 * m); ky = Math.round((Math.random() - 0.5) * 2 * m); }
+  if (kx !== (BV.shk || [0, 0])[0] || ky !== (BV.shk || [0, 0])[1]) { BV.shk = [kx, ky]; bvXform(); }
   G.drawImage(BV.low, 0, 0, BV.low.width, BV.low.height, shx, shy, BW * TILE * S, (BH * TILE + PADT) * S);
   // health numbers next to each bar
   G.font = `${Math.round(6.2 * S)}px Jersey, monospace`; G.textAlign = 'right'; G.textBaseline = 'middle'; G.lineJoin = 'round'; G.lineWidth = Math.max(2, S * 1.2); G.strokeStyle = '#140c22';
@@ -525,10 +528,17 @@ function bvNow() { return BV.vt != null ? BV.vt : performance.now(); }
 function bvShake(mag, dur) { BV.shake = { t0: bvNow(), mag, dur: dur || 220 }; }
 function bvFx(f) { f.t0 = bvNow(); f.dur = (f.dur || 250) * (f.raw ? 1 : BV.speed); BV.fx.push(f); }
 // camera punch toward a tile (p = [x, y] in tiles), or back to normal
-function bvZoom(p) {
-  const cv = BV.cv; if (!cv) return;
-  if (!p) { cv.style.transform = ''; return; }
-  cv.style.transformOrigin = `${(p[0] + 0.5) / BW * 100}% ${((p[1] + 0.5) * TILE + PADT) / (BH * TILE + PADT) * 100}%`; cv.style.transform = 'scale(1.22)';
+function bvZoom(p) { BV.zoomP = p || null; bvXform(); }
+// slow-mo zoom and screen shake move the board and the arena around it together, so nothing behind them shows
+function bvXform() {
+  const cv = BV.cv, bg = document.getElementById('bbg'); if (!cv) return;
+  const z = BV.zoomP, [sx, sy] = BV.shk || [0, 0], s = BV.scale;
+  if (!z && !sx && !sy) { cv.style.transition = BV.shkWas ? 'none' : ''; cv.style.transform = ''; if (bg) { bg.style.transition = cv.style.transition; bg.style.transform = ''; } BV.shkWas = false; return; }
+  BV.shkWas = !!(sx || sy);
+  const ox = z ? (z[0] + 0.5) * TILE * s : cv.offsetWidth / 2, oy = z ? ((z[1] + 0.5) * TILE + PADT) * s : cv.offsetHeight / 2, t = `translate(${sx}px,${sy}px) scale(${z ? 1.22 : 1})`;
+  const tr = sx || sy ? 'none' : ''; cv.style.transition = tr; if (bg) bg.style.transition = tr; // shakes snap; the zoom eases (same curve on both)
+  cv.style.transformOrigin = `${ox}px ${oy}px`; cv.style.transform = t;
+  if (bg) { const bb = cv.parentElement; bg.style.transformOrigin = `${bb.offsetLeft + cv.offsetLeft + ox + BG_PAD}px ${bb.offsetTop + cv.offsetTop + oy + BG_PAD}px`; bg.style.transform = t; }
 }
 
 // ----- per-hero attack effects -----

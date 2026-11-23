@@ -675,6 +675,12 @@ body[data-tut=bench] .bcard.fit { animation: tglow .8s infinite; }
 /* iOS Home Screen app: stretch the full-screen layers to the real screen when the viewport comes up short (see fixViewport) */
 html.vfix, html.vfix body { height: var(--app-h); }
 html.vfix #app, html.vfix #battle, html.vfix #modal-root, html.vfix .copen, html.vfix .co-flash { bottom: auto; height: var(--app-h); }
+/* backdrop overhangs the screen (shake / zoom), board may grow past its box during the slow-mo zoom; top bar and bottom row stay on top */
+#bbg { inset: auto; left: -28px; top: -28px; width: calc(100% + 56px); height: calc(100% + 56px); }
+#battle { overflow: hidden; }
+#battle > .bboard { overflow: visible; z-index: 1; }
+#battle > .bhud, #battle > .bpanel { z-index: 2; }
+#bbg { transition: transform .3s cubic-bezier(.2,.8,.3,1); }
 </style>
 </head>
 <body>
@@ -1294,6 +1300,50 @@ function stepToward(s, u, tgt) {
   else u.mt1 = s.t + moveTime(s, u, best[2]);
   return true;
 }
+// ----- tile movement (grid mode) -----
+// walking distance from a unit to every tile; other units block the way
+function walkMap(s, u) {
+  const D = new Array(BW * BH).fill(-1), q = [u.x + u.y * BW]; D[q[0]] = 0;
+  for (let i = 0; i < q.length; i++) { const c = q[i], cx = c % BW, cy = (c - cx) / BW;
+    for (const [dx, dy] of DIR4) { const nx = cx + dx, ny = cy + dy, k = nx + ny * BW; if (!inB(nx, ny) || D[k] >= 0 || !free(s, nx, ny)) continue; D[k] = D[c] + 1; q.push(k); } }
+  return D;
+}
+// steps needed before u can hit e (stand on any open tile within range of it); 1e9 = no way there right now
+function walkCost(s, u, e, D) {
+  let c = 1e9; for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = D[x + y * BW]; if (d >= 0 && d < c) { const m = manh(x, y, e.x, e.y); if (m >= 1 && m <= u.rng) c = d; } }
+  return c;
+}
+// closest enemy: anyone already in range first (keeps its current one), else the fewest steps away. Sticks to its target unless another is clearly closer.
+function gridTarget(s, u) {
+  const foes = s.units.filter(e => e.side !== u.side && targetable(s, e)); if (!foes.length) return null;
+  const cur = u.tgt && foes.includes(u.tgt) ? u.tgt : null, by = (a, b, ka, kb) => ka - kb || a.hp - b.hp || (a.uid < b.uid ? -1 : 1);
+  const inR = foes.filter(e => manh(u.x, u.y, e.x, e.y) <= u.rng);
+  if (inR.length) { const near = inR.sort((a, b) => by(a, b, manh(u.x, u.y, a.x, a.y), manh(u.x, u.y, b.x, b.y)))[0]; return cur && inR.includes(cur) && manh(u.x, u.y, cur.x, cur.y) <= manh(u.x, u.y, near.x, near.y) ? cur : near; }
+  const D = walkMap(s, u), cost = new Map(foes.map(e => [e, walkCost(s, u, e, D)]));
+  const best = foes.slice().sort((a, b) => by(a, b, cost.get(a), cost.get(b)))[0];
+  if (cur && cost.get(cur) < 1e9 && cost.get(cur) <= cost.get(best) + 1) return cur;
+  if (cost.get(best) < 1e9) return best;
+  return cur || foes.sort((a, b) => by(a, b, manh(u.x, u.y, a.x, a.y), manh(u.x, u.y, b.x, b.y)))[0]; // boxed in: wait facing the closest
+}
+// one step along the shortest open path to a tile within range of t. Never steps sideways without getting closer, so no back-and-forth.
+function gridStep(s, u, t) {
+  const D = new Array(BW * BH).fill(-1), q = [], open = (x, y) => (x === u.x && y === u.y) || free(s, x, y);
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const m = manh(x, y, t.x, t.y); if (m >= 1 && m <= u.rng && open(x, y) && !isObs(s, x, y)) { D[x + y * BW] = 0; q.push(x + y * BW); } }
+  for (let i = 0; i < q.length; i++) { const c = q[i], cx = c % BW, cy = (c - cx) / BW;
+    for (const [dx, dy] of DIR4) { const nx = cx + dx, ny = cy + dy, k = nx + ny * BW; if (!inB(nx, ny) || D[k] >= 0 || !open(nx, ny)) continue; D[k] = D[c] + 1; q.push(k); } }
+  const here = D[u.x + u.y * BW]; if (here <= 0) return false;
+  const fwd = u.side === 0 ? -1 : 1; let best = null, bk = null;
+  for (const [dx, dy] of DIR4) {
+    const nx = u.x + dx, ny = u.y + dy; if (!inB(nx, ny) || !free(s, nx, ny) || D[nx + ny * BW] !== here - 1) continue;
+    const back = u.lastDir && u.lastDir[0] === -dx && u.lastDir[1] === -dy ? 1 : 0;
+    const key = [manh(nx, ny, t.x, t.y), back, dy === fwd ? 0 : 1, dx];
+    if (!bk || (key[0] - bk[0] || key[1] - bk[1] || key[2] - bk[2] || key[3] - bk[3]) < 0) { bk = key; best = [nx, ny, dx, dy]; }
+  }
+  if (!best) return false;
+  u.fx = u.x; u.fy = u.y; u.x = best[0]; u.y = best[1]; u.mt0 = s.t; u.lastDir = [best[2], best[3]];
+  const st = moveTime(s, u, false) * GRID_SLOW; u.mt1 = s.t + Math.min(GRID_HOP, st); u.moveCd = s.t + st;
+  return true;
+}
 function placeAt(u, x, y, s, dur) { u.fx = u.x; u.fy = u.y; u.x = x; u.y = y; u.mt0 = s.t; u.mt1 = s.t + (dur || 0); }
 // slide a unit to a tile (knockback / pulls); returns true if it moved
 function shove(s, u, x, y, ev, dur) { if (!free(s, x, y)) return false; placeAt(u, x, y, s, dur || 0.25); pushEv(ev, { t: 'shove', uid: u.uid }); return true; }
@@ -1305,7 +1355,8 @@ function chooseTarget(s, u) {
     if (best) return best;
   }
   if (u.st.tauntT > s.t) { const t = byUid(s, u.st.tauntUid); if (t && targetable(s, t)) return t; }
-  // targeting style: back line / weakest / toughest (falls back to closest for a moment if the way is blocked). Grid mode: everyone hits the closest.
+  if (s.grid) return gridTarget(s, u);
+  // targeting style: back line / weakest / toughest (falls back to closest for a moment if the way is blocked)
   if (!s.grid && u.tg !== 'near' && !(u.tgFail > s.t)) {
     const fwd = u.side === 0 ? -1 : 1; let best = null, bv = -1e9;
     for (const e of s.units) {
@@ -1536,8 +1587,9 @@ function step(s, ev) {
         if (u.rng > 1) later(s, L.d, ev2 => hit(s, u, t, 0, ev2, 'atk'));
         else later(s, L.d, ev2 => { if (u.alive && !stunned(s, u)) hit(s, u, t, 0, ev2, 'atk'); });
       }
-    } else if (s.grid && u.moveCd > s.t) {
-      // grid mode: resting on the tile between steps
+    } else if (s.grid) {
+      // tile movement: rest on the tile between steps; if boxed in, wait and look again shortly
+      if (u.moveCd <= s.t && !gridStep(s, u, t)) u.retgt = Math.min(u.retgt, s.t + 0.3);
     } else if (!stepToward(s, u, t)) {
       u.retgt = Math.min(u.retgt, s.t + 0.3);
       if (u.tg !== 'near' && !(u.st.tauntT > s.t)) u.tgFail = s.t + 1.5;
@@ -2293,7 +2345,8 @@ function heroImg(hid, cls, locked) { return `<img class="${cls || 'spr'}" src="$
 function icon(name, cls) { return `<img class="${cls || ''}" src="${sprURL(name)}" alt="">`; }
 
 // ---------- floor ----------
-const TILE = 18, PADT = 5; // PADT: headroom above the top row for tall sprites
+const TILE = 18, PADT = 12; // PADT: headroom above the top row for tall sprites, health bars and numbers
+const BG_PAD = 28; // the arena backdrop runs this far past every screen edge, so shakes and zooms never show what's behind it
 function drawFloorTile(g, ax, ay, x, y, arena, seed) {
   const A = ARENAS[arena], [c1, c2, c3] = A.floor;
   g.fillStyle = (x + y) % 2 ? c1 : c2; g.fillRect(ax, ay, TILE, TILE);
@@ -2388,7 +2441,7 @@ function bvInit(canvas) {
 function bvLayout() {
   const box = BV.cv.parentElement.getBoundingClientRect();
   // smaller than the space allows, with clear room above and below, so the arena shows all around it
-  const s = Math.max(1, Math.min(box.width * 0.8 / (BW * TILE), (box.height - 36) / (BH * TILE + PADT)));
+  const s = Math.max(1, Math.min(box.width * 0.76 / (BW * TILE), (box.height - 30) / (BH * TILE + PADT)));
   BV.dpr = window.devicePixelRatio || 1; BV.scale = s;
   const W = Math.floor(BW * TILE * s), H = Math.floor((BH * TILE + PADT) * s);
   BV.cv.style.width = W + 'px'; BV.cv.style.height = H + 'px';
@@ -2399,7 +2452,7 @@ function bvLayout() {
 function bvBackdrop() {
   const bg = document.getElementById('bbg'); if (!bg || !BV.cv || typeof M === 'undefined' || !M || !M.setup) return;
   // layout positions (not getBoundingClientRect: the slow-mo zoom scales the canvas)
-  const hostEl = bg.parentElement, bb = BV.cv.parentElement, host = { width: hostEl.clientWidth, height: hostEl.clientHeight, top: 0, left: 0 }, cr = { left: bb.offsetLeft + BV.cv.offsetLeft, top: bb.offsetTop + BV.cv.offsetTop, width: BV.cv.offsetWidth };
+  const hostEl = bg.parentElement, bb = BV.cv.parentElement, host = { width: hostEl.clientWidth + BG_PAD * 2, height: hostEl.clientHeight + BG_PAD * 2, top: 0, left: 0 }, cr = { left: bb.offsetLeft + BV.cv.offsetLeft + BG_PAD, top: bb.offsetTop + BV.cv.offsetTop + BG_PAD, width: BV.cv.offsetWidth };
   const s = BV.scale, dpr = BV.dpr, arena = M.setup.arena, A = ARENAS[arena];
   if (!host.width || !cr.width) return;
   bg.width = Math.ceil(host.width * dpr); bg.height = Math.ceil(host.height * dpr);
@@ -2409,14 +2462,15 @@ function bvBackdrop() {
   const o = off.getContext('2d'); o.imageSmoothingEnabled = false;
   const seed = (M.setup.seed || 1) ^ 0x51ed, prop = sprCanvas(A.obs, A.obsPal);
   // no props behind the top bar or the bottom buttons
-  const hb = $('.bhud'), pb = $('.bpanel'), uiTop = hb ? hb.offsetTop + hb.offsetHeight : 0, uiBot = pb ? pb.offsetTop : host.height;
+  const hb = $('.bhud'), pb = $('.bpanel'), uiTop = hb ? hb.offsetTop + hb.offsetHeight + BG_PAD : 0, uiBot = pb ? pb.offsetTop + BG_PAD : host.height;
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
-    const ax = (x - x0) * TILE, ay = (y - y0) * TILE, onBoard = x >= 0 && x < BW && y >= 0 && y < BH; if (onBoard) continue;
+    const ax = (x - x0) * TILE, ay = (y - y0) * TILE, onBoard = x >= 0 && x < BW && y >= 0 && y < BH; if (onBoard) continue; // the board itself is drawn after the dimming
     drawFloorTile(o, ax, ay, x, y, arena, seed);
     const near = x >= -1 && x <= BW && y >= -1 && y <= BH; // keep the tiles right around the board clear
     const ty = oy + y * ts; if (!near && ty > uiTop && ty + ts < uiBot && mulberry32(seed + (x + 50) * 73 + (y + 50) * 191)() < 0.16) { o.fillStyle = '#0000002a'; o.fillRect(ax + 3, ay + 14, 12, 3); o.drawImage(prop, ax + 1, ay + 1, 16, 16); }
   }
   o.fillStyle = '#0b071655'; o.fillRect(0, 0, off.width, off.height); // dim everything off the board
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) drawFloorTile(o, (x - x0) * TILE, (y - y0) * TILE, x, y, arena, seed); // plain floor under the board (only seen mid-zoom)
   // an even frame on all four sides so the board reads as the place to play
   const bx = -x0 * TILE, by = -y0 * TILE, W = BW * TILE, H = BH * TILE, ring = (d, c) => { o.fillStyle = c; o.fillRect(bx - d, by - d, W + d * 2, d); o.fillRect(bx - d, by + H, W + d * 2, d); o.fillRect(bx - d, by, d, H); o.fillRect(bx + W, by, d, H); };
   ring(4, '#0b071640'); ring(3, '#0b07168c'); ring(2, '#0b0716d0'); ring(1, A.floor[2] || '#ffffff55');
@@ -2694,7 +2748,8 @@ function bvDraw(V, now) {
   }
   const G = BV.g, S = BV.scale * BV.dpr;
   G.imageSmoothingEnabled = false; G.clearRect(0, 0, BV.cv.width, BV.cv.height);
-  let shx = 0, shy = 0; if (BV.shake && now < BV.shake.t0 + BV.shake.dur) { const m = BV.shake.mag * (1 - (now - BV.shake.t0) / BV.shake.dur) * S; shx = Math.round((Math.random() - 0.5) * 2 * m); shy = Math.round((Math.random() - 0.5) * 2 * m); }
+  const shx = 0, shy = 0; let kx = 0, ky = 0; if (BV.shake && now < BV.shake.t0 + BV.shake.dur) { const m = BV.shake.mag * (1 - (now - BV.shake.t0) / BV.shake.dur) * BV.scale; kx = Math.round((Math.random() - 0.5) * 2 * m); ky = Math.round((Math.random() - 0.5) * 2 * m); }
+  if (kx !== (BV.shk || [0, 0])[0] || ky !== (BV.shk || [0, 0])[1]) { BV.shk = [kx, ky]; bvXform(); }
   G.drawImage(BV.low, 0, 0, BV.low.width, BV.low.height, shx, shy, BW * TILE * S, (BH * TILE + PADT) * S);
   // health numbers next to each bar
   G.font = `${Math.round(6.2 * S)}px Jersey, monospace`; G.textAlign = 'right'; G.textBaseline = 'middle'; G.lineJoin = 'round'; G.lineWidth = Math.max(2, S * 1.2); G.strokeStyle = '#140c22';
@@ -2733,10 +2788,17 @@ function bvNow() { return BV.vt != null ? BV.vt : performance.now(); }
 function bvShake(mag, dur) { BV.shake = { t0: bvNow(), mag, dur: dur || 220 }; }
 function bvFx(f) { f.t0 = bvNow(); f.dur = (f.dur || 250) * (f.raw ? 1 : BV.speed); BV.fx.push(f); }
 // camera punch toward a tile (p = [x, y] in tiles), or back to normal
-function bvZoom(p) {
-  const cv = BV.cv; if (!cv) return;
-  if (!p) { cv.style.transform = ''; return; }
-  cv.style.transformOrigin = `${(p[0] + 0.5) / BW * 100}% ${((p[1] + 0.5) * TILE + PADT) / (BH * TILE + PADT) * 100}%`; cv.style.transform = 'scale(1.22)';
+function bvZoom(p) { BV.zoomP = p || null; bvXform(); }
+// slow-mo zoom and screen shake move the board and the arena around it together, so nothing behind them shows
+function bvXform() {
+  const cv = BV.cv, bg = document.getElementById('bbg'); if (!cv) return;
+  const z = BV.zoomP, [sx, sy] = BV.shk || [0, 0], s = BV.scale;
+  if (!z && !sx && !sy) { cv.style.transition = BV.shkWas ? 'none' : ''; cv.style.transform = ''; if (bg) { bg.style.transition = cv.style.transition; bg.style.transform = ''; } BV.shkWas = false; return; }
+  BV.shkWas = !!(sx || sy);
+  const ox = z ? (z[0] + 0.5) * TILE * s : cv.offsetWidth / 2, oy = z ? ((z[1] + 0.5) * TILE + PADT) * s : cv.offsetHeight / 2, t = `translate(${sx}px,${sy}px) scale(${z ? 1.22 : 1})`;
+  const tr = sx || sy ? 'none' : ''; cv.style.transition = tr; if (bg) bg.style.transition = tr; // shakes snap; the zoom eases (same curve on both)
+  cv.style.transformOrigin = `${ox}px ${oy}px`; cv.style.transform = t;
+  if (bg) { const bb = cv.parentElement; bg.style.transformOrigin = `${bb.offsetLeft + cv.offsetLeft + ox + BG_PAD}px ${bb.offsetTop + cv.offsetTop + oy + BG_PAD}px`; bg.style.transform = t; }
 }
 
 // ----- per-hero attack effects -----

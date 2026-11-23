@@ -251,6 +251,50 @@ function stepToward(s, u, tgt) {
   else u.mt1 = s.t + moveTime(s, u, best[2]);
   return true;
 }
+// ----- tile movement (grid mode) -----
+// walking distance from a unit to every tile; other units block the way
+function walkMap(s, u) {
+  const D = new Array(BW * BH).fill(-1), q = [u.x + u.y * BW]; D[q[0]] = 0;
+  for (let i = 0; i < q.length; i++) { const c = q[i], cx = c % BW, cy = (c - cx) / BW;
+    for (const [dx, dy] of DIR4) { const nx = cx + dx, ny = cy + dy, k = nx + ny * BW; if (!inB(nx, ny) || D[k] >= 0 || !free(s, nx, ny)) continue; D[k] = D[c] + 1; q.push(k); } }
+  return D;
+}
+// steps needed before u can hit e (stand on any open tile within range of it); 1e9 = no way there right now
+function walkCost(s, u, e, D) {
+  let c = 1e9; for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = D[x + y * BW]; if (d >= 0 && d < c) { const m = manh(x, y, e.x, e.y); if (m >= 1 && m <= u.rng) c = d; } }
+  return c;
+}
+// closest enemy: anyone already in range first (keeps its current one), else the fewest steps away. Sticks to its target unless another is clearly closer.
+function gridTarget(s, u) {
+  const foes = s.units.filter(e => e.side !== u.side && targetable(s, e)); if (!foes.length) return null;
+  const cur = u.tgt && foes.includes(u.tgt) ? u.tgt : null, by = (a, b, ka, kb) => ka - kb || a.hp - b.hp || (a.uid < b.uid ? -1 : 1);
+  const inR = foes.filter(e => manh(u.x, u.y, e.x, e.y) <= u.rng);
+  if (inR.length) { const near = inR.sort((a, b) => by(a, b, manh(u.x, u.y, a.x, a.y), manh(u.x, u.y, b.x, b.y)))[0]; return cur && inR.includes(cur) && manh(u.x, u.y, cur.x, cur.y) <= manh(u.x, u.y, near.x, near.y) ? cur : near; }
+  const D = walkMap(s, u), cost = new Map(foes.map(e => [e, walkCost(s, u, e, D)]));
+  const best = foes.slice().sort((a, b) => by(a, b, cost.get(a), cost.get(b)))[0];
+  if (cur && cost.get(cur) < 1e9 && cost.get(cur) <= cost.get(best) + 1) return cur;
+  if (cost.get(best) < 1e9) return best;
+  return cur || foes.sort((a, b) => by(a, b, manh(u.x, u.y, a.x, a.y), manh(u.x, u.y, b.x, b.y)))[0]; // boxed in: wait facing the closest
+}
+// one step along the shortest open path to a tile within range of t. Never steps sideways without getting closer, so no back-and-forth.
+function gridStep(s, u, t) {
+  const D = new Array(BW * BH).fill(-1), q = [], open = (x, y) => (x === u.x && y === u.y) || free(s, x, y);
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const m = manh(x, y, t.x, t.y); if (m >= 1 && m <= u.rng && open(x, y) && !isObs(s, x, y)) { D[x + y * BW] = 0; q.push(x + y * BW); } }
+  for (let i = 0; i < q.length; i++) { const c = q[i], cx = c % BW, cy = (c - cx) / BW;
+    for (const [dx, dy] of DIR4) { const nx = cx + dx, ny = cy + dy, k = nx + ny * BW; if (!inB(nx, ny) || D[k] >= 0 || !open(nx, ny)) continue; D[k] = D[c] + 1; q.push(k); } }
+  const here = D[u.x + u.y * BW]; if (here <= 0) return false;
+  const fwd = u.side === 0 ? -1 : 1; let best = null, bk = null;
+  for (const [dx, dy] of DIR4) {
+    const nx = u.x + dx, ny = u.y + dy; if (!inB(nx, ny) || !free(s, nx, ny) || D[nx + ny * BW] !== here - 1) continue;
+    const back = u.lastDir && u.lastDir[0] === -dx && u.lastDir[1] === -dy ? 1 : 0;
+    const key = [manh(nx, ny, t.x, t.y), back, dy === fwd ? 0 : 1, dx];
+    if (!bk || (key[0] - bk[0] || key[1] - bk[1] || key[2] - bk[2] || key[3] - bk[3]) < 0) { bk = key; best = [nx, ny, dx, dy]; }
+  }
+  if (!best) return false;
+  u.fx = u.x; u.fy = u.y; u.x = best[0]; u.y = best[1]; u.mt0 = s.t; u.lastDir = [best[2], best[3]];
+  const st = moveTime(s, u, false) * GRID_SLOW; u.mt1 = s.t + Math.min(GRID_HOP, st); u.moveCd = s.t + st;
+  return true;
+}
 function placeAt(u, x, y, s, dur) { u.fx = u.x; u.fy = u.y; u.x = x; u.y = y; u.mt0 = s.t; u.mt1 = s.t + (dur || 0); }
 // slide a unit to a tile (knockback / pulls); returns true if it moved
 function shove(s, u, x, y, ev, dur) { if (!free(s, x, y)) return false; placeAt(u, x, y, s, dur || 0.25); pushEv(ev, { t: 'shove', uid: u.uid }); return true; }
@@ -262,7 +306,8 @@ function chooseTarget(s, u) {
     if (best) return best;
   }
   if (u.st.tauntT > s.t) { const t = byUid(s, u.st.tauntUid); if (t && targetable(s, t)) return t; }
-  // targeting style: back line / weakest / toughest (falls back to closest for a moment if the way is blocked). Grid mode: everyone hits the closest.
+  if (s.grid) return gridTarget(s, u);
+  // targeting style: back line / weakest / toughest (falls back to closest for a moment if the way is blocked)
   if (!s.grid && u.tg !== 'near' && !(u.tgFail > s.t)) {
     const fwd = u.side === 0 ? -1 : 1; let best = null, bv = -1e9;
     for (const e of s.units) {
@@ -493,8 +538,9 @@ function step(s, ev) {
         if (u.rng > 1) later(s, L.d, ev2 => hit(s, u, t, 0, ev2, 'atk'));
         else later(s, L.d, ev2 => { if (u.alive && !stunned(s, u)) hit(s, u, t, 0, ev2, 'atk'); });
       }
-    } else if (s.grid && u.moveCd > s.t) {
-      // grid mode: resting on the tile between steps
+    } else if (s.grid) {
+      // tile movement: rest on the tile between steps; if boxed in, wait and look again shortly
+      if (u.moveCd <= s.t && !gridStep(s, u, t)) u.retgt = Math.min(u.retgt, s.t + 0.3);
     } else if (!stepToward(s, u, t)) {
       u.retgt = Math.min(u.retgt, s.t + 0.3);
       if (u.tg !== 'near' && !(u.st.tauntT > s.t)) u.tgFail = s.t + 1.5;
