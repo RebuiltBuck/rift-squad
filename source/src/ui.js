@@ -466,31 +466,36 @@ function heroesHTML() {
   <div class="panel"><h3>Heroes <small>${ownedN.length - capOwned} / ${HEROES.length - CAPTAIN_IDS.length} collected</small></h3><div class="grid3">${regCards}</div></div>
   <p class="small mute center">Card colour = rarity. Each hero trophy is +1 level: level 1 unlocks the hero and its first ability, 5 and 10 open the others, and every level has a reward on the hero's road.</p>`;
 }
-function heroInfo(hid, pick) {
+function heroInfo(hid, pick, opts) {
+  opts = opts || {};
   const H = HERO[hid], o = S.heroes[hid] && S.heroes[hid].tr >= 1 ? S.heroes[hid] : null, R = RARITIES[H.rarity], W = WORLDS[H.world];
   const st = heroStats(hid), TG = TARGETING[heroTarget(hid)], lv = o ? o.tr : 0;
   // tiles: captain power (captains only), then the 3 abilities. Tap one to read it below.
   const tiles = [];
   if (H.captain) tiles.push({ k: 'cap', ic: 'i_crown', name: H.cap.name, cls: 'cap' });
   HERO_ABILITIES[hid].forEach((ab, k) => { const s2 = abilityState(S, hid, k); tiles.push({ k, ic: ABILITIES[ab].icon, name: ABILITIES[ab].name, cls: o ? s2.state : 'locked', s2 }); });
-  const firstClaim = o ? [...Array(HERO_MAX)].map((x, i) => i + 1).find(L => roadStep(S, hid, L).state === 'claim') : null;
-  let selK = pick != null ? pick : firstClaim ? 'L' + firstClaim : o && o.eq >= 0 ? o.eq : 0;
+  if (typeof pick === 'string' && pick[0] === 'L') { opts.page = 1; opts.at = +pick.slice(1); pick = null; }
+  let selK = pick != null ? pick : o && o.eq >= 0 ? o.eq : 0;
   const tileHTML = tiles.map(t => `<button class="abt ${t.cls} ${t.k === selK ? 'sel' : ''}" data-k="${t.k}">${icon(t.ic, 'ib')}${t.cls === 'locked' ? `<i class="lk">${icon('lock', 'ii')}</i>` : t.cls === 'equipped' ? `<i class="ck">${icon('i_check', 'ii')}</i>` : t.cls === 'ready' ? '<i class="nw">!</i>' : ''}<span>${esc(t.name)}</span></button>`).join('');
-  // the hero's road: one step per level
-  const nodes = [...Array(HERO_MAX)].map((x, i) => { const L = i + 1, rs = roadStep(S, hid, L), ic = roadRewardIcon(rs.R, hid);
-    return `<button class="rn ${rs.state} ${rs.state === 'claim' && !rs.can ? 'poor' : ''} ${('L' + L) === selK ? 'sel' : ''}" data-k="L${L}">${ic ? icon(ic, 'ii') : `<img class="px ii" src="${chestURL(rs.R.chest)}">`}<b>${L}</b></button>`; }).join('');
+  // page sizes: both pages of the card are the same height, as tall as the screen allows
+  const PH = Math.max(420, Math.min(600, ($('#modal-root').clientHeight || innerHeight) - 108)), big = PH >= 540;
+  // the hero's road (page 2): level 1 at the bottom, climbing up, every reward the same size, framed by type
+  const ROW = big ? 118 : 104, PADR = 44, TH = HERO_MAX * ROW + PADR * 2, yOf = L => TH - PADR - (L - 0.5) * ROW;
+  let road = `<div class="hr2-line" style="top:${yOf(HERO_MAX)}px;height:${yOf(1) - yOf(HERO_MAX)}px"><i style="height:${lv > 1 ? (Math.min(lv, HERO_MAX) - 1) * ROW : 0}px"></i></div>`;
+  for (let L = 1; L <= HERO_MAX; L++) {
+    const rs = roadStep(S, hid, L), Rw = rs.R, y = yOf(L), left = L % 2 === 1, ic = roadRewardIcon(Rw, hid);
+    const kind = Rw.kind === 'ab' ? 'ab' : Rw.kind === 'chest' ? 'chest' : 'cur';
+    const amt = Rw.kind === 'coins' || Rw.kind === 'gems' || Rw.kind === 'keys' ? Rw.n : 0;
+    const mark = rs.state === 'done' ? `<span class="st">${icon('i_check', '')}</span>` : rs.state === 'locked' ? `<span class="st">${icon('lock', '')}</span>` : '';
+    const pill = rs.state !== 'claim' || !o ? '' : Rw.kind === 'ab' && rs.cost ? `<span class="clp btn sm ${rs.can ? 'green' : 'gray'}">${fmt(rs.cost)} ${icon('coin', 'ii')}</span>` : `<span class="clp btn sm green">Claim</span>`;
+    road += `<button class="rt k-${kind} ${o ? rs.state : 'locked'} ${rs.state === 'claim' && !rs.can ? 'poor' : ''}" data-rl="${L}" style="top:${y}px;${left ? 'right' : 'left'}:calc(50% + 34px)">${ic ? icon(ic, 'ri') : `<img class="ri" src="${chestURL(Rw.chest)}">`}${amt ? `<span class="amt">${fmt(amt)}</span>` : ''}${mark}${pill}</button>`;
+    road += `<i class="hr2-arm" style="top:${y}px;${left ? 'right' : 'left'}:50%"></i><span class="hr2-node ${o ? rs.state : 'locked'} ${o && L === lv ? 'here' : ''}" style="top:${y}px">${L}</span>`;
+  }
+  const claimN = o ? heroClaimable(S, hid) : 0;
   const detail = k => {
     if (k === 'cost') return `<div class="abd-h"><i class="cst in big"><span>${heroCost(hid)}</span></i> <b>${heroCost(hid)} slot${heroCost(hid) > 1 ? 's' : ''}</b> <span class="tag sm">Cost</span></div><div class="abd-t">Each round you can put heroes on the board up to your slot limit: ${SLOT_START} in round 1, then 1 more every round (and 1 extra after losing a round). Bigger heroes cost more but are built much stronger.</div>`;
     if (k === 'tg') return `<div class="abd-h">${icon('i_bow', 'ii')} <b>Range ${st.rng}</b> <span class="tag sm">Attack</span></div><div class="abd-t">${rangeText(st.rng)} Every hero goes after the closest enemy.</div>`;
     if (k === 'cap') return `<div class="abd-h">${icon('i_crown', 'ii')} <b style="color:var(--gold)">${esc(H.cap.name)}</b> <span class="tag sm">Captain power</span></div><div class="abd-t">${esc(H.cap.desc)}</div><div class="abd-b tiny mute">Always on while ${esc(H.name)} is your Captain.</div>`;
-    if (typeof k === 'string' && k[0] === 'L') {
-      const L = +k.slice(1), rs = roadStep(S, hid, L), Rw = rs.R;
-      if (Rw.kind === 'ab') return detail(Rw.k).replace('<span class="tag sm">', `<span class="tag sm">Level ${L} · `) + (Rw.gold ? '<div class="tiny" style="color:var(--gold)">Also turns the card gold.</div>' : '');
-      const btn = !o ? `<span class="small mute">Unlock ${esc(H.name)} first</span>` : rs.state === 'done' ? `<span class="tag" style="background:var(--green)">${icon('i_check', 'ii')} Claimed</span>`
-        : rs.state === 'claim' ? `<button class="btn sm gold" data-claim="${L}">Claim</button>` : `<span class="small mute">Reach level ${L}</span>`;
-      return `<div class="abd-h">${roadRewardIcon(Rw, hid) ? icon(roadRewardIcon(Rw, hid), 'ii') : `<img class="px ii" src="${chestURL(Rw.chest)}">`} <b>${roadRewardLabel(Rw, hid)}</b> <span class="tag sm">Level ${L} reward</span></div>
-        <div class="abd-t">${Rw.kind === 'chest' ? 'Opens right away.' : `A gift for getting ${esc(H.name)} to level ${L}.`}</div><div class="abd-b">${btn}</div>`;
-    }
     const ab = HERO_ABILITIES[hid][k], A = ABILITIES[ab], s2 = abilityState(S, hid, k);
     const btn = !o ? `<span class="small mute">Unlock ${esc(H.name)} first</span>`
       : s2.state === 'equipped' ? `<span class="tag" style="background:var(--green)">${icon('i_check', 'ii')} Equipped</span>`
@@ -503,34 +508,55 @@ function heroInfo(hid, pick) {
   if (!o) { const road = Object.entries(ROAD_HEROES).find(([t, h]) => h === hid);
     how = `<div class="hhow small">${road ? `Trophy Road at <b style="color:var(--gold)">${fmt(+road[0])}</b> ${icon('trophy', 'ii')} or ` : ''}Hero Chests from ${esc(ARENAS[R.arena].name)}</div>`; }
   const canWild = S.wild > 0 && lv < HERO_MAX;
-  const m = modal(`<div class="hinfo">
+  const m = modal(`<div class="hdots"><i class="${opts.page ? '' : 'on'}"></i><i class="${opts.page ? 'on' : ''}"></i></div><div class="hpager">
+   <div class="hpage hinfo ${big ? 'big' : ''}" style="height:${PH}px">
     <div class="hi-top">
-      <div class="livewrap sm ${o && o.un[2] ? 'goldc' : ''}" ${rarStyle(hid)}>${o ? liveHero(hid, 4.5) : `<img class="bigspr px" src="${sprURL(hid, null, 'sil', 128)}">`}</div>
+      <div class="livewrap sm ${o && o.un[2] ? 'goldc' : ''}" ${rarStyle(hid)}>${o ? liveHero(hid, big ? 5.6 : 4.5) : `<img class="bigspr px" src="${sprURL(hid, null, 'sil', 128)}">`}</div>
       <div class="hi-side"><h2>${esc(H.name)}</h2>
         <div class="row" style="gap:4px;flex-wrap:wrap"><span class="tag" style="background:${R.color}">${R.name}</span><button class="tag costchip ${selK === 'cost' ? 'sel' : ''}" data-k="cost"><i class="cst in"><span>${heroCost(hid)}</span></i>${heroCost(hid)} slot${heroCost(hid) > 1 ? 's' : ''}</button>${WORLDS_ON ? `<span class="tag" style="background:${W.color}">${icon('w_' + H.world, 'ii')} ${W.name}</span>` : ''}</div>
         <div class="hstats"><span>${icon('i_heart', 'ii')}<b>${st.hp}</b></span><span>${icon('i_swords', 'ii')}<b>${st.atk}</b></span><span>${icon('i_boot', 'ii')}<b>${SPEEDS[heroSpeed(hid)].name}</b></span>
           <button class="tgchip ${selK === 'tg' ? 'sel' : ''}" data-k="tg">${icon('i_bow', 'ii')}<b>Range ${st.rng}</b></button></div>
       </div></div>
     ${o ? '' : how}
-    <div class="hroad"><div class="hr-top"><b>${o ? `Level ${lv}` : 'Not unlocked'}</b><span class="tiny mute">${lv >= HERO_MAX ? 'Max level' : `${HERO_MAX - lv} more hero troph${HERO_MAX - lv > 1 ? 'ies' : 'y'} to max`}</span></div>
-      <div class="hr-track"><div class="hr-line"><i style="width:${lv > 1 ? (lv - 1) / (HERO_MAX - 1) * 100 : 0}%"></i></div>${nodes}</div></div>
+    <div class="hlvrow"><b>${o ? `Lv ${lv}` : 'Locked'}</b><span class="hpips">${[...Array(HERO_MAX)].map((x, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span><button class="hgo" data-page="1">Road ${icon('i_right', 'ii')}${claimN ? '<i class="dot"></i>' : ''}</button></div>
     <div class="abts">${tileHTML}</div>
     <div class="abd" id="abd">${detail(selK)}</div>
     <div class="row" style="gap:8px">${o ? `<button class="btn grow ${S.squad.includes(hid) ? 'off' : 'gold'}" id="sq">${S.squad[0] === hid ? 'Captain ' + icon('i_crown', 'ii') : S.squad.includes(hid) ? 'In squad ' + icon('i_check', 'ii') : H.captain ? 'Make Captain' : 'Add to squad'}</button>` : ''}
       ${canWild ? `<button class="btn purple ${o ? '' : 'grow'}" id="wild">${icon('i_wild', 'ii')} ${o ? `+1 level (${S.wild})` : `Unlock with a wild trophy (${S.wild})`}</button>` : ''}</div>
+   </div>
+   <div class="hpage hroad2 ${big ? 'big' : ''}" style="height:${PH}px">
+    <div class="hr2-hd"><img class="px" src="${sprURL(hid, null, o ? '' : 'sil')}"><h2>${esc(H.name)}</h2><span class="lvc">${o ? `Lv ${lv}` : 'Locked'}</span></div>
+    <div class="hr2-box"><div class="hr2-track" style="height:${TH}px">${road}</div></div>
+    <div class="hr2-key"><span><i class="k-ab"></i>Ability</span><span><i class="k-chest"></i>Chest</span><span><i class="k-cur"></i>Coins, keys, gems</span></div>
+   </div>
   </div>`);
+  m.classList.add('hcardm');
+  // two pages you swipe between
+  const pager = $('.hpager', m), dots = m.querySelectorAll('.hdots i'), box = $('.hr2-box', m);
+  const atL = opts.at || (o ? [...Array(HERO_MAX)].map((x, i) => i + 1).find(L => roadStep(S, hid, L).state === 'claim' && roadStep(S, hid, L).can) || Math.max(1, lv) : 1);
+  box.scrollTop = yOf(atL) - box.clientHeight * 0.55;
+  if (opts.page) { pager.style.scrollBehavior = 'auto'; pager.scrollLeft = pager.clientWidth; pager.style.scrollBehavior = ''; }
+  pager.addEventListener('scroll', () => { const pi = Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth)); dots.forEach((d, i) => d.classList.toggle('on', i === pi)); }, { passive: true });
+  m.querySelectorAll('[data-page]').forEach(b => b.onclick = () => { SFX.tap(); pager.scrollTo({ left: +b.dataset.page * pager.clientWidth, behavior: 'smooth' }); });
+  dots.forEach((d, i) => d.onclick = () => pager.scrollTo({ left: i * pager.clientWidth, behavior: 'smooth' }));
+  // road tiles: claim what's ready, otherwise say what it is
+  m.querySelectorAll('[data-rl]').forEach(b => b.onclick = () => {
+    const L = +b.dataset.rl, rs = roadStep(S, hid, L), Rw = rs.R, what = `Level ${L}: ${roadRewardLabel(Rw, hid)}${Rw.kind === 'ab' ? ' (ability)' : ''}`;
+    if (!o) { toast(`Unlock ${esc(H.name)} first`); return; }
+    if (rs.state !== 'claim') { SFX.tap(); toast(rs.state === 'done' ? `${what} · claimed` : `${what} · reach level ${L}`); return; }
+    if (!rs.can) { toast(`Need ${fmt(rs.cost - S.coins)} more coins`); return; }
+    const b0 = resSnap(), src = b.getBoundingClientRect(), r = claimHeroRoad(S, hid, L, now()); if (!r) return;
+    if (Rw.kind === 'ab') { persist(); SFX.heal(); buzz(20); m.close(); render(); heroInfo(hid, null, { page: 1, at: L }); toast(`${esc(H.name)} learned ${esc(ABILITIES[r.ability].name)}!`); return; }
+    const gn = gainsSince(b0); if (Rw.kind !== 'chest') holdRes(gn); persist(); render(); m.close(); if (Rw.kind !== 'chest') setTimeout(() => flood(gn, src), 30);
+    if (Rw.kind === 'chest') { openSpecChest(CHESTS[Rw.chest].name, r); return; }
+    SFX.coin(); buzz(20); toast(`+ ${roadRewardLabel(Rw, hid)}`); heroInfo(hid, null, { page: 1, at: L });
+  });
   const wire = () => {
     m.querySelectorAll('[data-un]').forEach(b => b.onclick = () => { const k = +b.dataset.un; if (!unlockAbility(S, hid, k)) { toast(`Need ${fmt(ABILITY_COINS[k] - S.coins)} more coins`); return; } persist(); SFX.heal(); buzz(20); m.close(); render(); heroInfo(hid, k); toast(`${esc(H.name)} learned ${esc(ABILITIES[HERO_ABILITIES[hid][k]].name)}!`); });
     m.querySelectorAll('[data-eq]').forEach(b => b.onclick = () => { const k = +b.dataset.eq; equipAbility(S, hid, k); persist(); SFX.tap(); m.close(); render(); heroInfo(hid, k); });
-    m.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => {
-      const L = +b.dataset.claim, Rw = HERO_ROAD[L], b0 = resSnap(), src = (m.querySelector('.rn.sel') || b).getBoundingClientRect(), r = claimHeroRoad(S, hid, L, now()); if (!r) return;
-      const gn = gainsSince(b0); if (Rw.kind !== 'chest') holdRes(gn); persist(); render(); m.close(); if (Rw.kind !== 'chest') setTimeout(() => flood(gn, src), 30);
-      if (Rw.kind === 'chest') { openSpecChest(CHESTS[Rw.chest].name, r); return; }
-      SFX.coin(); buzz(20); toast(`+ ${roadRewardLabel(Rw, hid)}`); heroInfo(hid, 'L' + L);
-    });
   };
   m.querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
-    const raw = b.dataset.k, k = raw === 'tg' || raw === 'cap' || raw === 'cost' || raw[0] === 'L' ? raw : +raw;
+    const raw = b.dataset.k, k = raw === 'tg' || raw === 'cap' || raw === 'cost' ? raw : +raw;
     m.querySelectorAll('[data-k]').forEach(x => x.classList.toggle('sel', x === b)); SFX.tap();
     const d = $('#abd', m); d.innerHTML = detail(k); d.classList.remove('pop'); void d.offsetWidth; d.classList.add('pop'); wire();
   });

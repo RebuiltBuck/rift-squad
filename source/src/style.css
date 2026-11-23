@@ -497,18 +497,64 @@ body:has(#coach) #toast { top: calc(150px + var(--sat)); }
 .goldc { border-color: var(--gold) !important; box-shadow: 0 0 0 2px #ffd23f55, inset 0 -4px 0 #0003, 0 0 14px #ffd23f55 !important; }
 .wildp { display: flex; align-items: center; gap: 10px; border-color: #7b3fd1; background: #3a2a5c; }
 .wildrw { border-color: #c07bff !important; }
-.hroad { background: #0003; border: 2px solid var(--line); border-radius: 10px; padding: 5px 6px 6px; }
-.hr-top { display: flex; justify-content: space-between; align-items: baseline; margin: 0 2px 4px; } .hr-top b { font-size: 21px; }
-.hr-track { position: relative; display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
-.hr-line { position: absolute; left: 5%; right: 5%; top: 50%; height: 4px; margin-top: -2px; background: #0006; border-radius: 2px; }
-.hr-line i { display: block; height: 100%; background: linear-gradient(90deg, #7fb2ff, #ffd23f); border-radius: 2px; }
-.rn { position: relative; aspect-ratio: 1; border-radius: 8px; border: 2px solid var(--line); background: var(--panel2); display: flex; align-items: center; justify-content: center; padding: 0; color: inherit; font: inherit; }
-.rn img.ii { width: 18px !important; height: 18px !important; }
-.rn b { position: absolute; bottom: -3px; right: 1px; font-size: 12px; line-height: 1; text-shadow: 0 1px 0 #000, 1px 0 0 #000; }
-.rn.locked img { filter: grayscale(1) brightness(.5); } .rn.locked b { color: var(--mute); }
-.rn.done { background: #2c4a3a; border-color: #3d7a55; }
-.rn.claim { border-color: var(--gold); background: #4a3d1a; animation: glow 1s infinite alternate; } .rn.claim.poor { animation: none; border-color: #8a6d1a; }
-.rn.sel { outline: 2px solid #fff; outline-offset: 1px; }
+/* ---- hero card: two same-size pages you swipe between ---- */
+.modal.hcardm { padding: 8px 14px 12px; overflow: hidden; }
+.hdots { display: flex; gap: 6px; justify-content: center; height: 14px; margin: 2px 0 4px; }
+.hdots i { width: 11px; height: 11px; border-radius: 3px; background: #ffffff30; border: 2px solid var(--line); cursor: pointer; }
+.hdots i.on { background: var(--gold); }
+.hpager { display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; margin: 0 -14px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.hpager::-webkit-scrollbar { display: none; }
+.hpage { flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always; padding: 0 14px; box-sizing: border-box; min-width: 0; }
+.hpage.hinfo { gap: 8px; }
+.hpage.hinfo .abd { flex: 1; height: auto; min-height: 92px; }
+.hpage.hinfo.big { gap: 10px; }
+.hpage.hinfo.big .livewrap.sm { width: 108px; min-height: 168px; }
+.hpage.hinfo.big .hi-side { gap: 7px; } .hpage.hinfo.big .hi-side h2 { font-size: 35px; }
+.hpage.hinfo.big .hstats { gap: 6px; } .hpage.hinfo.big .hstats > * { padding: 4px 6px; }
+.hpage.hinfo.big .abt { padding: 11px 2px 7px; } .hpage.hinfo.big .abt img.ib { width: 44px !important; height: 44px !important; } .hpage.hinfo.big .abt span { font-size: 18px; }
+.hpage.hinfo.big .abd-t { font-size: 21px; }
+.hlvrow { display: flex; align-items: center; gap: 8px; background: #0003; border: 2px solid var(--line); border-radius: 10px; padding: 6px 8px 6px 10px; }
+.hlvrow > b { font-size: 24px; white-space: nowrap; }
+.hpips { display: flex; gap: 3px; flex: 1; min-width: 0; }
+.hpips i { flex: 1; height: 12px; border-radius: 3px; background: #ffffff18; border: 2px solid var(--line); }
+.hpips i.on { background: var(--gold); }
+.hgo { position: relative; display: flex; align-items: center; gap: 4px; background: var(--gold); color: #3a2400; font-weight: 700; font-size: 20px; padding: 4px 9px; border-radius: 8px; border: 2px solid var(--line); box-shadow: inset 0 -3px 0 #0003; }
+.hgo .dot { position: absolute; top: -7px; right: -7px; width: 16px; height: 16px; border-radius: 50%; background: var(--red); border: 2px solid var(--line); }
+.hroad2 { display: flex; flex-direction: column; gap: 10px; }
+.hr2-hd { display: flex; align-items: center; gap: 10px; padding: 2px 40px 0 2px; }
+.hr2-hd img { width: 40px; height: 50px; }
+.hr2-hd h2 { margin: 0; padding: 0; font-size: 32px; text-align: left; line-height: 1; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hr2-hd .lvc { background: var(--line); border-radius: 7px; padding: 4px 9px; font-weight: 700; font-size: 22px; white-space: nowrap; }
+.hr2-box { position: relative; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; background: #0004; border: 3px solid var(--line); border-radius: 12px; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(transparent 0, #000 26px, #000 calc(100% - 26px), transparent 100%); mask-image: linear-gradient(transparent 0, #000 26px, #000 calc(100% - 26px), transparent 100%); }
+.hr2-box::-webkit-scrollbar { display: none; }
+.hr2-track { position: relative; }
+.hr2-line { position: absolute; left: 50%; width: 8px; margin-left: -4px; background: var(--line); border-radius: 4px; }
+.hr2-line i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--gold); border-radius: 4px; }
+.hr2-arm { position: absolute; width: 36px; height: 4px; margin-top: -2px; background: var(--line); }
+.hr2-node { position: absolute; left: 50%; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 9px; background: var(--panel2); border: 3px solid var(--line); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 21px; color: var(--mute); z-index: 2; }
+.hr2-node.done, .hr2-node.claim { background: var(--gold); color: #3a2400; }
+.hr2-node.here { width: 44px; height: 44px; margin: -22px 0 0 -22px; font-size: 25px; box-shadow: 0 0 0 3px #ffd23f55, 0 0 14px #ffd23f88; }
+.rt { position: absolute; width: 90px; height: 90px; margin-top: -45px; padding: 0; border-radius: 13px; background: var(--panel2); border: 4px solid #6a6490; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 -4px 0 #0004, inset 0 3px 0 #ffffff12; z-index: 2; }
+.hroad2.big .rt { width: 98px; height: 98px; margin-top: -49px; }
+.rt img.ri { width: 56px; height: 56px; }
+.hroad2.big .rt img.ri { width: 62px; height: 62px; }
+.rt.k-ab { border-color: var(--gold); background: #3e3418; }
+.rt.k-chest { border-color: var(--blue); background: #1f2f52; }
+.rt .amt { position: absolute; right: -7px; bottom: -9px; background: var(--line); color: #fff; font-weight: 700; font-size: 20px; line-height: 1; padding: 3px 6px; border-radius: 6px; }
+.rt .st { position: absolute; top: -11px; right: -11px; line-height: 0; background: var(--line); border-radius: 7px; padding: 3px; }
+.rt .st img { width: 19px; height: 19px; }
+.rt.done { opacity: .75; }
+.rt.locked img.ri { filter: grayscale(.9) brightness(.6); }
+.rt.locked.k-ab, .rt.locked.k-chest { filter: saturate(.45); }
+.rt.claim { box-shadow: 0 0 0 3px var(--green), 0 0 18px #5fd068cc, inset 0 -4px 0 #0004; animation: rtpulse 1s infinite alternate; }
+.rt.claim.poor { box-shadow: 0 0 0 3px #8a84a8, inset 0 -4px 0 #0004; animation: none; }
+.rt .clp { position: absolute; left: 50%; bottom: -34px; transform: translateX(-50%); padding: 2px 10px; font-size: 18px; white-space: nowrap; pointer-events: none; z-index: 3; }
+.rt:active { transform: translateY(2px); }
+@keyframes rtpulse { from { box-shadow: 0 0 0 3px var(--green), 0 0 8px #5fd06888, inset 0 -4px 0 #0004; } to { box-shadow: 0 0 0 3px var(--green), 0 0 22px #5fd068ee, inset 0 -4px 0 #0004; } }
+.hr2-key { display: flex; gap: 12px; justify-content: center; font-size: 17px; color: var(--mute); flex: none; }
+.hr2-key i { display: inline-block; width: 13px; height: 13px; border-radius: 3px; border: 3px solid #6a6490; background: var(--panel2); margin-right: 5px; vertical-align: -2px; }
+.hr2-key i.k-ab { border-color: var(--gold); background: #3e3418; } .hr2-key i.k-chest { border-color: var(--blue); background: #1f2f52; }
 .livewrap.goldc { border-color: var(--gold) !important; }
 /* ---- home: arena + difficulty picker, bigger heroes ---- */
 .arenasel { padding: 6px; } .arenasel .arena { margin: 0 0 6px; border-radius: 10px; }
