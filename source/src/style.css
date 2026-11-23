@@ -658,3 +658,6 @@ body[data-tut=bench] .bcard.fit { animation: tglow .8s infinite; }
 /* fixed-height top bar and bottom row, so the board never shifts between phases */
 #battle .bhud { height: calc(50px + var(--sat)); flex: none; }
 #battle .bpanel { height: calc(91px + var(--sab) * .55); flex: none; }
+/* iOS Home Screen app: stretch the full-screen layers to the real screen when the viewport comes up short (see fixViewport) */
+html.vfix, html.vfix body { height: var(--app-h); }
+html.vfix #app, html.vfix #battle, html.vfix #modal-root, html.vfix .copen, html.vfix .co-flash { bottom: auto; height: var(--app-h); }

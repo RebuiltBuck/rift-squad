@@ -739,6 +739,23 @@ function saveMatch() {
   lsSet(STORE_BATTLE, JSON.stringify({ bh: BH, lastW: M.lastW, setup: M.setup, sides: M.sides, round: M.round, score: M.score, prev: M.prev, agg: M.agg, flawless: M.flawless, rounds: M.rounds, lineups: M.lineups, heroes: M.heroes, clutch: M.clutch, down02: M.down02, feats: M.feats }));
 }
 
+// ----- iOS Home Screen app fix -----
+// WebKit bug: in a Home Screen app, full-screen fixed layers can stop short of the bottom of the screen,
+// leaving the tab bar floating high with a dead band under it. When that happens, size them to the real screen.
+let VP_PROBE = null;
+function fixViewport() {
+  const root = document.documentElement;
+  const st = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if (!st) { if (root.classList.contains('vfix')) { root.classList.remove('vfix'); root.style.removeProperty('--app-h'); root.style.removeProperty('--sab'); } return; }
+  if (!VP_PROBE) { VP_PROBE = document.createElement('div'); VP_PROBE.style.cssText = 'position:fixed;top:0;bottom:0;left:0;width:1px;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);box-sizing:border-box'; document.body.appendChild(VP_PROBE); }
+  const portrait = innerHeight >= innerWidth, sh = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+  const cs = getComputedStyle(VP_PROBE), vh = VP_PROBE.offsetHeight, sat = parseFloat(cs.paddingTop) || 0, sab = parseFloat(cs.paddingBottom) || 0, gap = Math.round(sh - vh);
+  if (gap < 8 || gap > 220) { root.classList.remove('vfix'); root.style.removeProperty('--app-h'); root.style.removeProperty('--sab'); return; }
+  root.style.setProperty('--app-h', sh + 'px'); root.classList.add('vfix');
+  const fixB = Math.max(sab, Math.min(34, gap - sat)); // the home-indicator inset gets lost along with the gap
+  if (fixB > sab) root.style.setProperty('--sab', fixB + 'px'); else root.style.removeProperty('--sab');
+}
+
 // ----- bench: heroes you brought but aren't using this round -----
 function freeSlots() { return M.caps ? M.caps[0] - slotsUsed(M.sides[0].board) : 0; }
 function benchHTML() {
@@ -1212,7 +1229,10 @@ function boot() {
   $('#i-tro').src = sprURL('trophy'); $('#i-coin').src = sprURL('coin'); $('#i-gem').src = sprURL('gem');
   const cv = $('#bc'); cv.addEventListener('pointerdown', onBoardDown); cv.addEventListener('pointermove', onBoardMove); cv.addEventListener('pointerup', onBoardUp); cv.addEventListener('pointercancel', () => { if (M) { M.drag = null; M.hover = null; } });
   $('#b-flee').onclick = flee; $('#b-ev').onclick = () => { if (M) toast(esc(EVENTS[M.setup.event].desc)); };
-  window.addEventListener('resize', () => { if (M) bvLayout(); });
+  window.addEventListener('resize', () => { fixViewport(); if (M) bvLayout(); });
+  window.addEventListener('orientationchange', () => setTimeout(fixViewport, 300));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) fixViewport(); });
+  fixViewport(); setTimeout(fixViewport, 500);
   go('battle'); ACH_QUIET = false;
   let lastSig = '';
   setInterval(() => {
