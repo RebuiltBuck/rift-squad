@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#14112a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rift Squad">
+<title>Rift Squad</title>
+<!--PWA-->
+<style>/*CSS*/</style>
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <button id="prof" aria-label="Profile"><img id="i-prof" alt=""><i class="badge hidden"></i></button>
+    <div class="res"><img id="i-tro" alt=""><span id="r-tro">0</span></div>
+    <div class="res grow"><img id="i-coin" alt=""><span id="r-coin">0</span></div>
+    <div class="res"><img id="i-gem" alt=""><span id="r-gem">0</span></div>
+    <button id="gear" aria-label="Settings"></button>
+  </header>
+  <main id="screen"></main>
+  <nav id="tabs">
+    <button data-tab="shop"><img alt=""><span>Shop</span><i class="badge hidden"></i></button>
+    <button data-tab="heroes"><img alt=""><span>Heroes</span><i class="badge hidden"></i></button>
+    <button data-tab="battle" class="on"><img alt=""><span>Battle</span><i class="badge hidden"></i></button>
+    <button data-tab="season"><img alt=""><span>Season</span><i class="badge hidden"></i></button>
+    <button data-tab="road"><img alt=""><span>Road</span><i class="badge hidden"></i></button>
+  </nav>
+</div>
+<div id="battle" class="hidden">
+  <canvas id="bbg"></canvas>
+  <div class="bhud"><div class="hleft"><button class="btn sm gray" id="b-flee" aria-label="Leave match"></button><div class="hround" id="b-rl"></div></div><div class="hscore" id="b-ev"></div><div class="hright" id="b-rnd"></div></div>
+  <div class="bboard"><canvas id="bc"></canvas><div class="btip hidden" id="b-tip"></div></div>
+  <div class="bpanel">
+    <div class="hidden" id="b-syn"></div>
+    <div class="bleft"><div class="bbench hidden" id="b-bench"></div><div class="binfo" id="b-info"></div><div class="bcap" id="b-cap"></div></div>
+    <div class="bbtns2" id="b-btns"></div>
+  </div>
+</div>
+<div id="modal-root"></div>
+<div id="toast"></div>
+<script>
+const SPRITES_DATA = /*SPRITES*/;
+const SPRITES32 = /*SPRITES32*/;
+/*JS*/
+boot();
+/*SWREG*/
+</script>
+</body>
+</html>
