@@ -44,7 +44,7 @@ const HERO_ROAD = [null,
 ];
 const HERO_MAX = 10;
 // wild trophies: a rare chest drop you can put on any hero you like
-const WILD_CHANCE = { hero: 0.07, mega: 0.4, resource: 0 };
+const WILD_CHANCE = { hero: 0, mega: 0.4, resource: 0 }; // Hero Chests only ever give one hero
 const AB_KIND = { charge: 'Charge', start: 'Round start', passive: 'Passive' };
 const ABILITIES = {
   // Sir Bruno
@@ -242,7 +242,7 @@ const EVENT_IDS = Object.keys(EVENTS);
 // Every win drops a chest onto your shelf. Opening any chest uses 1 key. Keys refill 1 every 5 hours (up to 10).
 const KEY_HOURS = 5, KEY_MAX = 10, SHELF_MAX = 20;
 const CHESTS = {
-  hero:     { name: 'Hero Chest',     what: 'Hero trophies',                 trophies: [1, 2], coins: 0,   pal: { a: '#3a6fd8', A: '#1f3f8a', b: '#ffd23f', B: '#b37a00' } },
+  hero:     { name: 'Hero Chest',     what: 'Always 1 hero trophy',         trophies: [1, 1], coins: 0,   pal: { a: '#3a6fd8', A: '#1f3f8a', b: '#ffd23f', B: '#b37a00' } },
   resource: { name: 'Resource Chest', what: 'Coins, sometimes gems and keys', trophies: [0, 0], coins: 60,  pal: { a: '#5a9a46', A: '#2f5d2a', b: '#d9a066', B: '#8a5a32' } },
   mega:     { name: 'Mega Chest',     what: 'Lots of hero trophies, coins and gems', trophies: [4, 6], coins: 200, pal: { a: '#c0392b', A: '#7a1f1f', b: '#ffd23f', B: '#d99a00' } },
 };

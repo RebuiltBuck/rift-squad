@@ -162,7 +162,54 @@ function renderTop() {
   const set = (id, n) => { const b = $(`#tabs [data-tab=${id}] .badge`); if (n > 0) { b.textContent = n; b.classList.remove('hidden'); } else b.classList.add('hidden'); };
   set('heroes', heroN); set('season', seasonN); set('road', roadN); set('shop', shopN); set('battle', readyN);
 }
-function go(tab) { TAB = tab; document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab)); render(); $('#screen').scrollTop = 0; }
+// the five main tabs, left to right (swipe between them)
+const TAB_ORDER = ['shop', 'heroes', 'battle', 'season', 'road'];
+function go(tab, from) {
+  const a = TAB_ORDER.indexOf(TAB), b = TAB_ORDER.indexOf(tab), dir = from != null ? from : b > a ? 1 : b < a ? -1 : 0;
+  TAB = tab; document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x.dataset.tab === tab)); render();
+  const sc = $('#screen'); sc.scrollTop = 0;
+  if (dir && !REDUCED_MOTION && sc.animate) { // new tab slides in from the side it lives on
+    if (sc._anim) sc._anim.cancel();
+    sc.style.transform = ''; sc.style.opacity = '';
+    sc._anim = sc.animate([{ transform: `translateX(${dir * 34}%)`, opacity: 0.15 }, { transform: 'none', opacity: 1 }], { duration: 230, easing: 'cubic-bezier(.2,.85,.25,1)' });
+  }
+}
+const REDUCED_MOTION = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+// swipe left / right anywhere on the main screen to move between the five tabs
+function initTabSwipe() {
+  const sc = $('#screen'); let sx = 0, sy = 0, t0 = 0, dx = 0, lock = 0, on = false;
+  const reset = () => { sc.style.transition = 'transform .22s cubic-bezier(.2,.9,.3,1.2), opacity .22s'; sc.style.transform = ''; sc.style.opacity = ''; setTimeout(() => { sc.style.transition = ''; }, 240); };
+  const eatClick = () => { const f = e => { e.stopPropagation(); e.preventDefault(); }; window.addEventListener('click', f, true); setTimeout(() => window.removeEventListener('click', f, true), 350); };
+  sc.addEventListener('touchstart', e => {
+    on = false;
+    if (e.touches.length !== 1 || (typeof TUT !== 'undefined' && TUT) || e.target.closest('.synrow, [data-noswipe], input, textarea, select')) return;
+    const t = e.touches[0]; sx = t.clientX; sy = t.clientY; t0 = performance.now(); dx = 0; lock = 0; on = true;
+  }, { passive: true });
+  sc.addEventListener('touchmove', e => {
+    if (!on) return;
+    const t = e.touches[0], mx = t.clientX - sx, my = t.clientY - sy;
+    if (!lock) {
+      if (Math.abs(mx) > 12 && Math.abs(mx) > Math.abs(my) * 1.4) lock = 1;
+      else if (Math.abs(my) > 10) { on = false; return; } else return;
+    }
+    if (e.cancelable) e.preventDefault();
+    dx = mx;
+    const i = TAB_ORDER.indexOf(TAB), edge = (dx > 0 && i === 0) || (dx < 0 && i === TAB_ORDER.length - 1);
+    const d = edge ? dx * 0.2 : dx * 0.55; // rubber-band at the first / last tab
+    if (sc._anim) { sc._anim.cancel(); sc._anim = null; }
+    sc.style.transition = ''; sc.style.transform = `translateX(${d}px)`; sc.style.opacity = 1 - Math.min(0.45, Math.abs(d) / 500);
+  }, { passive: false });
+  const end = () => {
+    if (!on) return; on = false; if (lock !== 1) return;
+    eatClick();
+    const i = TAB_ORDER.indexOf(TAB), dir = dx < 0 ? 1 : -1, j = i + dir, v = Math.abs(dx) / Math.max(1, performance.now() - t0);
+    if (j < 0 || j >= TAB_ORDER.length || !(Math.abs(dx) > sc.clientWidth * 0.22 || (v > 0.4 && Math.abs(dx) > 40))) { reset(); return; }
+    SFX.tap();
+    sc.style.transition = 'transform .09s ease-in, opacity .09s'; sc.style.transform = `translateX(${-dir * 40}%)`; sc.style.opacity = 0;
+    setTimeout(() => { sc.style.transition = ''; go(TAB_ORDER[j], dir); }, 90);
+  };
+  sc.addEventListener('touchend', end); sc.addEventListener('touchcancel', () => { if (on && lock === 1) reset(); on = false; });
+}
 function render() {
   renderTop();
   const el = $('#screen');
@@ -643,7 +690,7 @@ function helpHTML() {
   <p>${icon('i_bow','ib')}<span>Each hero has a <b>range</b> from 1 (right next to the enemy) to 4 tiles. Tap a hero to see the tiles it can hit.</span></p>
   ${WORLDS_ON ? `<p>${icon('i_globe','ib')}<span>Heroes from the <b>same world</b> are stronger together.</span></p>` : ''}
   <p>${icon('i_key','ib')}<span>Every win adds a chest to your shelf. Open chests with keys: you get a new key every 5 hours.</span></p>
-  <p>${icon('i_htrophy','ib')}<span>Hero Chests hold <b>hero trophies</b>: each one is +1 hero level. Level 1 unlocks the hero and its first ability, level 5 the second, level 10 the third. Every level has a reward on that hero's road.</span></p>
+  <p>${icon('i_htrophy','ib')}<span>Every Hero Chest holds <b>1 hero trophy</b>: each one is +1 hero level. Level 1 unlocks the hero and its first ability, level 5 the second, level 10 the third. Every level has a reward on that hero's road.</span></p>
   <p>${icon('i_wild','ib')}<span><b>Wild trophies</b> are rare chest drops you can put on any hero you like.</span></p>
   <p>${icon('i_save','ib')}<span>Your progress is saved on this phone. Make a backup code in Settings sometimes.</span></p></div>`;
 }
@@ -1221,6 +1268,7 @@ function boot() {
   tick(S, now()); persist();
   if (BUILD === 'test') { const tg = document.createElement('span'); tg.className = 'tag'; tg.style.cssText = 'background:var(--red);color:#fff;font-size:14px;padding:2px 4px;flex:none'; tg.textContent = 'TEST'; $('#topbar').insertBefore(tg, $('#gear')); }
   document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { SFX.tap(); go(b.dataset.tab); });
+  initTabSwipe();
   $('#gear').innerHTML = icon('i_gear', 'ib'); $('#b-flee').innerHTML = icon('i_x', 'ii');
   $('#gear').onclick = openSettings;
   $('#tabs [data-tab=shop] img').src = sprURL('coin'); $('#tabs [data-tab=heroes] img').src = sprURL('bruno');

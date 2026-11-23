@@ -164,7 +164,13 @@ function rollChest(s, type, arena, rnd, opts) {
   if (type === 'resource') { if (rnd() < 0.35) out.gems = 1 + Math.floor(rnd() * 3); if (rnd() < 0.2) out.keys = 1; }
   if (type === 'mega') { out.gems = 5 + Math.floor(rnd() * 6); out.keys = 2; }
   if (rnd() < (WILD_CHANCE[type] || 0)) out.wild = 1;
-  if (opts && opts.starter) s.squad.slice(0, 3).forEach(h => { if (trophiesNeeded(s, h) > 0) out.trophies[h] = 1; }); // first chest: one trophy each for 3 squad heroes
+  if (opts && opts.starter) { // first chest: one brand-new hero
+    const fresh = trophyPool(s, arena).filter(h => !s.heroes[h] || s.heroes[h].tr < 1);
+    giveTrophies(s, out, 1, arena, rnd, fresh.length ? fresh : null);
+  }
+  else if (type === 'hero') { // a Hero Chest is always exactly one hero (if your arena's heroes are all maxed, any hero that still needs one)
+    const pool = trophyPool(s, arena); giveTrophies(s, out, 1, arena, rnd, pool.length ? null : HEROES.filter(h => trophiesNeeded(s, h.id) > 0).map(h => h.id));
+  }
   else if (C.trophies[1] > 0) { const [lo, hi] = C.trophies; const n = lo + (rnd() < 0.3 + 0.03 * arena ? hi - lo : 0); giveTrophies(s, out, n, arena, rnd); }
   return out;
 }
