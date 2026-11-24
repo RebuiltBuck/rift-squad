@@ -276,7 +276,7 @@ function homeHTML() {
   <div class="panel tight chestp"><button class="keyb" onclick="keyInfo()">${icon('i_key', 'ib')}<div><b>${S.keys}</b><small>${S.keys < KEY_MAX ? `<span data-until="${S.keyNext}"></span>` : 'full'}</small></div></button><div class="shelf">${shelf}</div></div>
   <button class="duelbtn ${older ? 'older' : ''}" onclick="openDuel()"><canvas id="arena-cv"></canvas><span class="dtxt"><small>${icon('i_swords', 'ii')} Duel · tap to change</small><b>${esc(A.name)}</b>
     <span class="drow"><span class="dchip" style="--dc:${d.color}">${d.name}</span>${older ? '<span class="tiny">no trophies at stake</span>' : `<span class="bar gold thin"><i style="width:${Math.round(pr * 100)}%"></i></span>`}</span></span><span class="dgo">${icon('i_right', 'ii')}</span></button>
-  <div class="playrow"><button class="btn gold big full battlebtn" onclick="startBattle()">${icon('i_swords','ib')} BATTLE</button>${S.tutorialDone ? advButtonHTML() : ''}</div>
+  <div class="playrow"><button class="btn gold big full battlebtn" onclick="startBattle()">${icon('i_swords','ib')} BATTLE</button>${S.tutorialDone ? `<div class="modes">${advButtonHTML()}${runButtonHTML()}</div>` : ''}</div>
   </div>`;
 }
 function keyInfo() { modal(`<h2>Keys</h2><div class="center">${icon('i_key', 'ib')}</div><p class="center">You have <b>${S.keys}</b> of ${KEY_MAX} keys. 1 key opens 1 chest.</p><p class="center small mute">${S.keys < KEY_MAX ? `Next key in <b data-until="${S.keyNext}">${fmtDur(S.keyNext - now())}</b>. ` : ''}A new key every ${KEY_HOURS} hours, or buy them in the Shop. Every win puts a chest on your shelf (up to ${SHELF_MAX}).</p><button class="btn gold full" data-close>OK</button>`); }
@@ -802,7 +802,7 @@ function roundSeed() { return (M.setup.seed + M.round * 7919) >>> 0; }
 function beginMatch(setup, saved) {
   M = { setup, phase: 'prep', vis: {}, sel: null, drag: null, hover: null, speed: (S.settings.fast && !setup.tut ? 2 : 1), acc: 0, rt: 0, last: performance.now(), sfxT: 0, mark: null, cheer: null, slowUntil: 0 };
   const fresh = { lastW: null, round: 1, score: [0, 0], prev: [null, null], agg: { dmg: 0, kills: 0, abil: 0 }, flawless: 0, rounds: 0, lineups: null, heroes: {}, clutch: 0, down02: false, feats: {} };
-  if (saved) Object.assign(M, fresh, { bossHp: saved.bossHp != null ? saved.bossHp : null, lastW: saved.lastW != null ? saved.lastW : null, sides: saved.sides, round: saved.round, score: saved.score, prev: saved.prev, agg: saved.agg, flawless: saved.flawless, rounds: saved.rounds, lineups: saved.lineups || null, heroes: saved.heroes || {}, clutch: saved.clutch || 0, down02: !!saved.down02, feats: saved.feats || {} });
+  if (saved) Object.assign(M, fresh, { bossHp: saved.bossHp != null ? saved.bossHp : null, fallen: saved.fallen || null, lastW: saved.lastW != null ? saved.lastW : null, sides: saved.sides, round: saved.round, score: saved.score, prev: saved.prev, agg: saved.agg, flawless: saved.flawless, rounds: saved.rounds, lineups: saved.lineups || null, heroes: saved.heroes || {}, clutch: saved.clutch || 0, down02: !!saved.down02, feats: saved.feats || {} });
   else Object.assign(M, fresh, { sides: [newMatchSide(setup.myDeck), newMatchSide(setup.foeDeck)] });
   M.style = setup.tut ? 'mix' : aiStyleFor(setup.seed >>> 2);
   M.variant = setup.variant; const eb = eventBoard(setup.event, M.variant); M.obs = eb.obs;
@@ -819,7 +819,7 @@ function beginMatch(setup, saved) {
 }
 function saveMatch() {
   if (!M || M.setup.tut) return;
-  lsSet(STORE_BATTLE, JSON.stringify({ bh: BH, lastW: M.lastW, bossHp: M.bossHp, setup: M.setup, sides: M.sides, round: M.round, score: M.score, prev: M.prev, agg: M.agg, flawless: M.flawless, rounds: M.rounds, lineups: M.lineups, heroes: M.heroes, clutch: M.clutch, down02: M.down02, feats: M.feats }));
+  lsSet(STORE_BATTLE, JSON.stringify({ bh: BH, lastW: M.lastW, bossHp: M.bossHp, fallen: M.fallen || null, setup: M.setup, sides: M.sides, round: M.round, score: M.score, prev: M.prev, agg: M.agg, flawless: M.flawless, rounds: M.rounds, lineups: M.lineups, heroes: M.heroes, clutch: M.clutch, down02: M.down02, feats: M.feats }));
 }
 
 // ----- iOS Home Screen app fix -----
@@ -844,7 +844,7 @@ function benchHTML() {
   const was = M.capShown || 0; M.capShown = cap; // sockets added since last time pop in
   const socks = Array.from({ length: cap }, (x, i) => { const gold = bonus && i === cap - 1, on = i < used;
     return `<img class="px sk ${on ? 'on' : ''} ${gold ? 'gold' : ''} ${i >= was && was > 0 ? 'new' : ''}" data-i="${i}" src="${on ? (gold ? sprURL('i_orb', ORB_GOLD) : sprURL('i_orb')) : (gold ? sprURL('i_orb0', { r: '#b37a00' }) : sprURL('i_orb0'))}" alt="">`; }).join('');
-  const cards = M.sides[0].bench.map(h => `<button class="bcard ${heroCost(h.hid) > cap - used ? 'off' : 'fit'}" data-bh="${h.hid}"><img class="px" src="${sprURL(h.hid)}" alt="">${costTag(h.hid)}</button>`).join('');
+  const cards = M.sides[0].bench.map(h => `<button class="bcard ${heroCost(h.hid) > cap - used ? 'off' : 'fit'}" data-bh="${h.hid}"><img class="px" src="${sprURL(h.hid)}" alt="">${costTag(h.hid)}${h.up ? `<span class="upst">${'<i></i>'.repeat(h.up)}</span>` : ''}</button>`).join('');
   return `<div class="bslots" aria-label="Rift Orbs ${used} of ${cap}">${socks}</div><div class="bcards">${cards || '<span class="tiny mute">Everyone is on the board</span>'}</div>`;
 }
 // ----- Rift Orbs (hero cost) -----
@@ -920,7 +920,7 @@ function myLineup() {
   const ok = p => p && p.y >= P0 && p.y < BH && p.x >= 0 && p.x < BW && !M.obs[p.y * BW + p.x] && !used.has(p.x + ',' + p.y);
   for (const h of M.sides[0].board) {
     let p = cur && cur.units.find(u => u.hid === h.hid); if (!ok(p)) p = S.formation[h.hid];
-    if (ok(p)) { used.add(p.x + ',' + p.y); units.push({ hid: h.hid, ab: h.ab, x: p.x, y: p.y }); }
+    if (ok(p)) { used.add(p.x + ',' + p.y); units.push({ hid: h.hid, ab: h.ab, x: p.x, y: p.y, up: h.up || 0 }); }
   }
   const rest = M.sides[0].board.filter(h => !units.some(u => u.hid === h.hid));
   if (rest.length) { const obs2 = M.obs.map((o, i) => (o || used.has((i % BW) + ',' + Math.floor(i / BW))) ? 1 : 0); units.push(...roleFormation(rest, 0, mulberry32(1), false, obs2)); }
@@ -935,7 +935,7 @@ async function prepRound() {
   const moved = setRoundBoard(r);
   if (moved && r > 1) { await hazardShift(); if (!M) return; }
   // slots: the limit grows every round, and whoever lost the last round gets 1 extra
-  M.caps = [sideCap(r, M.lastW === 1), sideCap(r, M.lastW === 0) + (M.setup.foeOrbs || 0)];
+  M.caps = M.setup.orbs ? [M.setup.orbs, M.setup.orbs + (M.setup.foeOrbs || 0)] : [sideCap(r, M.lastW === 1), sideCap(r, M.lastW === 0) + (M.setup.foeOrbs || 0)];
   if (!M.setup.fixedFoe) aiPickBoard(M.sides[1], M.caps[1], M.style || 'mix', D, matchRnd('fb' + r), M.prev[0]);
   if (r === 1 && M.setup.tut) autoFill(M.sides[0], M.caps[0]); else trimBoard(M.sides[0], M.caps[0]);
   const my = myLineup(); if (M.setup.tut && r === 1) my.charge0 = 0.8;
@@ -954,7 +954,7 @@ async function prepRound() {
   M.lineups = [my, foe];
   M.phase = 'setup'; rebuildPreview(); saveMatch(); hud(); panel(); tutHook('setup', r);
   if (r === 1 && !M.setup.tut) toast(M.setup.fixedFoe && !M.setup.boss ? `${icon('i_target', 'ii')} Puzzle: their exact spots are shown. Spend your <b>${M.caps[0]} Rift Orbs</b>`
-    : M.setup.boss ? `${icon('i_skull', 'ii')} The ${esc(HERO[M.setup.boss].name)}'s damage stays between rounds. Spend your <b>${M.caps[0]} Rift Orbs</b>` : `${icon('i_orb', 'ii')} Spend your <b>${M.caps[0]} Rift Orbs</b>: tap or drag heroes from the bench`);
+    : M.setup.boss ? `${icon('i_skull', 'ii')} ${M.setup.run ? `The ${esc(HERO[M.setup.boss].name)} slams a 3x3 area marked in red.` : `The ${esc(HERO[M.setup.boss].name)}'s damage stays between rounds.`} Spend your <b>${M.caps[0]} Rift Orbs</b>` : `${icon('i_orb', 'ii')} Spend your <b>${M.caps[0]} Rift Orbs</b>: tap or drag heroes from the bench`);
   if (r > 1) { const free = M.caps[0] - slotsUsed(M.sides[0].board); toast(`${icon('i_orb', 'ii')} <b>${M.caps[0]} Rift Orbs</b> this round${M.lastW === 1 ? ' (gold one for losing the last round)' : ''}${free > 0 && M.sides[0].bench.length ? ` · ${free} to spend` : ''}`); }
 }
 // faded enemies: last round's spots, or before round 1 their usual spots
@@ -981,7 +981,7 @@ function matchIntro() {
   return new Promise(done => {
     const st = M.setup, E = EVENTS[st.event], D = DIFF[st.diff], A = ARENAS[st.arena], el = document.createElement('div');
     el.className = 'mintro';
-    el.innerHTML = `<div class="mi-top"><small>Arena ${st.arena + 1}${st.older ? ' · no trophies at stake' : ''}</small><b>${esc(A.name)}</b></div>
+    el.innerHTML = `<div class="mi-top"><small>${st.run ? `Rift Run · Stage ${st.run.stage} of ${RUN_STAGES}` : `Arena ${st.arena + 1}${st.older ? ' · no trophies at stake' : ''}`}</small><b>${esc(A.name)}</b></div>
       <div class="mi-vs"><div class="mi-side me">${liveHero(M.sides[0].captain, 5)}<b>${esc(S.name)}</b><small>You</small></div><div class="mi-x">VS</div>
         <div class="mi-side foe">${liveHero(M.sides[1].captain, 5)}<b style="color:${D.color}">${esc(st.foeName)}</b><small>${D.name} AI</small></div></div>
       <div class="mi-haz" style="--hc:${E.color}"><div class="mi-tile"></div><div class="mi-ht"><small>${E.tile ? 'This match' : 'Weather'}</small><b style="color:${E.color}">${E.name}</b><span>${esc(E.desc)}${E.tile ? ' The tiles move every round!' : ''}</span></div></div>
@@ -1137,6 +1137,7 @@ function roundOver() {
   if (w === 0 && M.rs.units.filter(u => u.side === 0 && u.alive && !u.clone).length === 1) M.clutch++;
   for (const u of M.rs.units) if (u.side === 0 && !u.clone) { const h = M.heroes[u.hid] || (M.heroes[u.hid] = { d: 0, k: 0 }); h.d += Math.round(u.dealt); h.k += u.kills; }
   for (const f in M.rs.feats[0]) M.feats[f] = 1;
+  if (M.setup.run) { M.fallen = M.fallen || []; for (const u of M.rs.units) if (u.side === 0 && !u.clone && !u.alive && u.hid !== M.sides[0].captain && !M.fallen.includes(u.hid)) M.fallen.push(u.hid); }
   if (w === 0) M.score[0]++; else if (w === 1) M.score[1]++;
   M.lastW = w === 0 || w === 1 ? w : null;
   if (M.setup.boss) { const b = M.rs.units.find(u => u.boss); M.bossHp = b && b.alive ? b.hp : 0; if (!M.bossHp) M.score[0] = Math.max(M.score[0], toWin()); }
@@ -1157,7 +1158,7 @@ function hud() {
   const pips = (n, cls) => `<span class="pips ${cls}">${Array.from({ length: toWin() }, (x, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
   $('#b-ev').innerHTML = `<div class="hs-row">${pips(M.score[0], 'me')}<b class="me">${M.score[0]}</b><i>–</i><b class="foe">${M.score[1]}</b>${pips(M.score[1], 'foe')}</div>`;
   const ph = { setup: 'Set up', prep: 'Get ready', fight: 'Fight!' }[M.phase] || '';
-  $('#b-rl').innerHTML = `<b>Round ${M.round}</b><small>${ph || '&nbsp;'}</small>`;
+  $('#b-rl').innerHTML = `<b>${M.setup.run ? 'Stage ' + M.setup.run.stage : 'Round ' + M.round}</b><small>${ph || '&nbsp;'}</small>`;
   $('#b-rnd').innerHTML = M.phase === 'fight' ? `<span class="tmr">${icon('i_clock', 'ii')}${Math.max(0, Math.ceil(M.rs.timeLimit - M.rs.t))}</span>`
     : `<button class="hazchip" onclick="hazInfo()"><i class="evdot" style="background:${E.color}"></i>${E.name.split(' ')[0]}</button>`;
 }
@@ -1260,6 +1261,7 @@ async function finishMatch(fled) {
   if (!M) return;
   if (M.setup.tut) { finishTutorialMatch(win, fled, sc); return; }
   if (M.setup.adv) { finishAdventureMatch(win, fled, sc); return; }
+  if (M.setup.run) { finishRunMatch(win, fled, sc); return; }
   const finalHids = M.lineups ? M.lineups[0].units.map(u => u.hid) : [];
   const res = finishBattle(S, M.setup, { winner, score: sc, stats: M.agg, flawless: M.flawless, rounds: M.rounds, syn3: activeSynergies(finalHids).some(x => x.n >= 3), captain: M.sides[0].captain,
     heroes: M.heroes, clutch: M.clutch, comeback: win && M.down02, feats: M.feats }, now());
@@ -1315,9 +1317,105 @@ function countUp(root) {
 // ---------- adventure ----------
 function advButtonHTML() {
   const C = ADVENTURE[0], got = advChapterStars(S, C.id), max = C.levels.length * 3, nxt = advNext(S, C.id);
-  return `<button class="advbtn" onclick="openAdventure()"><span class="ai">${icon('star', 'ib')}</span><span class="at"><b>Adventure</b><small>${got >= max ? 'Chapter ' + C.id + ' complete' : advLevel(C.id, nxt).type === 'boss' ? 'Boss: ' + esc(advLevel(C.id, nxt).name) : 'Level ' + (nxt + 1)} · ${esc(C.name)}</small></span><span class="as">${icon('star', 'ii')}${got}/${max}</span>${icon('i_right', 'ii')}</button>`;
+  const sub = got >= max ? 'Chapter ' + C.id + ' done' : advLevel(C.id, nxt).type === 'boss' ? 'Boss level' : 'Level ' + (nxt + 1);
+  return `<button class="modebtn advbtn" onclick="openAdventure()"><span class="mi">${icon('star', '')}</span><span class="mt"><b>Adventure</b><small>${sub} · ${icon('star', 'ii')}${got}/${max}</small></span></button>`;
+}
+function runButtonHTML() {
+  const R = S.run;
+  const sub = !R ? (S.runBest ? `Best: stage ${S.runBest}` : 'New mode!') : R.phase === 'over' ? 'Collect rewards' : R.phase === 'captain' || R.phase === 'draft' ? 'Drafting' : `Stage ${R.stage} · ${R.hearts}${icon('i_heart', 'ii')}`;
+  return `<button class="modebtn runbtn" onclick="openRun()"><span class="mi">${icon('i_orb', '')}</span><span class="mt"><b>Rift Run</b><small>${sub}</small></span></button>`;
 }
 function closeAdventure() { const a = $('#advl'); if (a) a.remove(); }
+// ---------- Rift Run ----------
+function closeRun() { const a = $('#runl'); if (a) a.remove(); }
+function heartsHTML(n, max, cls) { return Array.from({ length: max }, (x, i) => `<img class="px ${cls || ''} ${i < n ? '' : 'e'}" src="${sprURL('i_heart')}" alt="">`).join(''); }
+function upHTML(n) { return n ? `<span class="upst">${'<i></i>'.repeat(n)}</span>` : ''; }
+function runOfferHTML(o, i) {
+  const R = S.run;
+  if (o.k === 'rest') return `<button class="roff rest" data-o="${i}"><span class="ro-pic">${icon('i_heart', '')}</span><span class="ro-tx"><b>Rest</b><span class="ro-d">Get back 1 heart (${R.hearts}/${RUN_HEARTS}) and refill every hero's lives.</span></span></button>`;
+  const H = HERO[o.hid], st = heroStats(o.hid);
+  if (o.k === 'train') { const u = runUnit(R, o.hid), lv = (u && u.up) || 0;
+    return `<button class="roff train" data-o="${i}"><span class="ro-pic"><img class="px" src="${sprURL(o.hid)}" alt="">${upHTML(lv)}</span><span class="ro-tx"><b>Train ${esc(H.name)}</b><span class="ro-d">+40% health and +1 damage for the rest of the run. Level ${lv + 1} of ${RUN_TRAIN_MAX}.</span></span></button>`; }
+  const A = o.ab ? ABILITIES[o.ab] : null, own = !!S.heroes[o.hid];
+  return `<button class="roff" data-o="${i}"><span class="ro-pic"><img class="px" src="${sprURL(o.hid)}" alt="">${costTag(o.hid)}${H.captain ? `<img class="cr px" src="${sprURL('i_crown')}" alt="">` : ''}</span>
+    <span class="ro-tx"><b>${esc(H.name)}${own ? '' : '<em>Not owned</em>'}</b><span class="ro-m">${icon('i_heart', 'ii')}${st.hp} ${icon('i_swords', 'ii')}${st.atk} ${icon('i_boot', 'ii')}${SPEEDS[heroSpeed(o.hid)].name} · Range ${st.rng}</span>
+    ${A ? `<span class="ro-ab">${abIcon(o.ab)}<span><b>${esc(A.name)}</b> ${esc(A.desc)}</span></span>` : ''}</span></button>`;
+}
+function runSquadHTML(R, big) {
+  const card = (u, cap) => `<div class="rsq-c ${cap ? 'cap' : ''}">${cap ? `<img class="cr px" src="${sprURL('i_crown')}" alt="">` : ''}<img class="px hs" src="${sprURL(u.hid)}" alt="">${upHTML(u.up)}
+    ${big ? `<b>${esc(HERO[u.hid].name)}</b>` : ''}<span class="lv">${cap ? `<small>Captain</small>` : heartsHTML(u.lives, RUN_LIVES, 'sm')}</span>${big && u.ab ? `<span class="ab">${abIcon(u.ab)}</span>` : ''}</div>`;
+  return `<div class="rsq ${big ? 'big' : ''}">${R.cap ? card(R.cap, true) : ''}${R.squad.map(u => card(u, false)).join('')}</div>`;
+}
+function openRun() {
+  if (M) return; closeAdventure();
+  let el = $('#runl');
+  if (!el) { el = document.createElement('div'); el.id = 'runl'; el.className = 'adv runl'; document.body.appendChild(el); }
+  const tb = $('#topbar'); el.style.top = (tb ? Math.round(tb.getBoundingClientRect().bottom) : 0) + 'px';
+  const R = S.run, sub = !R ? (S.runBest ? `Best: stage ${S.runBest} of ${RUN_STAGES}` : 'A new run every time') : R.phase === 'over' ? (R.won ? 'Run cleared!' : 'Run over') : R.phase === 'captain' || R.phase === 'draft' ? 'Build your squad' : `Stage ${R.stage} of ${RUN_STAGES}`;
+  let body;
+  if (!R) body = `<div class="run-intro"><div class="ri-art">${['bruno', 'hex', 'ember', 'yuki', 'zip'].map((h, k) => `<img class="px" style="--k:${k}" src="${sprURL(h)}" alt="">`).join('')}</div>
+      <p class="ri-lead">Climb ${RUN_STAGES} stages with one squad. Every run is different.</p>
+      <div class="ri-rules">
+        <p>${icon('i_crown', 'ib')}<span>Pick a captain, then recruit ${RUN_DRAFT} heroes. <b>Any hero</b> can show up, even ones you don't own yet.</span></p>
+        <p>${icon('i_swords', 'ib')}<span>Each stage is <b>one fight</b>. Stage 5 is an elite, stage ${RUN_STAGES} is the Rift Golem.</span></p>
+        <p>${icon('star', 'ib')}<span>After every win, pick a reward: <b>recruit</b> a hero, <b>train</b> one, or <b>rest</b>.</span></p>
+        <p>${icon('i_heart', 'ib')}<span>Heroes have ${RUN_LIVES} lives. Falling in a fight costs one, and at zero they leave. Lose a fight and you lose 1 of your ${RUN_HEARTS} hearts.</span></p>
+        <p>${icon('coin', 'ib')}<span>${RUN_PAY.coins} coins and ${RUN_PAY.gems} gem per stage cleared. Beat the Golem for ${RUN_PAY.clearGems} more gems and a Hero chest.</span></p>
+      </div><button class="btn gold big full" id="run-go">START RUN</button></div>`;
+  else if (R.offer && ['captain', 'draft', 'reward'].includes(R.phase)) {
+    const t = R.phase === 'captain' ? ['Pick your captain', 'Your captain is always on the board and never leaves the run.']
+      : R.phase === 'draft' ? [`Recruit a hero (${R.draft + 1}/${RUN_DRAFT})`, 'Each one comes with a random ability.']
+      : [`Stage ${R.cleared} cleared!`, 'Pick a reward.'];
+    body = `${R.phase !== 'captain' ? runSquadHTML(R, false) : ''}<div class="run-pick"><h3>${t[0]}</h3><p class="small mute">${t[1]}</p>${R.offer.map(runOfferHTML).join('')}</div>`;
+  } else if (R.phase === 'over') {
+    const p = runPayout(R);
+    body = `<div class="run-over">${resultHeader(R.won ? 'RUN CLEARED' : 'RUN OVER', R.won ? 'win' : 'lose')}
+      <p class="center">You cleared <b>${R.cleared || 0} of ${RUN_STAGES}</b> stages${(R.cleared || 0) > (S.runBest || 0) ? ' · new best!' : ''}</p>${runSquadHTML(R, false)}
+      ${rewardTiles({ coins: p.coins, gems: p.gems })}${p.chest ? `<div class="rewards"><div class="rw new"><img src="${chestURL(p.chest)}"><span>${CHESTS[p.chest].name.split(' ')[0]}</span><small>chest</small></div></div>` : ''}
+      <button class="btn gold big full" id="run-collect">${p.coins || p.gems || p.chest ? 'COLLECT' : 'OK'}</button></div>`;
+  } else {
+    const nodes = Array.from({ length: RUN_STAGES }, (x, k) => { const n = k + 1, cls = n < R.stage ? 'done' : n === R.stage ? 'cur' : '';
+      return `<span class="rn ${cls} ${n === 5 ? 'elite' : ''} ${n === RUN_STAGES ? 'boss' : ''}">${n === RUN_STAGES ? `<img class="px" src="${sprURL('golem')}" alt="">` : n < R.stage ? icon('i_check', '') : n === 5 ? icon('i_skull', '') : n}</span>`; }).join('');
+    const nx = R.stage === RUN_STAGES ? 'The Rift Golem: hit it hard before it slams.' : R.stage === 5 ? 'Elite stage: they bring 1 extra Rift Orb.' : `A random squad. You get <b>${runOrbs(R.stage)} Rift Orbs</b>.`;
+    body = `<div class="rmap">${nodes}</div>
+      <div class="rsq-h"><b>Your squad</b><small>${R.squad.length + 1} heroes · ${heartsHTML(R.hearts, RUN_HEARTS, 'sm')}</small></div>${runSquadHTML(R, true)}
+      <div class="rfoot"><p class="small center" style="margin:0 0 6px">${nx}</p><button class="btn gold big full" id="run-fight">${icon('i_swords', 'ib')} FIGHT · STAGE ${R.stage}</button>
+      <button class="btn sm gray" id="run-quit">End run</button></div>`;
+  }
+  el.innerHTML = `<div class="adv-hd"><button class="btn sm gray" id="run-x" aria-label="Close">${icon('i_x', 'ii')}</button><div class="adv-tt"><h2>Rift Run</h2><small>${sub}</small></div>${R && R.phase !== 'captain' && R.phase !== 'over' ? `<span class="adv-st rh">${heartsHTML(R.hearts, RUN_HEARTS)}</span>` : ''}</div><div class="run-body">${body}</div>`;
+  $('#run-x', el).onclick = () => { SFX.tap(); closeRun(); render(); };
+  const go = $('#run-go', el); if (go) go.onclick = () => { SFX.cast(); runStart(S, now()); persist(); openRun(); };
+  el.querySelectorAll('[data-o]').forEach(b => b.onclick = () => {
+    const o = runChoose(S, +b.dataset.o); if (!o) return; persist();
+    if (o.k === 'train') SFX.relic(); else if (o.k === 'rest') SFX.heal ? SFX.heal() : SFX.coin(); else SFX.coin();
+    b.classList.add('picked'); setTimeout(openRun, 220);
+  });
+  const fb = $('#run-fight', el); if (fb) fb.onclick = () => { if (M) return; SFX.cast(); closeRun(); beginMatch(runSetup(S), null); persist(); };
+  const qb = $('#run-quit', el); if (qb) qb.onclick = () => {
+    const c = modal(`<h2>End this run?</h2><p class="center small">You keep the rewards for the ${S.run.cleared || 0} stage${S.run.cleared === 1 ? '' : 's'} you cleared.</p><div class="row" style="gap:8px"><button class="btn gray grow" data-close>Keep going</button><button class="btn red grow" id="rq-go">End run</button></div>`);
+    $('#rq-go', c).onclick = () => { c.remove(); S.run.phase = 'over'; S.run.offer = null; persist(); openRun(); };
+  };
+  const cb = $('#run-collect', el); if (cb) cb.onclick = () => {
+    const rects = {}; ['coins', 'gems'].forEach(k => { const t = el.querySelector(`[data-res="${k}"]`); if (t) rects[k] = t.getBoundingClientRect(); });
+    const p = runPayout(S.run); holdRes({ coins: p.coins, gems: p.gems });
+    const out = runEnd(S); persist(); SFX.coin(); openRun();
+    setTimeout(() => { if (p.coins) flood({ coins: p.coins }, rects.coins || null); if (p.gems) flood({ gems: p.gems }, rects.gems || null); if (out.chestR) openSpecChest(CHESTS[out.chestR.type].name, out.chestR); }, 80);
+  };
+}
+function finishRunMatch(win, fled, sc) {
+  const out = runFight(S, M.setup, { winner: win ? 0 : 1, fallen: fled ? [] : (M.fallen || []), stats: M.agg });
+  S.activeBattle = false; lsDel(STORE_BATTLE); persist();
+  const R = S.run, who = hs => hs.map(h => `<img class="px" src="${sprURL(h)}" alt=""><b>${esc(HERO[h].name)}</b>`).join(' ');
+  const m = modal(`${resultHeader(out.win ? (out.stage >= RUN_STAGES ? 'GOLEM DOWN' : 'STAGE CLEAR') : 'DEFEAT', out.win ? 'win' : 'lose')}
+    <p class="center" style="margin:0 0 6px">Rift Run · Stage ${out.stage}${fled ? ' (left)' : ''}</p>
+    ${!out.win ? `<p class="center rh-line">${R && R.hearts > 0 ? 'You lost a heart' : 'Out of hearts'} ${heartsHTML(R ? R.hearts : 0, RUN_HEARTS)}</p>` : ''}
+    ${out.hurt.length ? `<p class="run-fx">${who(out.hurt)} <span>lost a life</span></p>` : ''}
+    ${out.left.length ? `<p class="run-fx bad">${who(out.left)} <span>left the run</span></p>` : ''}
+    ${out.win && !out.hurt.length && !out.left.length ? '<p class="center small" style="color:var(--gold)">No one fell!</p>' : ''}
+    <button class="btn gold full" id="cont">Continue</button>`, { noClose: true });
+  if (out.win) SFX.coin();
+  $('#cont', m).onclick = () => { m.remove(); closeBattle(); openRun(); };
+}
 function advRewardTiles(L, claimed) {
   const R = L.r, t = [];
   const tile = (img, n, cls) => `<div class="rw3 ${cls || ''} ${claimed ? 'got' : ''}">${img}${n ? `<span>${fmt(n)}</span>` : ''}${claimed ? `<img class="ck px" src="${sprURL('i_check')}">` : ''}</div>`;
@@ -1482,7 +1580,7 @@ function boot() {
       if (sv.bh !== BH || (sv.lineups && sv.lineups.some(offBoard)) || (sv.prev && sv.prev.some(offBoard))) { sv.lineups = null; sv.prev = [null, null]; }
       const m = modal(`<h2>Match in progress</h2><p class="center">You left a match against <b>${esc(sv.setup.foeName)}</b> (${sv.score[0]}–${sv.score[1]}). Jump back in?</p><div class="row" style="gap:8px"><button class="btn red grow" id="ff">Forfeit</button><button class="btn gold grow" id="rs">Resume</button></div>`, { noClose: true });
       $('#rs', m).onclick = () => { m.remove(); beginMatch(sv.setup, sv); };
-      $('#ff', m).onclick = () => { m.remove(); if (sv.setup.adv) advFinish(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg }); else finishBattle(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg, flawless: 0, rounds: sv.rounds }, now()); S.activeBattle = false; lsDel(STORE_BATTLE); persist(); render(); toast('Match forfeited'); };
+      $('#ff', m).onclick = () => { m.remove(); if (sv.setup.run) runFight(S, sv.setup, { winner: 1, fallen: [], stats: sv.agg }); else if (sv.setup.adv) advFinish(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg }); else finishBattle(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg, flawless: 0, rounds: sv.rounds }, now()); S.activeBattle = false; lsDel(STORE_BATTLE); persist(); render(); toast('Match forfeited'); };
     } catch (e) { S.activeBattle = false; lsDel(STORE_BATTLE); persist(); }
   } else if (S.activeBattle) { S.activeBattle = false; persist(); }
   if (fresh && DEV) modal(`<h2>${BUILD === 'test' ? 'Test Build' : 'Developer Build'}</h2><p class="center small">All 20 heroes are unlocked with all 3 abilities, plus 999,999 coins, 99,999 gems and 10 keys. This save is separate from your normal game${BUILD === 'test' ? ' preview' : ': switch back any time in Settings'}.</p><p class="center small mute">More tools in ${icon('i_gear','ii')} Settings ${icon('i_right','ii')} Test tools: jump to any arena, reset hero trophies, skip time to test keys, fill the chest shelf.</p><button class="btn gold full" data-close>Show me the heroes</button>`, { onClose: () => go('heroes') });

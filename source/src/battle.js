@@ -124,8 +124,9 @@ function newRound(opts) {
     S.units.forEach((d, i) => {
       const H = HERO[d.hid];
       const H2 = HERO[d.hid]; if (H2.boss) { const b = makeUnit(s, (side ? 'e' : 'p') + i, d.hid, side, null, d.x, d.y, { i, cap: d.hid === S.captain, hp: H2.hp }); b.big = !!H2.big; b.boss = true; if (d.hpNow != null) b.hp = Math.max(1, Math.min(b.maxHp, d.hpNow)); s.units.push(b); return; }
+      const up = d.up || 0; // Rift Run training: +40% health and +1 damage per level
       s.units.push(makeUnit(s, (side ? 'e' : 'p') + i, d.hid, side, d.ab, d.x, d.y, {
-        i, cap: d.hid === S.captain, hpAdd: (capFx.hp || 0) + worldBonus(counts, H.world), hpMul: S.hpMul || 1,
+        i, cap: d.hid === S.captain, hpAdd: (capFx.hp || 0) + worldBonus(counts, H.world), hpMul: (S.hpMul || 1) * (1 + 0.4 * up), atk: up ? heroStats(d.hid).atk + up : 0,
         abilHaste: Math.max(0.3, 1 + (capFx.abilHaste || 0)), abil: capFx.abilDmg || 0, block: capFx.abilBlock || 0, shield: capFx.shieldStart || 0, charge0: S.charge0 }));
     });
   }

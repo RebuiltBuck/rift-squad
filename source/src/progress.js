@@ -27,7 +27,7 @@ function newSave(now) {
     road: [], season: { id: seasonKey(now), xp: 0, claimed: [], peak: 0, bonusClaimed: 0 },
     quests: null, shop: null, winCoins: { day: dayKey(now), n: 0 },
     stats: newStats(),
-    formation: {}, ach: {}, heroStats: {}, adv: { st: {}, tries: {} },
+    formation: {}, ach: {}, heroStats: {}, adv: { st: {}, tries: {} }, run: null, runBest: 0,
     settings: { sound: true, music: true, fast: false }, lastDiff: 'normal', tutorialDone: false, pendingEvents: [],
   };
   START_HEROES.forEach(h => s.heroes[h] = newHeroRec(1));
@@ -66,6 +66,7 @@ function migrate(s) {
   // hero roads (v3): the first ability comes free with the hero; rc = road levels already claimed
   if (s.wild == null) s.wild = 0;
   if (!s.adv) s.adv = { st: {}, tries: {} }; // adventure: best stars per level, attempts
+  if (s.run === undefined) { s.run = null; s.runBest = 0; } // Rift Run: the run in progress, best stage
   for (const h in s.heroes) { const o = s.heroes[h]; if (!o.rc) o.rc = []; if (o.tr >= 1 && !o.un[0]) o.un[0] = 1; if (o.tr >= 1 && o.eq < 0) o.eq = 0; }
   if (s.tutorialDone == null || (!s.tutorialDone && s.stats.battles > 0)) s.tutorialDone = true; // players who already battled skip the tutorial
   if (s.lastDiff == null) s.lastDiff = 'normal';
@@ -542,3 +543,103 @@ function importSave(str) {
 }
 function btoaSafe(str) { if (typeof btoa !== 'undefined') return btoa(unescape(encodeURIComponent(str))); return Buffer.from(str, 'utf8').toString('base64'); }
 function atobSafe(str) { if (typeof atob !== 'undefined') return decodeURIComponent(escape(atob(str))); return Buffer.from(str, 'base64').toString('utf8'); }
+
+// ---------- Rift Run: a roguelike climb with one squad ----------
+// Pick a captain and 3 heroes (any hero can show up, owned or not), then win single fights up 10 stages.
+// After each win: recruit, train or rest. Heroes have 2 lives; lose a fight and you lose 1 of 3 hearts.
+const RUN_STAGES = 10, RUN_HEARTS = 3, RUN_LIVES = 2, RUN_SQUAD_MAX = 6, RUN_DRAFT = 3, RUN_TRAIN_MAX = 2;
+const RUN_FOE = { hp0: 0.6, hpStep: 0.05, eliteHp: 0.8, bossHelpersHp: 0.8, boss: [['golem', 1, 0], ['gus', 0, 2], ['zip', 4, 1]] };
+const RUN_PAY = { coins: 25, gems: 1, clearGems: 10 }; // per stage cleared, plus a bonus and a Hero chest for beating stage 10
+function runRnd(s, tag) { return mulberry32((s.run.seed ^ hashStr(tag)) >>> 0); }
+function runAb(hid, r) { const a = HERO_ABILITIES[hid]; return a ? a[Math.floor(r() * a.length)] : null; }
+// weighted by rarity, no repeats
+function runSample(r, ids, n) {
+  const pool = ids.slice(), out = [];
+  while (out.length < n && pool.length) {
+    const w = pool.map(h => RARITIES[HERO[h].rarity].weight), tot = w.reduce((a, b) => a + b, 0);
+    let x = r() * tot, k = 0; while (k < pool.length - 1 && (x -= w[k]) > 0) k++;
+    out.push(pool.splice(k, 1)[0]);
+  }
+  return out;
+}
+function runHave(R) { return new Set(R.squad.map(u => u.hid).concat(R.cap ? [R.cap.hid] : [])); }
+function runRecruits(s, r, n) {
+  const have = runHave(s.run), ids = HEROES.filter(h => !h.captain && !HERO[h.id].boss && !have.has(h.id)).map(h => h.id);
+  return runSample(r, ids, n).map(h => ({ k: 'hero', hid: h, ab: runAb(h, r) }));
+}
+function runOffer(s) {
+  const R = s.run, r = runRnd(s, 'o' + R.phase + R.stage + ':' + R.draft + ':' + R.fights);
+  if (R.phase === 'captain') R.offer = runSample(r, CAPTAIN_IDS.slice(), 3).map(h => ({ k: 'hero', hid: h, ab: runAb(h, r) }));
+  else if (R.phase === 'draft') R.offer = runRecruits(s, r, 3);
+  else if (R.phase === 'reward') {
+    const o = R.squad.length < RUN_SQUAD_MAX ? runRecruits(s, r, 2) : [];
+    const hurt = R.hearts < RUN_HEARTS || R.squad.some(u => u.lives < RUN_LIVES);
+    const trainable = [R.cap, ...R.squad].filter(u => (u.up || 0) < RUN_TRAIN_MAX);
+    if (hurt) o.push({ k: 'rest' });
+    const tr = runSample(r, trainable.map(u => u.hid), 3 - o.length);
+    tr.forEach(h => o.push({ k: 'train', hid: h }));
+    if (!o.length) o.push({ k: 'rest' });
+    R.offer = o.slice(0, 3);
+  } else R.offer = null;
+  return R.offer;
+}
+function runStart(s, t) {
+  s.run = { stage: 1, hearts: RUN_HEARTS, cap: null, squad: [], seed: (t ^ 0x5bd1e995) >>> 0, phase: 'captain', offer: null, draft: 0, fights: 0, cleared: 0, won: false };
+  runOffer(s); return s.run;
+}
+function runUnit(R, hid) { return R.cap && R.cap.hid === hid ? R.cap : R.squad.find(u => u.hid === hid); }
+function runChoose(s, idx) {
+  const R = s.run, o = R && R.offer && R.offer[idx]; if (!o) return null;
+  if (R.phase === 'captain') { R.cap = { hid: o.hid, ab: o.ab, up: 0 }; R.phase = 'draft'; R.draft = 0; }
+  else if (R.phase === 'draft') { R.squad.push({ hid: o.hid, ab: o.ab, up: 0, lives: RUN_LIVES }); if (++R.draft >= RUN_DRAFT) R.phase = 'map'; }
+  else if (R.phase === 'reward') {
+    if (o.k === 'hero') R.squad.push({ hid: o.hid, ab: o.ab, up: 0, lives: RUN_LIVES });
+    else if (o.k === 'train') { const u = runUnit(R, o.hid); if (u) u.up = Math.min(RUN_TRAIN_MAX, (u.up || 0) + 1); }
+    else if (o.k === 'rest') { R.hearts = Math.min(RUN_HEARTS, R.hearts + 1); R.squad.forEach(u => u.lives = RUN_LIVES); }
+    R.phase = 'map';
+  }
+  runOffer(s); return o;
+}
+function runOrbs(stage) { return slotCap(Math.ceil(stage / 2)); } // 5,5,6,6,7,7,8,8,9,9
+function runSetup(s) {
+  const R = s.run, st = R.stage, r = runRnd(s, 'f' + st + ':' + R.fights), boss = st === RUN_STAGES, elite = st === 5;
+  const seed = Math.floor(r() * 2147483647) >>> 0;
+  const myDeck = [R.cap, ...R.squad].map(u => ({ hid: u.hid, ab: u.ab, up: u.up || 0 }));
+  const base = { run: { stage: st }, toWin: 1, orbs: runOrbs(st), arena: Math.min(ARENAS.length - 1, Math.round((st - 1) * 1.4)), seed, variant: Math.floor(r() * 2), myDeck, foeTier: 3 };
+  if (boss) {
+    const fx = RUN_FOE.boss;
+    return Object.assign(base, { diff: 'hard', foeName: 'Rift Golem', event: 'clear', boss: 'golem', foeHp: RUN_FOE.bossHelpersHp,
+      fixedFoe: fx.map(f => ({ hid: f[0], ab: runAb(f[0], r), x: f[1], y: f[2] })), foeDeck: fx.map(f => ({ hid: f[0], ab: runAb(f[0], r) })) });
+  }
+  const cap = runSample(r, CAPTAIN_IDS.slice(), 1)[0];
+  const team = runSample(r, HEROES.filter(h => !h.captain && !HERO[h.id].boss).map(h => h.id), 5);
+  return Object.assign(base, { diff: st <= 2 ? 'easy' : st <= 6 ? 'normal' : 'hard', foeName: elite ? 'Rift Elite' : 'Stage ' + st, event: EVENT_IDS[Math.floor(r() * EVENT_IDS.length)],
+    foeHp: elite ? RUN_FOE.eliteHp : +(RUN_FOE.hp0 + st * RUN_FOE.hpStep).toFixed(2), foeOrbs: elite ? 1 : 0, foeDeck: [cap, ...team].map(h => ({ hid: h, ab: runAb(h, r) })) });
+}
+// res: { winner, fallen: [hid], stats }
+function runFight(s, setup, res) {
+  const R = s.run; if (!R) return null;
+  R.fights++;
+  s.stats.battles++; questAdd(s, 'battles', 1);
+  if (res.stats) { s.stats.kills += res.stats.kills; s.stats.dmg += res.stats.dmg; s.stats.abil += res.stats.abil; questAdd(s, 'kills', res.stats.kills); questAdd(s, 'dmg', res.stats.dmg); questAdd(s, 'abil', res.stats.abil); }
+  const out = { win: res.winner === 0, stage: R.stage, hurt: [], left: [] };
+  if (out.win) { s.stats.wins++; questAdd(s, 'wins', 1); }
+  for (const h of res.fallen || []) {
+    const u = R.squad.find(x => x.hid === h); if (!u) continue;
+    u.lives--; if (u.lives <= 0) { R.squad = R.squad.filter(x => x !== u); out.left.push(h); } else out.hurt.push(h);
+  }
+  if (out.win) { R.cleared = R.stage; if (R.stage >= RUN_STAGES) { R.won = true; R.phase = 'over'; } else { R.stage++; R.phase = 'reward'; } }
+  else { R.hearts--; if (R.hearts <= 0) R.phase = 'over'; else R.phase = 'map'; }
+  runOffer(s);
+  return out;
+}
+function runPayout(R) { const c = R.cleared || 0; return { coins: c * RUN_PAY.coins, gems: c * RUN_PAY.gems + (R.won ? RUN_PAY.clearGems : 0), chest: R.won ? 'hero' : null }; }
+function runEnd(s) {
+  const R = s.run; if (!R) return null;
+  const p = runPayout(R); s.coins += p.coins; s.gems += p.gems;
+  s.runBest = Math.max(s.runBest || 0, R.cleared || 0);
+  const out = Object.assign({ cleared: R.cleared || 0, won: R.won }, p);
+  if (p.chest) out.chestR = openInstant(s, p.chest, arenaIndex(s.trophies), 'run' + R.seed);
+  s.run = null;
+  return out;
+}

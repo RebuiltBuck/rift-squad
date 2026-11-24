@@ -748,10 +748,6 @@ body[data-tut=bench] .bcard.fit { animation: tglow .8s infinite; }
 .bcard.pop { animation: orbpop .25s ease-out; }
 .tag.costchip { border-color: #4fa3ff; }
 /* ---- adventure ---- */
-.advbtn { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 8px 12px; border-radius: 14px; background: linear-gradient(90deg, #3a2a6a, #2a2244); border: 3px solid #6a5ac8; color: #fff; font: inherit; text-align: left; box-shadow: 0 4px 0 #0008; cursor: pointer; }
-.advbtn .ai img { width: 34px; height: 34px; } .advbtn .at { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.05; }
-.advbtn .at b { font-size: 25px; } .advbtn .at small { font-size: 16px; color: #c9c0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.advbtn .as { display: flex; align-items: center; gap: 3px; font-size: 19px; font-weight: 700; background: #0b071688; padding: 2px 8px; border-radius: 9px; }
 .adv { position: fixed; inset: 0; z-index: 35; max-width: 560px; margin: 0 auto; background: #140c22; display: flex; flex-direction: column; }
 .adv-hd { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #1d1530; border-bottom: 3px solid #2e2550; }
 .adv-tt { min-width: 0; } .adv-hd h2 { margin: 0; font-size: 30px; line-height: 1; text-align: left; } .adv-hd small { color: #bdb5e0; font-size: 17px; white-space: nowrap; }
@@ -800,15 +796,6 @@ body[data-tut=bench] .bcard.fit { animation: tglow .8s infinite; }
 .advstar { width: 48px; height: 48px; filter: grayscale(1) brightness(.3); }
 .advstar.on { filter: none; animation: starpop .45s cubic-bezier(.3, 1.6, .5, 1) both; }
 @keyframes starpop { 0% { transform: scale(0) rotate(-40deg); } 100% { transform: scale(1) rotate(0); } }
-.playrow { display: flex; flex-direction: column; gap: 10px; } .playrow .advbtn { margin-top: 0; }
-/* short phones: Adventure sits beside BATTLE instead of under it */
-@media (max-height: 740px) {
-  .playrow { flex-direction: row; gap: 8px; align-items: stretch; } .playrow .battlebtn { flex: 1; min-width: 0; }
-  .playrow .advbtn { width: 31%; flex: none; flex-direction: column; justify-content: center; gap: 0; padding: 4px 6px; }
-  .playrow .advbtn .ai, .playrow .advbtn .at small, .playrow .advbtn > img:last-child { display: none; }
-  .playrow .advbtn .at { flex: none; align-items: center; } .playrow .advbtn .at b { font-size: 21px; }
-  .playrow .advbtn .as { font-size: 17px; padding: 0 6px; }
-}
 #battle .hs-row > * { flex: none; min-width: max-content; }
 /* top bar: the score stays dead centre whatever sits either side of it */
 #battle .bhud { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
@@ -818,6 +805,67 @@ body[data-tut=bench] .bcard.fit { animation: tglow .8s infinite; }
 html, body { background: var(--bg2); }
 html.vband #battle { border-bottom: 3px solid var(--line); } /* the band under it reads as a footer */
 .toggle span small { display: block; font-size: 15px; color: var(--mute); line-height: 1; }
+/* ---- home: Adventure + Rift Run side by side under BATTLE ---- */
+.modes { display: flex; gap: 8px; }
+.modebtn { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; margin: 0; padding: 7px 10px; border-radius: 14px; background: linear-gradient(90deg, #3a2a6a, #2a2244); border: 3px solid #6a5ac8; color: #fff; font: inherit; text-align: left; box-shadow: 0 4px 0 #0008; cursor: pointer; }
+.modebtn.runbtn { background: linear-gradient(90deg, #143a63, #1c2547); border-color: #4fa3ff; }
+.modebtn .mi img { width: 32px; height: 32px; display: block; } .modebtn .mt { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.05; }
+.modebtn .mt b { font-size: 24px; } .modebtn .mt small { font-size: 16px; color: #c9c0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.modebtn .mt small img { width: 13px; height: 13px; vertical-align: -1px; }
+@media (max-height: 740px) {
+  .playrow .modes { width: 36%; flex: none; flex-direction: column; gap: 5px; }
+  .playrow .modebtn { padding: 2px 8px; gap: 5px; } .playrow .modebtn .mi img { width: 20px; height: 20px; }
+  .playrow .modebtn .mt small { display: none; } .playrow .modebtn .mt b { font-size: 19px; }
+}
+/* ---- Rift Run ---- */
+.runl .adv-hd { background: #13203a; border-bottom-color: #23395e; } .runl { background: #0e1424; }
+.adv-st.rh { gap: 2px; padding: 4px 7px; } .adv-st.rh img { width: 20px; height: 20px; } img.e { filter: grayscale(1) brightness(.35); }
+.run-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px 12px calc(14px + var(--sab)); background: radial-gradient(ellipse at 50% 0, #1f3566 0, #0e1424 70%); }
+.run-intro { display: flex; flex-direction: column; gap: 8px; }
+.ri-art { display: flex; justify-content: center; align-items: flex-end; height: 92px; margin-top: 4px; }
+.ri-art img { width: 64px; height: 64px; margin: 0 -6px; filter: drop-shadow(0 4px 0 #0008); animation: riBob 2.4s ease-in-out infinite; animation-delay: calc(var(--k) * -.4s); }
+.ri-art img:nth-child(3) { width: 84px; height: 84px; z-index: 1; }
+@keyframes riBob { 50% { transform: translateY(-6px); } }
+.ri-lead { text-align: center; font-size: 22px; margin: 0; }
+.ri-rules { background: #0b0716a0; border: 2px solid #ffffff1f; border-radius: 12px; padding: 4px 10px; }
+.ri-rules p { display: flex; gap: 8px; align-items: flex-start; margin: 7px 0; font-size: 18px; line-height: 1.12; } .ri-rules p img { width: 22px; height: 22px; flex: none; margin-top: 1px; }
+.run-pick h3 { margin: 6px 0 0; font-size: 28px; text-align: center; } .run-pick > p { text-align: center; margin: 0 0 8px; }
+.roff { display: flex; gap: 10px; align-items: center; width: 100%; margin: 0 0 9px; padding: 8px 10px; border-radius: 14px; background: #1c2547; border: 3px solid #3e5a9a; color: #fff; font: inherit; text-align: left; box-shadow: 0 4px 0 #0008; cursor: pointer; transition: transform .15s; }
+.roff:active { transform: translateY(2px); } .roff.picked { transform: scale(1.04); border-color: #ffd23f; box-shadow: 0 0 0 3px #ffd23f66, 0 4px 0 #0008; }
+.roff.train { border-color: #c07bff; background: #2a1f4a; } .roff.rest { border-color: #5fd068; background: #173a2a; }
+.ro-pic { position: relative; flex: none; width: 72px; height: 72px; border-radius: 12px; background: #0b0716; display: flex; align-items: center; justify-content: center; }
+.ro-pic > img:first-child { width: 60px; height: 60px; } .roff.rest .ro-pic img { width: 40px; height: 40px; }
+.ro-pic .orbs.corner { position: absolute; right: -4px; top: -8px; } .ro-pic .cr { position: absolute; left: 50%; top: -10px; width: 20px; height: 20px; transform: translateX(-50%); }
+.ro-pic .upst { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); }
+.ro-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .ro-tx > b { font-size: 24px; line-height: 1; }
+.ro-tx > b em { font-style: normal; font-size: 14px; color: #ffd23f; background: #ffd23f22; border-radius: 6px; padding: 0 5px; margin-left: 6px; vertical-align: 3px; }
+.ro-m { font-size: 16px; color: #bdb5e0; display: flex; align-items: center; gap: 3px; flex-wrap: wrap; } .ro-m img { width: 14px; height: 14px; }
+.ro-ab { display: flex; gap: 6px; align-items: flex-start; font-size: 16px; line-height: 1.1; color: #d8d2f0; } .ro-ab > img { width: 20px; height: 20px; flex: none; } .ro-ab b { color: #fff; }
+.ro-d { font-size: 17px; color: #d8d2f0; line-height: 1.12; }
+.upst { display: inline-flex; gap: 2px; } .upst i { width: 9px; height: 9px; background: #c07bff; border: 2px solid #0b0716; transform: rotate(45deg); display: block; }
+.bcard .upst { position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); } .bcard { position: relative; }
+.rsq { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 4px 0 8px; }
+.rsq-c { position: relative; width: 52px; display: flex; flex-direction: column; align-items: center; background: #1c2547; border: 2px solid #3e5a9a; border-radius: 10px; padding: 4px 2px 3px; }
+.rsq-c.cap { border-color: #ffd23f; } .rsq-c .cr { position: absolute; top: -9px; width: 16px; height: 16px; } .rsq-c img.hs { width: 40px; height: 40px; }
+.rsq-c .upst { position: absolute; top: 34px; } .rsq-c .lv { display: flex; gap: 1px; min-height: 13px; align-items: center; } .rsq-c .lv small { font-size: 12px; color: #ffd23f; line-height: 1; }
+img.sm { width: 12px; height: 12px; }
+.rsq.big .rsq-c { width: calc(33.3% - 6px); padding: 6px 4px 5px; } .rsq.big .rsq-c img.hs { width: 54px; height: 54px; } .rsq.big .rsq-c .upst { top: 50px; }
+.rsq.big .rsq-c b { font-size: 17px; line-height: 1.1; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.rsq.big .rsq-c .ab { position: absolute; top: 4px; right: 4px; } .rsq.big .rsq-c .ab img { width: 18px; height: 18px; }
+.rsq.big img.sm { width: 15px; height: 15px; }
+.rsq-h { display: flex; justify-content: space-between; align-items: baseline; margin: 10px 2px 2px; } .rsq-h b { font-size: 22px; } .rsq-h small { font-size: 16px; color: #bdb5e0; display: flex; align-items: center; gap: 2px; }
+.rmap { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px 6px; padding: 10px; background: #0b0716a0; border: 2px solid #ffffff1f; border-radius: 14px; }
+.rn { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #1c2547; border: 3px solid #3e5a9a; font-size: 22px; color: #8fa3d0; max-width: 54px; margin: 0 auto; width: 100%; }
+.rn img { width: 60%; height: 60%; } .rn.done { background: #ffd23f; border-color: #b37a00; } .rn.elite { border-color: #ff4f6b; }
+.rn.cur { background: #4fa3ff; border-color: #fff; color: #fff; box-shadow: 0 0 0 4px #4fa3ff55, 0 0 16px #4fa3ffaa; animation: advpulse 1.6s ease-in-out infinite; }
+.rn.boss { border-color: #ff4f6b; background: #3a1530; } .rn.boss img { width: 82%; height: 82%; } .rn.boss.cur { background: #ff4f6b; }
+.rfoot { margin-top: 6px; display: flex; flex-direction: column; align-items: center; gap: 8px; } .rfoot .btn.big { font-size: 28px; }
+.run-over { text-align: center; } .run-over .rsq { margin-top: 8px; }
+.rh-line { display: flex; align-items: center; justify-content: center; gap: 4px; } .rh-line img { width: 22px; height: 22px; }
+.run-fx { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; margin: 6px 0; font-size: 19px; } .run-fx img { width: 30px; height: 30px; } .run-fx span { color: #ffb3c0; } .run-fx.bad span { color: #ff4f6b; }
+
+.playrow { display: flex; flex-direction: column; gap: 10px; }
+@media (max-height: 740px) { .playrow { flex-direction: row; gap: 8px; align-items: stretch; } .playrow .battlebtn { flex: 1; min-width: 0; } }
 </style>
 </head>
 <body>
@@ -1344,8 +1392,9 @@ function newRound(opts) {
     S.units.forEach((d, i) => {
       const H = HERO[d.hid];
       const H2 = HERO[d.hid]; if (H2.boss) { const b = makeUnit(s, (side ? 'e' : 'p') + i, d.hid, side, null, d.x, d.y, { i, cap: d.hid === S.captain, hp: H2.hp }); b.big = !!H2.big; b.boss = true; if (d.hpNow != null) b.hp = Math.max(1, Math.min(b.maxHp, d.hpNow)); s.units.push(b); return; }
+      const up = d.up || 0; // Rift Run training: +40% health and +1 damage per level
       s.units.push(makeUnit(s, (side ? 'e' : 'p') + i, d.hid, side, d.ab, d.x, d.y, {
-        i, cap: d.hid === S.captain, hpAdd: (capFx.hp || 0) + worldBonus(counts, H.world), hpMul: S.hpMul || 1,
+        i, cap: d.hid === S.captain, hpAdd: (capFx.hp || 0) + worldBonus(counts, H.world), hpMul: (S.hpMul || 1) * (1 + 0.4 * up), atk: up ? heroStats(d.hid).atk + up : 0,
         abilHaste: Math.max(0.3, 1 + (capFx.abilHaste || 0)), abil: capFx.abilDmg || 0, block: capFx.abilBlock || 0, shield: capFx.shieldStart || 0, charge0: S.charge0 }));
     });
   }
@@ -1993,7 +2042,7 @@ function newSave(now) {
     road: [], season: { id: seasonKey(now), xp: 0, claimed: [], peak: 0, bonusClaimed: 0 },
     quests: null, shop: null, winCoins: { day: dayKey(now), n: 0 },
     stats: newStats(),
-    formation: {}, ach: {}, heroStats: {}, adv: { st: {}, tries: {} },
+    formation: {}, ach: {}, heroStats: {}, adv: { st: {}, tries: {} }, run: null, runBest: 0,
     settings: { sound: true, music: true, fast: false }, lastDiff: 'normal', tutorialDone: false, pendingEvents: [],
   };
   START_HEROES.forEach(h => s.heroes[h] = newHeroRec(1));
@@ -2032,6 +2081,7 @@ function migrate(s) {
   // hero roads (v3): the first ability comes free with the hero; rc = road levels already claimed
   if (s.wild == null) s.wild = 0;
   if (!s.adv) s.adv = { st: {}, tries: {} }; // adventure: best stars per level, attempts
+  if (s.run === undefined) { s.run = null; s.runBest = 0; } // Rift Run: the run in progress, best stage
   for (const h in s.heroes) { const o = s.heroes[h]; if (!o.rc) o.rc = []; if (o.tr >= 1 && !o.un[0]) o.un[0] = 1; if (o.tr >= 1 && o.eq < 0) o.eq = 0; }
   if (s.tutorialDone == null || (!s.tutorialDone && s.stats.battles > 0)) s.tutorialDone = true; // players who already battled skip the tutorial
   if (s.lastDiff == null) s.lastDiff = 'normal';
@@ -2508,6 +2558,106 @@ function importSave(str) {
 }
 function btoaSafe(str) { if (typeof btoa !== 'undefined') return btoa(unescape(encodeURIComponent(str))); return Buffer.from(str, 'utf8').toString('base64'); }
 function atobSafe(str) { if (typeof atob !== 'undefined') return decodeURIComponent(escape(atob(str))); return Buffer.from(str, 'base64').toString('utf8'); }
+
+// ---------- Rift Run: a roguelike climb with one squad ----------
+// Pick a captain and 3 heroes (any hero can show up, owned or not), then win single fights up 10 stages.
+// After each win: recruit, train or rest. Heroes have 2 lives; lose a fight and you lose 1 of 3 hearts.
+const RUN_STAGES = 10, RUN_HEARTS = 3, RUN_LIVES = 2, RUN_SQUAD_MAX = 6, RUN_DRAFT = 3, RUN_TRAIN_MAX = 2;
+const RUN_FOE = { hp0: 0.6, hpStep: 0.05, eliteHp: 0.8, bossHelpersHp: 0.8, boss: [['golem', 1, 0], ['gus', 0, 2], ['zip', 4, 1]] };
+const RUN_PAY = { coins: 25, gems: 1, clearGems: 10 }; // per stage cleared, plus a bonus and a Hero chest for beating stage 10
+function runRnd(s, tag) { return mulberry32((s.run.seed ^ hashStr(tag)) >>> 0); }
+function runAb(hid, r) { const a = HERO_ABILITIES[hid]; return a ? a[Math.floor(r() * a.length)] : null; }
+// weighted by rarity, no repeats
+function runSample(r, ids, n) {
+  const pool = ids.slice(), out = [];
+  while (out.length < n && pool.length) {
+    const w = pool.map(h => RARITIES[HERO[h].rarity].weight), tot = w.reduce((a, b) => a + b, 0);
+    let x = r() * tot, k = 0; while (k < pool.length - 1 && (x -= w[k]) > 0) k++;
+    out.push(pool.splice(k, 1)[0]);
+  }
+  return out;
+}
+function runHave(R) { return new Set(R.squad.map(u => u.hid).concat(R.cap ? [R.cap.hid] : [])); }
+function runRecruits(s, r, n) {
+  const have = runHave(s.run), ids = HEROES.filter(h => !h.captain && !HERO[h.id].boss && !have.has(h.id)).map(h => h.id);
+  return runSample(r, ids, n).map(h => ({ k: 'hero', hid: h, ab: runAb(h, r) }));
+}
+function runOffer(s) {
+  const R = s.run, r = runRnd(s, 'o' + R.phase + R.stage + ':' + R.draft + ':' + R.fights);
+  if (R.phase === 'captain') R.offer = runSample(r, CAPTAIN_IDS.slice(), 3).map(h => ({ k: 'hero', hid: h, ab: runAb(h, r) }));
+  else if (R.phase === 'draft') R.offer = runRecruits(s, r, 3);
+  else if (R.phase === 'reward') {
+    const o = R.squad.length < RUN_SQUAD_MAX ? runRecruits(s, r, 2) : [];
+    const hurt = R.hearts < RUN_HEARTS || R.squad.some(u => u.lives < RUN_LIVES);
+    const trainable = [R.cap, ...R.squad].filter(u => (u.up || 0) < RUN_TRAIN_MAX);
+    if (hurt) o.push({ k: 'rest' });
+    const tr = runSample(r, trainable.map(u => u.hid), 3 - o.length);
+    tr.forEach(h => o.push({ k: 'train', hid: h }));
+    if (!o.length) o.push({ k: 'rest' });
+    R.offer = o.slice(0, 3);
+  } else R.offer = null;
+  return R.offer;
+}
+function runStart(s, t) {
+  s.run = { stage: 1, hearts: RUN_HEARTS, cap: null, squad: [], seed: (t ^ 0x5bd1e995) >>> 0, phase: 'captain', offer: null, draft: 0, fights: 0, cleared: 0, won: false };
+  runOffer(s); return s.run;
+}
+function runUnit(R, hid) { return R.cap && R.cap.hid === hid ? R.cap : R.squad.find(u => u.hid === hid); }
+function runChoose(s, idx) {
+  const R = s.run, o = R && R.offer && R.offer[idx]; if (!o) return null;
+  if (R.phase === 'captain') { R.cap = { hid: o.hid, ab: o.ab, up: 0 }; R.phase = 'draft'; R.draft = 0; }
+  else if (R.phase === 'draft') { R.squad.push({ hid: o.hid, ab: o.ab, up: 0, lives: RUN_LIVES }); if (++R.draft >= RUN_DRAFT) R.phase = 'map'; }
+  else if (R.phase === 'reward') {
+    if (o.k === 'hero') R.squad.push({ hid: o.hid, ab: o.ab, up: 0, lives: RUN_LIVES });
+    else if (o.k === 'train') { const u = runUnit(R, o.hid); if (u) u.up = Math.min(RUN_TRAIN_MAX, (u.up || 0) + 1); }
+    else if (o.k === 'rest') { R.hearts = Math.min(RUN_HEARTS, R.hearts + 1); R.squad.forEach(u => u.lives = RUN_LIVES); }
+    R.phase = 'map';
+  }
+  runOffer(s); return o;
+}
+function runOrbs(stage) { return slotCap(Math.ceil(stage / 2)); } // 5,5,6,6,7,7,8,8,9,9
+function runSetup(s) {
+  const R = s.run, st = R.stage, r = runRnd(s, 'f' + st + ':' + R.fights), boss = st === RUN_STAGES, elite = st === 5;
+  const seed = Math.floor(r() * 2147483647) >>> 0;
+  const myDeck = [R.cap, ...R.squad].map(u => ({ hid: u.hid, ab: u.ab, up: u.up || 0 }));
+  const base = { run: { stage: st }, toWin: 1, orbs: runOrbs(st), arena: Math.min(ARENAS.length - 1, Math.round((st - 1) * 1.4)), seed, variant: Math.floor(r() * 2), myDeck, foeTier: 3 };
+  if (boss) {
+    const fx = RUN_FOE.boss;
+    return Object.assign(base, { diff: 'hard', foeName: 'Rift Golem', event: 'clear', boss: 'golem', foeHp: RUN_FOE.bossHelpersHp,
+      fixedFoe: fx.map(f => ({ hid: f[0], ab: runAb(f[0], r), x: f[1], y: f[2] })), foeDeck: fx.map(f => ({ hid: f[0], ab: runAb(f[0], r) })) });
+  }
+  const cap = runSample(r, CAPTAIN_IDS.slice(), 1)[0];
+  const team = runSample(r, HEROES.filter(h => !h.captain && !HERO[h.id].boss).map(h => h.id), 5);
+  return Object.assign(base, { diff: st <= 2 ? 'easy' : st <= 6 ? 'normal' : 'hard', foeName: elite ? 'Rift Elite' : 'Stage ' + st, event: EVENT_IDS[Math.floor(r() * EVENT_IDS.length)],
+    foeHp: elite ? RUN_FOE.eliteHp : +(RUN_FOE.hp0 + st * RUN_FOE.hpStep).toFixed(2), foeOrbs: elite ? 1 : 0, foeDeck: [cap, ...team].map(h => ({ hid: h, ab: runAb(h, r) })) });
+}
+// res: { winner, fallen: [hid], stats }
+function runFight(s, setup, res) {
+  const R = s.run; if (!R) return null;
+  R.fights++;
+  s.stats.battles++; questAdd(s, 'battles', 1);
+  if (res.stats) { s.stats.kills += res.stats.kills; s.stats.dmg += res.stats.dmg; s.stats.abil += res.stats.abil; questAdd(s, 'kills', res.stats.kills); questAdd(s, 'dmg', res.stats.dmg); questAdd(s, 'abil', res.stats.abil); }
+  const out = { win: res.winner === 0, stage: R.stage, hurt: [], left: [] };
+  if (out.win) { s.stats.wins++; questAdd(s, 'wins', 1); }
+  for (const h of res.fallen || []) {
+    const u = R.squad.find(x => x.hid === h); if (!u) continue;
+    u.lives--; if (u.lives <= 0) { R.squad = R.squad.filter(x => x !== u); out.left.push(h); } else out.hurt.push(h);
+  }
+  if (out.win) { R.cleared = R.stage; if (R.stage >= RUN_STAGES) { R.won = true; R.phase = 'over'; } else { R.stage++; R.phase = 'reward'; } }
+  else { R.hearts--; if (R.hearts <= 0) R.phase = 'over'; else R.phase = 'map'; }
+  runOffer(s);
+  return out;
+}
+function runPayout(R) { const c = R.cleared || 0; return { coins: c * RUN_PAY.coins, gems: c * RUN_PAY.gems + (R.won ? RUN_PAY.clearGems : 0), chest: R.won ? 'hero' : null }; }
+function runEnd(s) {
+  const R = s.run; if (!R) return null;
+  const p = runPayout(R); s.coins += p.coins; s.gems += p.gems;
+  s.runBest = Math.max(s.runBest || 0, R.cleared || 0);
+  const out = Object.assign({ cleared: R.cleared || 0, won: R.won }, p);
+  if (p.chest) out.chestR = openInstant(s, p.chest, arenaIndex(s.trophies), 'run' + R.seed);
+  s.run = null;
+  return out;
+}
 
 ;
 // ===== Rift Squad: sprites + battle renderer =====
@@ -3551,7 +3701,7 @@ function homeHTML() {
   <div class="panel tight chestp"><button class="keyb" onclick="keyInfo()">${icon('i_key', 'ib')}<div><b>${S.keys}</b><small>${S.keys < KEY_MAX ? `<span data-until="${S.keyNext}"></span>` : 'full'}</small></div></button><div class="shelf">${shelf}</div></div>
   <button class="duelbtn ${older ? 'older' : ''}" onclick="openDuel()"><canvas id="arena-cv"></canvas><span class="dtxt"><small>${icon('i_swords', 'ii')} Duel · tap to change</small><b>${esc(A.name)}</b>
     <span class="drow"><span class="dchip" style="--dc:${d.color}">${d.name}</span>${older ? '<span class="tiny">no trophies at stake</span>' : `<span class="bar gold thin"><i style="width:${Math.round(pr * 100)}%"></i></span>`}</span></span><span class="dgo">${icon('i_right', 'ii')}</span></button>
-  <div class="playrow"><button class="btn gold big full battlebtn" onclick="startBattle()">${icon('i_swords','ib')} BATTLE</button>${S.tutorialDone ? advButtonHTML() : ''}</div>
+  <div class="playrow"><button class="btn gold big full battlebtn" onclick="startBattle()">${icon('i_swords','ib')} BATTLE</button>${S.tutorialDone ? `<div class="modes">${advButtonHTML()}${runButtonHTML()}</div>` : ''}</div>
   </div>`;
 }
 function keyInfo() { modal(`<h2>Keys</h2><div class="center">${icon('i_key', 'ib')}</div><p class="center">You have <b>${S.keys}</b> of ${KEY_MAX} keys. 1 key opens 1 chest.</p><p class="center small mute">${S.keys < KEY_MAX ? `Next key in <b data-until="${S.keyNext}">${fmtDur(S.keyNext - now())}</b>. ` : ''}A new key every ${KEY_HOURS} hours, or buy them in the Shop. Every win puts a chest on your shelf (up to ${SHELF_MAX}).</p><button class="btn gold full" data-close>OK</button>`); }
@@ -4077,7 +4227,7 @@ function roundSeed() { return (M.setup.seed + M.round * 7919) >>> 0; }
 function beginMatch(setup, saved) {
   M = { setup, phase: 'prep', vis: {}, sel: null, drag: null, hover: null, speed: (S.settings.fast && !setup.tut ? 2 : 1), acc: 0, rt: 0, last: performance.now(), sfxT: 0, mark: null, cheer: null, slowUntil: 0 };
   const fresh = { lastW: null, round: 1, score: [0, 0], prev: [null, null], agg: { dmg: 0, kills: 0, abil: 0 }, flawless: 0, rounds: 0, lineups: null, heroes: {}, clutch: 0, down02: false, feats: {} };
-  if (saved) Object.assign(M, fresh, { bossHp: saved.bossHp != null ? saved.bossHp : null, lastW: saved.lastW != null ? saved.lastW : null, sides: saved.sides, round: saved.round, score: saved.score, prev: saved.prev, agg: saved.agg, flawless: saved.flawless, rounds: saved.rounds, lineups: saved.lineups || null, heroes: saved.heroes || {}, clutch: saved.clutch || 0, down02: !!saved.down02, feats: saved.feats || {} });
+  if (saved) Object.assign(M, fresh, { bossHp: saved.bossHp != null ? saved.bossHp : null, fallen: saved.fallen || null, lastW: saved.lastW != null ? saved.lastW : null, sides: saved.sides, round: saved.round, score: saved.score, prev: saved.prev, agg: saved.agg, flawless: saved.flawless, rounds: saved.rounds, lineups: saved.lineups || null, heroes: saved.heroes || {}, clutch: saved.clutch || 0, down02: !!saved.down02, feats: saved.feats || {} });
   else Object.assign(M, fresh, { sides: [newMatchSide(setup.myDeck), newMatchSide(setup.foeDeck)] });
   M.style = setup.tut ? 'mix' : aiStyleFor(setup.seed >>> 2);
   M.variant = setup.variant; const eb = eventBoard(setup.event, M.variant); M.obs = eb.obs;
@@ -4094,7 +4244,7 @@ function beginMatch(setup, saved) {
 }
 function saveMatch() {
   if (!M || M.setup.tut) return;
-  lsSet(STORE_BATTLE, JSON.stringify({ bh: BH, lastW: M.lastW, bossHp: M.bossHp, setup: M.setup, sides: M.sides, round: M.round, score: M.score, prev: M.prev, agg: M.agg, flawless: M.flawless, rounds: M.rounds, lineups: M.lineups, heroes: M.heroes, clutch: M.clutch, down02: M.down02, feats: M.feats }));
+  lsSet(STORE_BATTLE, JSON.stringify({ bh: BH, lastW: M.lastW, bossHp: M.bossHp, fallen: M.fallen || null, setup: M.setup, sides: M.sides, round: M.round, score: M.score, prev: M.prev, agg: M.agg, flawless: M.flawless, rounds: M.rounds, lineups: M.lineups, heroes: M.heroes, clutch: M.clutch, down02: M.down02, feats: M.feats }));
 }
 
 // ----- iOS Home Screen app fix -----
@@ -4119,7 +4269,7 @@ function benchHTML() {
   const was = M.capShown || 0; M.capShown = cap; // sockets added since last time pop in
   const socks = Array.from({ length: cap }, (x, i) => { const gold = bonus && i === cap - 1, on = i < used;
     return `<img class="px sk ${on ? 'on' : ''} ${gold ? 'gold' : ''} ${i >= was && was > 0 ? 'new' : ''}" data-i="${i}" src="${on ? (gold ? sprURL('i_orb', ORB_GOLD) : sprURL('i_orb')) : (gold ? sprURL('i_orb0', { r: '#b37a00' }) : sprURL('i_orb0'))}" alt="">`; }).join('');
-  const cards = M.sides[0].bench.map(h => `<button class="bcard ${heroCost(h.hid) > cap - used ? 'off' : 'fit'}" data-bh="${h.hid}"><img class="px" src="${sprURL(h.hid)}" alt="">${costTag(h.hid)}</button>`).join('');
+  const cards = M.sides[0].bench.map(h => `<button class="bcard ${heroCost(h.hid) > cap - used ? 'off' : 'fit'}" data-bh="${h.hid}"><img class="px" src="${sprURL(h.hid)}" alt="">${costTag(h.hid)}${h.up ? `<span class="upst">${'<i></i>'.repeat(h.up)}</span>` : ''}</button>`).join('');
   return `<div class="bslots" aria-label="Rift Orbs ${used} of ${cap}">${socks}</div><div class="bcards">${cards || '<span class="tiny mute">Everyone is on the board</span>'}</div>`;
 }
 // ----- Rift Orbs (hero cost) -----
@@ -4195,7 +4345,7 @@ function myLineup() {
   const ok = p => p && p.y >= P0 && p.y < BH && p.x >= 0 && p.x < BW && !M.obs[p.y * BW + p.x] && !used.has(p.x + ',' + p.y);
   for (const h of M.sides[0].board) {
     let p = cur && cur.units.find(u => u.hid === h.hid); if (!ok(p)) p = S.formation[h.hid];
-    if (ok(p)) { used.add(p.x + ',' + p.y); units.push({ hid: h.hid, ab: h.ab, x: p.x, y: p.y }); }
+    if (ok(p)) { used.add(p.x + ',' + p.y); units.push({ hid: h.hid, ab: h.ab, x: p.x, y: p.y, up: h.up || 0 }); }
   }
   const rest = M.sides[0].board.filter(h => !units.some(u => u.hid === h.hid));
   if (rest.length) { const obs2 = M.obs.map((o, i) => (o || used.has((i % BW) + ',' + Math.floor(i / BW))) ? 1 : 0); units.push(...roleFormation(rest, 0, mulberry32(1), false, obs2)); }
@@ -4210,7 +4360,7 @@ async function prepRound() {
   const moved = setRoundBoard(r);
   if (moved && r > 1) { await hazardShift(); if (!M) return; }
   // slots: the limit grows every round, and whoever lost the last round gets 1 extra
-  M.caps = [sideCap(r, M.lastW === 1), sideCap(r, M.lastW === 0) + (M.setup.foeOrbs || 0)];
+  M.caps = M.setup.orbs ? [M.setup.orbs, M.setup.orbs + (M.setup.foeOrbs || 0)] : [sideCap(r, M.lastW === 1), sideCap(r, M.lastW === 0) + (M.setup.foeOrbs || 0)];
   if (!M.setup.fixedFoe) aiPickBoard(M.sides[1], M.caps[1], M.style || 'mix', D, matchRnd('fb' + r), M.prev[0]);
   if (r === 1 && M.setup.tut) autoFill(M.sides[0], M.caps[0]); else trimBoard(M.sides[0], M.caps[0]);
   const my = myLineup(); if (M.setup.tut && r === 1) my.charge0 = 0.8;
@@ -4229,7 +4379,7 @@ async function prepRound() {
   M.lineups = [my, foe];
   M.phase = 'setup'; rebuildPreview(); saveMatch(); hud(); panel(); tutHook('setup', r);
   if (r === 1 && !M.setup.tut) toast(M.setup.fixedFoe && !M.setup.boss ? `${icon('i_target', 'ii')} Puzzle: their exact spots are shown. Spend your <b>${M.caps[0]} Rift Orbs</b>`
-    : M.setup.boss ? `${icon('i_skull', 'ii')} The ${esc(HERO[M.setup.boss].name)}'s damage stays between rounds. Spend your <b>${M.caps[0]} Rift Orbs</b>` : `${icon('i_orb', 'ii')} Spend your <b>${M.caps[0]} Rift Orbs</b>: tap or drag heroes from the bench`);
+    : M.setup.boss ? `${icon('i_skull', 'ii')} ${M.setup.run ? `The ${esc(HERO[M.setup.boss].name)} slams a 3x3 area marked in red.` : `The ${esc(HERO[M.setup.boss].name)}'s damage stays between rounds.`} Spend your <b>${M.caps[0]} Rift Orbs</b>` : `${icon('i_orb', 'ii')} Spend your <b>${M.caps[0]} Rift Orbs</b>: tap or drag heroes from the bench`);
   if (r > 1) { const free = M.caps[0] - slotsUsed(M.sides[0].board); toast(`${icon('i_orb', 'ii')} <b>${M.caps[0]} Rift Orbs</b> this round${M.lastW === 1 ? ' (gold one for losing the last round)' : ''}${free > 0 && M.sides[0].bench.length ? ` · ${free} to spend` : ''}`); }
 }
 // faded enemies: last round's spots, or before round 1 their usual spots
@@ -4256,7 +4406,7 @@ function matchIntro() {
   return new Promise(done => {
     const st = M.setup, E = EVENTS[st.event], D = DIFF[st.diff], A = ARENAS[st.arena], el = document.createElement('div');
     el.className = 'mintro';
-    el.innerHTML = `<div class="mi-top"><small>Arena ${st.arena + 1}${st.older ? ' · no trophies at stake' : ''}</small><b>${esc(A.name)}</b></div>
+    el.innerHTML = `<div class="mi-top"><small>${st.run ? `Rift Run · Stage ${st.run.stage} of ${RUN_STAGES}` : `Arena ${st.arena + 1}${st.older ? ' · no trophies at stake' : ''}`}</small><b>${esc(A.name)}</b></div>
       <div class="mi-vs"><div class="mi-side me">${liveHero(M.sides[0].captain, 5)}<b>${esc(S.name)}</b><small>You</small></div><div class="mi-x">VS</div>
         <div class="mi-side foe">${liveHero(M.sides[1].captain, 5)}<b style="color:${D.color}">${esc(st.foeName)}</b><small>${D.name} AI</small></div></div>
       <div class="mi-haz" style="--hc:${E.color}"><div class="mi-tile"></div><div class="mi-ht"><small>${E.tile ? 'This match' : 'Weather'}</small><b style="color:${E.color}">${E.name}</b><span>${esc(E.desc)}${E.tile ? ' The tiles move every round!' : ''}</span></div></div>
@@ -4412,6 +4562,7 @@ function roundOver() {
   if (w === 0 && M.rs.units.filter(u => u.side === 0 && u.alive && !u.clone).length === 1) M.clutch++;
   for (const u of M.rs.units) if (u.side === 0 && !u.clone) { const h = M.heroes[u.hid] || (M.heroes[u.hid] = { d: 0, k: 0 }); h.d += Math.round(u.dealt); h.k += u.kills; }
   for (const f in M.rs.feats[0]) M.feats[f] = 1;
+  if (M.setup.run) { M.fallen = M.fallen || []; for (const u of M.rs.units) if (u.side === 0 && !u.clone && !u.alive && u.hid !== M.sides[0].captain && !M.fallen.includes(u.hid)) M.fallen.push(u.hid); }
   if (w === 0) M.score[0]++; else if (w === 1) M.score[1]++;
   M.lastW = w === 0 || w === 1 ? w : null;
   if (M.setup.boss) { const b = M.rs.units.find(u => u.boss); M.bossHp = b && b.alive ? b.hp : 0; if (!M.bossHp) M.score[0] = Math.max(M.score[0], toWin()); }
@@ -4432,7 +4583,7 @@ function hud() {
   const pips = (n, cls) => `<span class="pips ${cls}">${Array.from({ length: toWin() }, (x, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
   $('#b-ev').innerHTML = `<div class="hs-row">${pips(M.score[0], 'me')}<b class="me">${M.score[0]}</b><i>–</i><b class="foe">${M.score[1]}</b>${pips(M.score[1], 'foe')}</div>`;
   const ph = { setup: 'Set up', prep: 'Get ready', fight: 'Fight!' }[M.phase] || '';
-  $('#b-rl').innerHTML = `<b>Round ${M.round}</b><small>${ph || '&nbsp;'}</small>`;
+  $('#b-rl').innerHTML = `<b>${M.setup.run ? 'Stage ' + M.setup.run.stage : 'Round ' + M.round}</b><small>${ph || '&nbsp;'}</small>`;
   $('#b-rnd').innerHTML = M.phase === 'fight' ? `<span class="tmr">${icon('i_clock', 'ii')}${Math.max(0, Math.ceil(M.rs.timeLimit - M.rs.t))}</span>`
     : `<button class="hazchip" onclick="hazInfo()"><i class="evdot" style="background:${E.color}"></i>${E.name.split(' ')[0]}</button>`;
 }
@@ -4535,6 +4686,7 @@ async function finishMatch(fled) {
   if (!M) return;
   if (M.setup.tut) { finishTutorialMatch(win, fled, sc); return; }
   if (M.setup.adv) { finishAdventureMatch(win, fled, sc); return; }
+  if (M.setup.run) { finishRunMatch(win, fled, sc); return; }
   const finalHids = M.lineups ? M.lineups[0].units.map(u => u.hid) : [];
   const res = finishBattle(S, M.setup, { winner, score: sc, stats: M.agg, flawless: M.flawless, rounds: M.rounds, syn3: activeSynergies(finalHids).some(x => x.n >= 3), captain: M.sides[0].captain,
     heroes: M.heroes, clutch: M.clutch, comeback: win && M.down02, feats: M.feats }, now());
@@ -4590,9 +4742,105 @@ function countUp(root) {
 // ---------- adventure ----------
 function advButtonHTML() {
   const C = ADVENTURE[0], got = advChapterStars(S, C.id), max = C.levels.length * 3, nxt = advNext(S, C.id);
-  return `<button class="advbtn" onclick="openAdventure()"><span class="ai">${icon('star', 'ib')}</span><span class="at"><b>Adventure</b><small>${got >= max ? 'Chapter ' + C.id + ' complete' : advLevel(C.id, nxt).type === 'boss' ? 'Boss: ' + esc(advLevel(C.id, nxt).name) : 'Level ' + (nxt + 1)} · ${esc(C.name)}</small></span><span class="as">${icon('star', 'ii')}${got}/${max}</span>${icon('i_right', 'ii')}</button>`;
+  const sub = got >= max ? 'Chapter ' + C.id + ' done' : advLevel(C.id, nxt).type === 'boss' ? 'Boss level' : 'Level ' + (nxt + 1);
+  return `<button class="modebtn advbtn" onclick="openAdventure()"><span class="mi">${icon('star', '')}</span><span class="mt"><b>Adventure</b><small>${sub} · ${icon('star', 'ii')}${got}/${max}</small></span></button>`;
+}
+function runButtonHTML() {
+  const R = S.run;
+  const sub = !R ? (S.runBest ? `Best: stage ${S.runBest}` : 'New mode!') : R.phase === 'over' ? 'Collect rewards' : R.phase === 'captain' || R.phase === 'draft' ? 'Drafting' : `Stage ${R.stage} · ${R.hearts}${icon('i_heart', 'ii')}`;
+  return `<button class="modebtn runbtn" onclick="openRun()"><span class="mi">${icon('i_orb', '')}</span><span class="mt"><b>Rift Run</b><small>${sub}</small></span></button>`;
 }
 function closeAdventure() { const a = $('#advl'); if (a) a.remove(); }
+// ---------- Rift Run ----------
+function closeRun() { const a = $('#runl'); if (a) a.remove(); }
+function heartsHTML(n, max, cls) { return Array.from({ length: max }, (x, i) => `<img class="px ${cls || ''} ${i < n ? '' : 'e'}" src="${sprURL('i_heart')}" alt="">`).join(''); }
+function upHTML(n) { return n ? `<span class="upst">${'<i></i>'.repeat(n)}</span>` : ''; }
+function runOfferHTML(o, i) {
+  const R = S.run;
+  if (o.k === 'rest') return `<button class="roff rest" data-o="${i}"><span class="ro-pic">${icon('i_heart', '')}</span><span class="ro-tx"><b>Rest</b><span class="ro-d">Get back 1 heart (${R.hearts}/${RUN_HEARTS}) and refill every hero's lives.</span></span></button>`;
+  const H = HERO[o.hid], st = heroStats(o.hid);
+  if (o.k === 'train') { const u = runUnit(R, o.hid), lv = (u && u.up) || 0;
+    return `<button class="roff train" data-o="${i}"><span class="ro-pic"><img class="px" src="${sprURL(o.hid)}" alt="">${upHTML(lv)}</span><span class="ro-tx"><b>Train ${esc(H.name)}</b><span class="ro-d">+40% health and +1 damage for the rest of the run. Level ${lv + 1} of ${RUN_TRAIN_MAX}.</span></span></button>`; }
+  const A = o.ab ? ABILITIES[o.ab] : null, own = !!S.heroes[o.hid];
+  return `<button class="roff" data-o="${i}"><span class="ro-pic"><img class="px" src="${sprURL(o.hid)}" alt="">${costTag(o.hid)}${H.captain ? `<img class="cr px" src="${sprURL('i_crown')}" alt="">` : ''}</span>
+    <span class="ro-tx"><b>${esc(H.name)}${own ? '' : '<em>Not owned</em>'}</b><span class="ro-m">${icon('i_heart', 'ii')}${st.hp} ${icon('i_swords', 'ii')}${st.atk} ${icon('i_boot', 'ii')}${SPEEDS[heroSpeed(o.hid)].name} · Range ${st.rng}</span>
+    ${A ? `<span class="ro-ab">${abIcon(o.ab)}<span><b>${esc(A.name)}</b> ${esc(A.desc)}</span></span>` : ''}</span></button>`;
+}
+function runSquadHTML(R, big) {
+  const card = (u, cap) => `<div class="rsq-c ${cap ? 'cap' : ''}">${cap ? `<img class="cr px" src="${sprURL('i_crown')}" alt="">` : ''}<img class="px hs" src="${sprURL(u.hid)}" alt="">${upHTML(u.up)}
+    ${big ? `<b>${esc(HERO[u.hid].name)}</b>` : ''}<span class="lv">${cap ? `<small>Captain</small>` : heartsHTML(u.lives, RUN_LIVES, 'sm')}</span>${big && u.ab ? `<span class="ab">${abIcon(u.ab)}</span>` : ''}</div>`;
+  return `<div class="rsq ${big ? 'big' : ''}">${R.cap ? card(R.cap, true) : ''}${R.squad.map(u => card(u, false)).join('')}</div>`;
+}
+function openRun() {
+  if (M) return; closeAdventure();
+  let el = $('#runl');
+  if (!el) { el = document.createElement('div'); el.id = 'runl'; el.className = 'adv runl'; document.body.appendChild(el); }
+  const tb = $('#topbar'); el.style.top = (tb ? Math.round(tb.getBoundingClientRect().bottom) : 0) + 'px';
+  const R = S.run, sub = !R ? (S.runBest ? `Best: stage ${S.runBest} of ${RUN_STAGES}` : 'A new run every time') : R.phase === 'over' ? (R.won ? 'Run cleared!' : 'Run over') : R.phase === 'captain' || R.phase === 'draft' ? 'Build your squad' : `Stage ${R.stage} of ${RUN_STAGES}`;
+  let body;
+  if (!R) body = `<div class="run-intro"><div class="ri-art">${['bruno', 'hex', 'ember', 'yuki', 'zip'].map((h, k) => `<img class="px" style="--k:${k}" src="${sprURL(h)}" alt="">`).join('')}</div>
+      <p class="ri-lead">Climb ${RUN_STAGES} stages with one squad. Every run is different.</p>
+      <div class="ri-rules">
+        <p>${icon('i_crown', 'ib')}<span>Pick a captain, then recruit ${RUN_DRAFT} heroes. <b>Any hero</b> can show up, even ones you don't own yet.</span></p>
+        <p>${icon('i_swords', 'ib')}<span>Each stage is <b>one fight</b>. Stage 5 is an elite, stage ${RUN_STAGES} is the Rift Golem.</span></p>
+        <p>${icon('star', 'ib')}<span>After every win, pick a reward: <b>recruit</b> a hero, <b>train</b> one, or <b>rest</b>.</span></p>
+        <p>${icon('i_heart', 'ib')}<span>Heroes have ${RUN_LIVES} lives. Falling in a fight costs one, and at zero they leave. Lose a fight and you lose 1 of your ${RUN_HEARTS} hearts.</span></p>
+        <p>${icon('coin', 'ib')}<span>${RUN_PAY.coins} coins and ${RUN_PAY.gems} gem per stage cleared. Beat the Golem for ${RUN_PAY.clearGems} more gems and a Hero chest.</span></p>
+      </div><button class="btn gold big full" id="run-go">START RUN</button></div>`;
+  else if (R.offer && ['captain', 'draft', 'reward'].includes(R.phase)) {
+    const t = R.phase === 'captain' ? ['Pick your captain', 'Your captain is always on the board and never leaves the run.']
+      : R.phase === 'draft' ? [`Recruit a hero (${R.draft + 1}/${RUN_DRAFT})`, 'Each one comes with a random ability.']
+      : [`Stage ${R.cleared} cleared!`, 'Pick a reward.'];
+    body = `${R.phase !== 'captain' ? runSquadHTML(R, false) : ''}<div class="run-pick"><h3>${t[0]}</h3><p class="small mute">${t[1]}</p>${R.offer.map(runOfferHTML).join('')}</div>`;
+  } else if (R.phase === 'over') {
+    const p = runPayout(R);
+    body = `<div class="run-over">${resultHeader(R.won ? 'RUN CLEARED' : 'RUN OVER', R.won ? 'win' : 'lose')}
+      <p class="center">You cleared <b>${R.cleared || 0} of ${RUN_STAGES}</b> stages${(R.cleared || 0) > (S.runBest || 0) ? ' · new best!' : ''}</p>${runSquadHTML(R, false)}
+      ${rewardTiles({ coins: p.coins, gems: p.gems })}${p.chest ? `<div class="rewards"><div class="rw new"><img src="${chestURL(p.chest)}"><span>${CHESTS[p.chest].name.split(' ')[0]}</span><small>chest</small></div></div>` : ''}
+      <button class="btn gold big full" id="run-collect">${p.coins || p.gems || p.chest ? 'COLLECT' : 'OK'}</button></div>`;
+  } else {
+    const nodes = Array.from({ length: RUN_STAGES }, (x, k) => { const n = k + 1, cls = n < R.stage ? 'done' : n === R.stage ? 'cur' : '';
+      return `<span class="rn ${cls} ${n === 5 ? 'elite' : ''} ${n === RUN_STAGES ? 'boss' : ''}">${n === RUN_STAGES ? `<img class="px" src="${sprURL('golem')}" alt="">` : n < R.stage ? icon('i_check', '') : n === 5 ? icon('i_skull', '') : n}</span>`; }).join('');
+    const nx = R.stage === RUN_STAGES ? 'The Rift Golem: hit it hard before it slams.' : R.stage === 5 ? 'Elite stage: they bring 1 extra Rift Orb.' : `A random squad. You get <b>${runOrbs(R.stage)} Rift Orbs</b>.`;
+    body = `<div class="rmap">${nodes}</div>
+      <div class="rsq-h"><b>Your squad</b><small>${R.squad.length + 1} heroes · ${heartsHTML(R.hearts, RUN_HEARTS, 'sm')}</small></div>${runSquadHTML(R, true)}
+      <div class="rfoot"><p class="small center" style="margin:0 0 6px">${nx}</p><button class="btn gold big full" id="run-fight">${icon('i_swords', 'ib')} FIGHT · STAGE ${R.stage}</button>
+      <button class="btn sm gray" id="run-quit">End run</button></div>`;
+  }
+  el.innerHTML = `<div class="adv-hd"><button class="btn sm gray" id="run-x" aria-label="Close">${icon('i_x', 'ii')}</button><div class="adv-tt"><h2>Rift Run</h2><small>${sub}</small></div>${R && R.phase !== 'captain' && R.phase !== 'over' ? `<span class="adv-st rh">${heartsHTML(R.hearts, RUN_HEARTS)}</span>` : ''}</div><div class="run-body">${body}</div>`;
+  $('#run-x', el).onclick = () => { SFX.tap(); closeRun(); render(); };
+  const go = $('#run-go', el); if (go) go.onclick = () => { SFX.cast(); runStart(S, now()); persist(); openRun(); };
+  el.querySelectorAll('[data-o]').forEach(b => b.onclick = () => {
+    const o = runChoose(S, +b.dataset.o); if (!o) return; persist();
+    if (o.k === 'train') SFX.relic(); else if (o.k === 'rest') SFX.heal ? SFX.heal() : SFX.coin(); else SFX.coin();
+    b.classList.add('picked'); setTimeout(openRun, 220);
+  });
+  const fb = $('#run-fight', el); if (fb) fb.onclick = () => { if (M) return; SFX.cast(); closeRun(); beginMatch(runSetup(S), null); persist(); };
+  const qb = $('#run-quit', el); if (qb) qb.onclick = () => {
+    const c = modal(`<h2>End this run?</h2><p class="center small">You keep the rewards for the ${S.run.cleared || 0} stage${S.run.cleared === 1 ? '' : 's'} you cleared.</p><div class="row" style="gap:8px"><button class="btn gray grow" data-close>Keep going</button><button class="btn red grow" id="rq-go">End run</button></div>`);
+    $('#rq-go', c).onclick = () => { c.remove(); S.run.phase = 'over'; S.run.offer = null; persist(); openRun(); };
+  };
+  const cb = $('#run-collect', el); if (cb) cb.onclick = () => {
+    const rects = {}; ['coins', 'gems'].forEach(k => { const t = el.querySelector(`[data-res="${k}"]`); if (t) rects[k] = t.getBoundingClientRect(); });
+    const p = runPayout(S.run); holdRes({ coins: p.coins, gems: p.gems });
+    const out = runEnd(S); persist(); SFX.coin(); openRun();
+    setTimeout(() => { if (p.coins) flood({ coins: p.coins }, rects.coins || null); if (p.gems) flood({ gems: p.gems }, rects.gems || null); if (out.chestR) openSpecChest(CHESTS[out.chestR.type].name, out.chestR); }, 80);
+  };
+}
+function finishRunMatch(win, fled, sc) {
+  const out = runFight(S, M.setup, { winner: win ? 0 : 1, fallen: fled ? [] : (M.fallen || []), stats: M.agg });
+  S.activeBattle = false; lsDel(STORE_BATTLE); persist();
+  const R = S.run, who = hs => hs.map(h => `<img class="px" src="${sprURL(h)}" alt=""><b>${esc(HERO[h].name)}</b>`).join(' ');
+  const m = modal(`${resultHeader(out.win ? (out.stage >= RUN_STAGES ? 'GOLEM DOWN' : 'STAGE CLEAR') : 'DEFEAT', out.win ? 'win' : 'lose')}
+    <p class="center" style="margin:0 0 6px">Rift Run · Stage ${out.stage}${fled ? ' (left)' : ''}</p>
+    ${!out.win ? `<p class="center rh-line">${R && R.hearts > 0 ? 'You lost a heart' : 'Out of hearts'} ${heartsHTML(R ? R.hearts : 0, RUN_HEARTS)}</p>` : ''}
+    ${out.hurt.length ? `<p class="run-fx">${who(out.hurt)} <span>lost a life</span></p>` : ''}
+    ${out.left.length ? `<p class="run-fx bad">${who(out.left)} <span>left the run</span></p>` : ''}
+    ${out.win && !out.hurt.length && !out.left.length ? '<p class="center small" style="color:var(--gold)">No one fell!</p>' : ''}
+    <button class="btn gold full" id="cont">Continue</button>`, { noClose: true });
+  if (out.win) SFX.coin();
+  $('#cont', m).onclick = () => { m.remove(); closeBattle(); openRun(); };
+}
 function advRewardTiles(L, claimed) {
   const R = L.r, t = [];
   const tile = (img, n, cls) => `<div class="rw3 ${cls || ''} ${claimed ? 'got' : ''}">${img}${n ? `<span>${fmt(n)}</span>` : ''}${claimed ? `<img class="ck px" src="${sprURL('i_check')}">` : ''}</div>`;
@@ -4757,7 +5005,7 @@ function boot() {
       if (sv.bh !== BH || (sv.lineups && sv.lineups.some(offBoard)) || (sv.prev && sv.prev.some(offBoard))) { sv.lineups = null; sv.prev = [null, null]; }
       const m = modal(`<h2>Match in progress</h2><p class="center">You left a match against <b>${esc(sv.setup.foeName)}</b> (${sv.score[0]}–${sv.score[1]}). Jump back in?</p><div class="row" style="gap:8px"><button class="btn red grow" id="ff">Forfeit</button><button class="btn gold grow" id="rs">Resume</button></div>`, { noClose: true });
       $('#rs', m).onclick = () => { m.remove(); beginMatch(sv.setup, sv); };
-      $('#ff', m).onclick = () => { m.remove(); if (sv.setup.adv) advFinish(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg }); else finishBattle(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg, flawless: 0, rounds: sv.rounds }, now()); S.activeBattle = false; lsDel(STORE_BATTLE); persist(); render(); toast('Match forfeited'); };
+      $('#ff', m).onclick = () => { m.remove(); if (sv.setup.run) runFight(S, sv.setup, { winner: 1, fallen: [], stats: sv.agg }); else if (sv.setup.adv) advFinish(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg }); else finishBattle(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg, flawless: 0, rounds: sv.rounds }, now()); S.activeBattle = false; lsDel(STORE_BATTLE); persist(); render(); toast('Match forfeited'); };
     } catch (e) { S.activeBattle = false; lsDel(STORE_BATTLE); persist(); }
   } else if (S.activeBattle) { S.activeBattle = false; persist(); }
   if (fresh && DEV) modal(`<h2>${BUILD === 'test' ? 'Test Build' : 'Developer Build'}</h2><p class="center small">All 20 heroes are unlocked with all 3 abilities, plus 999,999 coins, 99,999 gems and 10 keys. This save is separate from your normal game${BUILD === 'test' ? ' preview' : ': switch back any time in Settings'}.</p><p class="center small mute">More tools in ${icon('i_gear','ii')} Settings ${icon('i_right','ii')} Test tools: jump to any arena, reset hero trophies, skip time to test keys, fill the chest shelf.</p><button class="btn gold full" data-close>Show me the heroes</button>`, { onClose: () => go('heroes') });
