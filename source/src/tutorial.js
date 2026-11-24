@@ -55,7 +55,7 @@ async function runTutorial() {
   // ---- round 1: placement, targeting, abilities ----
   await tutWait('setup');
   if (!alive()) return;
-  await coach(`This is your half. The <b>faded heroes</b> on top show the enemy's usual spots. Their real spots stay hidden until the fight.`, { next: 'Next' });
+  await coach(`This is your half. The <b>faded hero</b> on top is the enemy captain. The rest of their team stays hidden until the fight.`, { next: 'Next' });
   if (!alive()) return;
   if (GRID_MODE) {
     await coach(`${icon('i_tnear', 'ii')} Heroes step <b>one tile at a time</b>, never diagonally, and can't walk through anyone. They always hit the <b>closest</b> enemy.`, { next: 'Next' });

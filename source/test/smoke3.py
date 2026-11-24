@@ -28,7 +28,7 @@ async def main():
         print('round 1 slots:', await pg.evaluate("[slotsUsed(M.sides[0].board), M.caps[0], M.sides[0].board.map(h => h.hid + ':' + heroCost(h.hid)).join(' '), 'foe', M.sides[1].board.map(h => h.hid + ':' + heroCost(h.hid)).join(' '), M.style]"))
         await pg.screenshot(path=f'{OUT}/04_setup.png')
         # drag a hero: find one of my units and drag to another tile
-        box = await pg.locator('#bc').bounding_box(); tw = box['width'] / 5; th = box['height'] / ((await pg.evaluate('BH')) + 5 / 18); box['y'] += th * 5 / 18
+        box = await pg.locator('#bc').bounding_box(); tw = box['width'] / 5; th = tw; box['y'] += th * (await pg.evaluate('PADT / TILE')); top0 = box['y']
         u = await pg.evaluate("(() => { const u = M.rs.units.find(q => q.side === 0); return [u.x, u.y]; })()")
         await pg.mouse.move(box['x'] + (u[0] + .5) * tw, box['y'] + (u[1] + .5) * th); await pg.mouse.down()
         await pg.mouse.move(box['x'] + (u[0] + .5) * tw, box['y'] + 3.5 * th, steps=6); await pg.wait_for_timeout(100)
@@ -38,7 +38,19 @@ async def main():
         print('after drag:', moved)
         # tap a hero to inspect
         await pg.mouse.click(box['x'] + 2.5 * tw, box['y'] + 1.5 * th); await pg.wait_for_timeout(200)
-        await pg.click('#b-btns .btn.gold'); await pg.wait_for_timeout(2500)
+        print('round 1 start (captain only):', await pg.evaluate("M.lineups[0].units.map(u => u.hid).join(' ')"), '| enemy ghosts:', await pg.evaluate("ghostLine() ? ghostLine().units.map(u => u.hid).join(' ') : 'none'"))
+        for k in range(5):
+            if not await pg.locator('.bcard.fit').count(): break
+            await pg.click('.bcard.fit >> nth=0'); await pg.wait_for_timeout(450)
+        before = await pg.evaluate("M.lineups[0].units.length")
+        q = await pg.evaluate("(() => { const u = M.lineups[0].units.find(q => q.hid !== M.sides[0].captain); return u ? [u.x, u.y, u.hid] : null; })()")
+        if q:
+            await pg.mouse.click(box['x'] + (q[0] + .5) * tw, top0 + (q[1] + .5) * th); await pg.wait_for_timeout(120)
+            await pg.mouse.click(box['x'] + (q[0] + .5) * tw, top0 + (q[1] + .5) * th); await pg.wait_for_timeout(500)
+            print('double-tap', q[2], '-> on board', before, '->', await pg.evaluate("M.lineups[0].units.length"), '| on bench:', await pg.evaluate(f"M.sides[0].bench.some(h => h.hid === '{q[2]}')"))
+        await pg.click('#b-btns .btn.gold'); await pg.wait_for_timeout(300)
+        if await pg.locator('#cf-yes').count(): print('unspent-orbs check shown'); await pg.click('#cf-yes')
+        await pg.wait_for_timeout(2200)
         await pg.screenshot(path=f'{OUT}/06_fight.png')
         await pg.wait_for_timeout(2500)
         await pg.screenshot(path=f'{OUT}/07_fight2.png')
@@ -52,6 +64,7 @@ async def main():
                 if await pg.locator('.bcard.fit').count(): await pg.click('.bcard.fit >> nth=0'); await pg.wait_for_timeout(250); print('added from bench, slots', await pg.evaluate("[slotsUsed(M.sides[0].board), M.caps[0], M.lineups[0].units.length]"))
                 if i == 6: await pg.screenshot(path=f'{OUT}/08_round_setup.png')
                 await pg.click('#b-btns .btn.gold'); await pg.wait_for_timeout(300)
+                if await pg.locator('#cf-yes').count(): await pg.click('#cf-yes'); await pg.wait_for_timeout(200)
             elif ph == 'fight':
                 await pg.click('text=Skip'); await pg.wait_for_timeout(300)
             else: await pg.wait_for_timeout(400)

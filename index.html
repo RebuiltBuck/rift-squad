@@ -3816,7 +3816,7 @@ function helpHTML() {
   <p>${icon('i_hand','ib')}<span><b>Drag</b> your heroes where you want them, then tap <b>Fight!</b> They battle on their own.</span></p>
   <p>${icon('i_laser','ib')}<span><b>Round-start abilities</b> go off before anyone moves, so guess where the enemy will stand.</span></p>
   <p>${icon('i_tnear','ib')}<span>Heroes step <b>one tile at a time</b>, never diagonally, and can't walk through anyone. They always go after the <b>closest</b> enemy.</span></p>
-  <p>${icon('i_orb','ib')}<span><b>Rift Orbs:</b> every hero costs 1 to 4 orbs (the blue orbs on its card). You get ${SLOT_START} orbs in round 1 and 1 more every round, plus a gold one after losing a round. Your captain always fights; tap or drag heroes from the bench to spend the rest.</span></p>
+  <p>${icon('i_orb','ib')}<span><b>Rift Orbs:</b> every hero costs 1 to 4 orbs (the blue orbs on its card). You get ${SLOT_START} orbs in round 1 and 1 more every round, plus a gold one after losing a round. Your captain always fights; tap or drag heroes from the bench to spend the rest, and double-tap a hero on the board to send it back.</span></p>
   <p>${icon('i_bow','ib')}<span>Each hero has a <b>range</b> from 1 (the 8 tiles around it) to 4 tiles, diagonals included. Heroes still walk only up, down, left and right. Tap a hero to see the tiles it can hit.</span></p>
   ${WORLDS_ON ? `<p>${icon('i_globe','ib')}<span>Heroes from the <b>same world</b> are stronger together.</span></p>` : ''}
   <p>${icon('i_key','ib')}<span>Every win adds a chest to your shelf. Open chests with keys: you get a new key every 5 hours.</span></p>
@@ -4033,7 +4033,7 @@ async function prepRound() {
   // slots: the limit grows every round, and whoever lost the last round gets 1 extra
   M.caps = [sideCap(r, M.lastW === 1), sideCap(r, M.lastW === 0)];
   aiPickBoard(M.sides[1], M.caps[1], M.style || 'mix', D, matchRnd('fb' + r), M.prev[0]);
-  if (r === 1) autoFill(M.sides[0], M.caps[0]); else trimBoard(M.sides[0], M.caps[0]);
+  if (r === 1 && M.setup.tut) autoFill(M.sides[0], M.caps[0]); else trimBoard(M.sides[0], M.caps[0]);
   const my = myLineup(); if (M.setup.tut && r === 1) my.charge0 = 0.8;
   $('#b-hint2') && ($('#b-hint2').textContent = 'Enemy is planning…');
   await new Promise(r2 => setTimeout(r2, 40));
@@ -4045,10 +4045,12 @@ async function prepRound() {
   if (r === 1) M.scout = { units: aiLineup(M.sides[1].board, 1, D, null, ctx, (M.setup.seed ^ 0x9e37) >>> 0).units, captain: M.sides[1].captain };
   M.lineups = [my, foe];
   M.phase = 'setup'; rebuildPreview(); saveMatch(); hud(); panel(); tutHook('setup', r);
+  if (r === 1 && !M.setup.tut) toast(`${icon('i_orb', 'ii')} Spend your <b>${M.caps[0]} Rift Orbs</b>: tap or drag heroes from the bench`);
   if (r > 1) { const free = M.caps[0] - slotsUsed(M.sides[0].board); toast(`${icon('i_orb', 'ii')} <b>${M.caps[0]} Rift Orbs</b> this round${M.lastW === 1 ? ' (gold one for losing the last round)' : ''}${free > 0 && M.sides[0].bench.length ? ` · ${free} to spend` : ''}`); }
 }
 // faded enemies: last round's spots, or before round 1 their usual spots
-function ghostLine() { return M.prev && M.prev[1] ? M.prev[1] : M.round === 1 ? M.scout : null; }
+// faded enemies: where they stood last round; before round 1 you only know their captain
+function ghostLine() { return M.prev && M.prev[1] ? M.prev[1] : M.round === 1 && M.scout ? Object.assign({}, M.scout, { units: M.scout.units.filter(u => u.hid === M.sides[1].captain) }) : null; }
 function roundVariant(r) { return r <= 1 || M.setup.tut ? M.setup.variant : (((hashStr('hz' + r) ^ M.setup.seed) >>> 0) % 1e9) + 2; }
 function setRoundBoard(r) {
   const E = EVENTS[M.setup.event], v = roundVariant(r), changed = v !== M.variant;
@@ -4092,8 +4094,10 @@ function rebuildPreview() {
   M.rt = 0; M.vis = {};
 }
 
-function fight() {
+function fight(sure) {
   if (!M || M.phase !== 'setup') return;
+  const left = freeSlots(), fits = M.sides[0].bench.some(h => heroCost(h.hid) <= left);
+  if (!sure && !M.setup.tut && fits) { confirmBox(`You still have <b>${left} Rift Orb${left > 1 ? 's' : ''}</b> to spend. Fight anyway?`, 'Fight', () => fight(true)); return; }
   M.lineups[0].units.forEach(u => S.formation[u.hid] = { x: u.x, y: u.y }); persist();
   rebuildPreview(); M.phase = 'fight'; M.acc = -0.45; M.sel = null; BV.fx = []; BV.floats = []; M.revealAt = bvNow(); M.slowUntil = 0; M.cheer = null;
   musicMode('fight'); tutHook('fight');
@@ -4319,7 +4323,11 @@ function onBoardMove(e) {
 }
 function onBoardUp(e) {
   if (!M || !M.drag) return; const d = M.drag; M.drag = null; const h = M.hover; M.hover = null; const bb = $('#b-bench'); if (bb) bb.classList.remove('drop');
-  if (!d.moved) { M.sel = d.uid; M.info = null; SFX.tap(); panel(); tutHook('sel', d.uid); return; }
+  if (!d.moved) {
+    const nowT = performance.now(), dbl = M.phase === 'setup' && M.lastTap && M.lastTap.uid === d.uid && nowT - M.lastTap.t < 380;
+    M.lastTap = dbl ? null : { uid: d.uid, t: nowT };
+    if (dbl && d.hid) { benchRemove(d.hid); return; } // double-tap: back to the bench
+    M.sel = d.uid; M.info = null; SFX.tap(); panel(); tutHook('sel', d.uid); return; }
   if (d.toBench && M.phase === 'setup') { benchRemove(d.hid); return; }
   if (!h || M.phase !== 'setup') return;
   const L = M.lineups[0].units; const me = L.find(u => u.hid === d.hid); const other = L.find(u => u.x === h.x && u.y === h.y);
@@ -4570,7 +4578,7 @@ async function runTutorial() {
   // ---- round 1: placement, targeting, abilities ----
   await tutWait('setup');
   if (!alive()) return;
-  await coach(`This is your half. The <b>faded heroes</b> on top show the enemy's usual spots. Their real spots stay hidden until the fight.`, { next: 'Next' });
+  await coach(`This is your half. The <b>faded hero</b> on top is the enemy captain. The rest of their team stays hidden until the fight.`, { next: 'Next' });
   if (!alive()) return;
   if (GRID_MODE) {
     await coach(`${icon('i_tnear', 'ii')} Heroes step <b>one tile at a time</b>, never diagonally, and can't walk through anyone. They always hit the <b>closest</b> enemy.`, { next: 'Next' });
