@@ -24,7 +24,10 @@ const GRID_SLOW = 2.5, GRID_HOP = 0.3;
 const dirsOf = s => s.grid ? DIR4 : DIR8;
 const manh = (ax, ay, bx, by) => Math.abs(ax - bx) + Math.abs(ay - by);
 // distance used for "can I hit it" and "who is closest"
-const reach = (s, ax, ay, bx, by) => s.grid && s.gridReach === 'manh' ? manh(ax, ay, bx, by) : Math.max(Math.abs(ax - bx), Math.abs(ay - by));
+// attack reach on the tile board: a round shape, so every hero can hit diagonally (movement stays up/down/left/right).
+// a tile is within range r when dx^2 + dy^2 <= r(r+1): r1 = the 8 tiles around, r2 adds the knight-move tiles, and so on
+const rdist = (ax, ay, bx, by) => { const d2 = (ax - bx) ** 2 + (ay - by) ** 2; return d2 === 0 ? 0 : Math.ceil((Math.sqrt(1 + 4 * d2) - 1) / 2 - 1e-9); };
+const reach = (s, ax, ay, bx, by) => s.grid ? rdist(ax, ay, bx, by) : Math.max(Math.abs(ax - bx), Math.abs(ay - by));
 function deployRows(side) { const r = []; for (let d = 0; d < HALF; d++) r.push(rowAt(side, d)); return r; }
 function inHalf(side, y) { return side === 0 ? y >= P0 : y < HALF; }
 // depth 0 = row touching the middle, HALF-1 = back row
@@ -261,25 +264,26 @@ function walkMap(s, u) {
 }
 // steps needed before u can hit e (stand on any open tile within range of it); 1e9 = no way there right now
 function walkCost(s, u, e, D) {
-  let c = 1e9; for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = D[x + y * BW]; if (d >= 0 && d < c) { const m = manh(x, y, e.x, e.y); if (m >= 1 && m <= u.rng) c = d; } }
+  let c = 1e9; for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = D[x + y * BW]; if (d >= 0 && d < c) { const m = rdist(x, y, e.x, e.y); if (m >= 1 && m <= u.rng) c = d; } }
   return c;
 }
 // closest enemy: anyone already in range first (keeps its current one), else the fewest steps away. Sticks to its target unless another is clearly closer.
 function gridTarget(s, u) {
   const foes = s.units.filter(e => e.side !== u.side && targetable(s, e)); if (!foes.length) return null;
   const cur = u.tgt && foes.includes(u.tgt) ? u.tgt : null, by = (a, b, ka, kb) => ka - kb || a.hp - b.hp || (a.uid < b.uid ? -1 : 1);
-  const inR = foes.filter(e => manh(u.x, u.y, e.x, e.y) <= u.rng);
-  if (inR.length) { const near = inR.sort((a, b) => by(a, b, manh(u.x, u.y, a.x, a.y), manh(u.x, u.y, b.x, b.y)))[0]; return cur && inR.includes(cur) && manh(u.x, u.y, cur.x, cur.y) <= manh(u.x, u.y, near.x, near.y) ? cur : near; }
+  const dist = e => rdist(u.x, u.y, e.x, e.y) * 10 + manh(u.x, u.y, e.x, e.y); // nearest by reach, then by steps
+  const inR = foes.filter(e => rdist(u.x, u.y, e.x, e.y) <= u.rng);
+  if (inR.length) { const near = inR.sort((a, b) => by(a, b, dist(a), dist(b)))[0]; return cur && inR.includes(cur) && dist(cur) <= dist(near) ? cur : near; }
   const D = walkMap(s, u), cost = new Map(foes.map(e => [e, walkCost(s, u, e, D)]));
   const best = foes.slice().sort((a, b) => by(a, b, cost.get(a), cost.get(b)))[0];
   if (cur && cost.get(cur) < 1e9 && cost.get(cur) <= cost.get(best) + 1) return cur;
   if (cost.get(best) < 1e9) return best;
-  return cur || foes.sort((a, b) => by(a, b, manh(u.x, u.y, a.x, a.y), manh(u.x, u.y, b.x, b.y)))[0]; // boxed in: wait facing the closest
+  return cur || foes.sort((a, b) => by(a, b, dist(a), dist(b)))[0]; // boxed in: wait facing the closest
 }
 // one step along the shortest open path to a tile within range of t. Never steps sideways without getting closer, so no back-and-forth.
 function gridStep(s, u, t) {
   const D = new Array(BW * BH).fill(-1), q = [], open = (x, y) => (x === u.x && y === u.y) || free(s, x, y);
-  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const m = manh(x, y, t.x, t.y); if (m >= 1 && m <= u.rng && open(x, y) && !isObs(s, x, y)) { D[x + y * BW] = 0; q.push(x + y * BW); } }
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const m = rdist(x, y, t.x, t.y); if (m >= 1 && m <= u.rng && open(x, y) && !isObs(s, x, y)) { D[x + y * BW] = 0; q.push(x + y * BW); } }
   for (let i = 0; i < q.length; i++) { const c = q[i], cx = c % BW, cy = (c - cx) / BW;
     for (const [dx, dy] of DIR4) { const nx = cx + dx, ny = cy + dy, k = nx + ny * BW; if (!inB(nx, ny) || D[k] >= 0 || !open(nx, ny)) continue; D[k] = D[c] + 1; q.push(k); } }
   const here = D[u.x + u.y * BW]; if (here <= 0) return false;
@@ -320,7 +324,7 @@ function chooseTarget(s, u) {
   let best = null, bd = 99;
   for (const e of s.units) {
     if (e.side === u.side || !targetable(s, e)) continue;
-    const d = s.grid ? manh(u.x, u.y, e.x, e.y) : cheb(u.x, u.y, e.x, e.y);
+    const d = s.grid ? rdist(u.x, u.y, e.x, e.y) * 10 + manh(u.x, u.y, e.x, e.y) : cheb(u.x, u.y, e.x, e.y);
     if (d < bd || (d === bd && (e.hp < best.hp || (e.hp === best.hp && e.uid < best.uid)))) { bd = d; best = e; }
   }
   return best;

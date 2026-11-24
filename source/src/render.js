@@ -259,7 +259,7 @@ function bvDraw(V, now) {
   if (V.drag) { const u = V.drag.bench ? { rng: heroStats(V.drag.hid).rng, side: 0 } : byUid(rs, V.drag.uid), h = V.hover || { x: Math.floor(V.drag.px / TILE), y: Math.floor(V.drag.py / TILE) }; if (u && inB(h.x, h.y) && !V.drag.toBench) { rgU = u; rgX = h.x; rgY = h.y; } }
   else if (V.sel) { const u = byUid(rs, V.sel); if (u && u.alive) { const [ux, uy] = unitPos(u, V.rt); rgU = u; rgX = Math.round(ux); rgY = Math.round(uy); } }
   if (rgU && rgU.rng) { const u = rgU, cx = rgX, cy = rgY, col = u.side === 0 ? '255,210,63' : '255,79,107'; {
-    for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = Math.abs(x - cx) + Math.abs(y - cy); if (d < 1 || d > u.rng) continue; g.fillStyle = `rgba(${col},0.2)`; g.fillRect(x * TILE + 1, y * TILE + 1, TILE - 2, TILE - 2); g.fillStyle = `rgba(${col},0.5)`; g.fillRect(x * TILE + 1, y * TILE + 1, TILE - 2, 1); } } }
+    for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = rdist(x, y, cx, cy); if (d < 1 || d > u.rng) continue; g.fillStyle = `rgba(${col},0.2)`; g.fillRect(x * TILE + 1, y * TILE + 1, TILE - 2, TILE - 2); g.fillStyle = `rgba(${col},0.5)`; g.fillRect(x * TILE + 1, y * TILE + 1, TILE - 2, 1); } } }
   // prediction: where the enemy stood last round (faded), and where your round-start abilities will land
   if (V.mode === 'setup') {
     if (V.ghosts) for (const gh of V.ghosts) {

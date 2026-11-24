@@ -144,7 +144,7 @@ const TARGETING = {
   weak: { name: 'Weakest',   icon: 'i_tweak', desc: 'Goes after the enemy with the least health.' },
   big:  { name: 'Toughest',  icon: 'i_tbig',  desc: 'Goes after the enemy with the most health.' },
 };
-function rangeText(n) { return n <= 1 ? 'Has to stand right next to an enemy to hit it (not diagonally).' : `Hits enemies up to ${n} tiles away. Tiles count up, down, left and right, not diagonally.`; }
+function rangeText(n) { return n <= 1 ? 'Hits enemies right next to it, diagonals included. It still walks only up, down, left and right.' : `Hits enemies up to ${n} tiles away in a round area, diagonals included. It still walks only up, down, left and right.`; }
 function heroTarget(hid) { return (typeof GRID_MODE !== 'undefined' && GRID_MODE) ? 'near' : HERO[hid].tg || 'near'; } // grid test mode: everyone hits the closest
 
 // Movement speed: seconds to cross one tile

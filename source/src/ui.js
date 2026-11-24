@@ -713,7 +713,7 @@ function helpHTML() {
   <p>${icon('i_laser','ib')}<span><b>Round-start abilities</b> go off before anyone moves, so guess where the enemy will stand.</span></p>
   <p>${icon('i_tnear','ib')}<span>Heroes step <b>one tile at a time</b>, never diagonally, and can't walk through anyone. They always go after the <b>closest</b> enemy.</span></p>
   <p>${icon('i_orb','ib')}<span><b>Rift Orbs:</b> every hero costs 1 to 4 orbs (the blue orbs on its card). You get ${SLOT_START} orbs in round 1 and 1 more every round, plus a gold one after losing a round. Your captain always fights; tap or drag heroes from the bench to spend the rest.</span></p>
-  <p>${icon('i_bow','ib')}<span>Each hero has a <b>range</b> from 1 (right next to the enemy) to 4 tiles. Tap a hero to see the tiles it can hit.</span></p>
+  <p>${icon('i_bow','ib')}<span>Each hero has a <b>range</b> from 1 (the 8 tiles around it) to 4 tiles, diagonals included. Heroes still walk only up, down, left and right. Tap a hero to see the tiles it can hit.</span></p>
   ${WORLDS_ON ? `<p>${icon('i_globe','ib')}<span>Heroes from the <b>same world</b> are stronger together.</span></p>` : ''}
   <p>${icon('i_key','ib')}<span>Every win adds a chest to your shelf. Open chests with keys: you get a new key every 5 hours.</span></p>
   <p>${icon('i_htrophy','ib')}<span>Every Hero Chest holds <b>1 hero trophy</b>: each one is +1 hero level. Level 1 unlocks the hero and its first ability, level 5 the second, level 10 the third. Every level has a reward on that hero's road.</span></p>

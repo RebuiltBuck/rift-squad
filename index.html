@@ -935,7 +935,7 @@ const TARGETING = {
   weak: { name: 'Weakest',   icon: 'i_tweak', desc: 'Goes after the enemy with the least health.' },
   big:  { name: 'Toughest',  icon: 'i_tbig',  desc: 'Goes after the enemy with the most health.' },
 };
-function rangeText(n) { return n <= 1 ? 'Has to stand right next to an enemy to hit it (not diagonally).' : `Hits enemies up to ${n} tiles away. Tiles count up, down, left and right, not diagonally.`; }
+function rangeText(n) { return n <= 1 ? 'Hits enemies right next to it, diagonals included. It still walks only up, down, left and right.' : `Hits enemies up to ${n} tiles away in a round area, diagonals included. It still walks only up, down, left and right.`; }
 function heroTarget(hid) { return (typeof GRID_MODE !== 'undefined' && GRID_MODE) ? 'near' : HERO[hid].tg || 'near'; } // grid test mode: everyone hits the closest
 
 // Movement speed: seconds to cross one tile
@@ -1145,7 +1145,10 @@ const GRID_SLOW = 2.5, GRID_HOP = 0.3;
 const dirsOf = s => s.grid ? DIR4 : DIR8;
 const manh = (ax, ay, bx, by) => Math.abs(ax - bx) + Math.abs(ay - by);
 // distance used for "can I hit it" and "who is closest"
-const reach = (s, ax, ay, bx, by) => s.grid && s.gridReach === 'manh' ? manh(ax, ay, bx, by) : Math.max(Math.abs(ax - bx), Math.abs(ay - by));
+// attack reach on the tile board: a round shape, so every hero can hit diagonally (movement stays up/down/left/right).
+// a tile is within range r when dx^2 + dy^2 <= r(r+1): r1 = the 8 tiles around, r2 adds the knight-move tiles, and so on
+const rdist = (ax, ay, bx, by) => { const d2 = (ax - bx) ** 2 + (ay - by) ** 2; return d2 === 0 ? 0 : Math.ceil((Math.sqrt(1 + 4 * d2) - 1) / 2 - 1e-9); };
+const reach = (s, ax, ay, bx, by) => s.grid ? rdist(ax, ay, bx, by) : Math.max(Math.abs(ax - bx), Math.abs(ay - by));
 function deployRows(side) { const r = []; for (let d = 0; d < HALF; d++) r.push(rowAt(side, d)); return r; }
 function inHalf(side, y) { return side === 0 ? y >= P0 : y < HALF; }
 // depth 0 = row touching the middle, HALF-1 = back row
@@ -1382,25 +1385,26 @@ function walkMap(s, u) {
 }
 // steps needed before u can hit e (stand on any open tile within range of it); 1e9 = no way there right now
 function walkCost(s, u, e, D) {
-  let c = 1e9; for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = D[x + y * BW]; if (d >= 0 && d < c) { const m = manh(x, y, e.x, e.y); if (m >= 1 && m <= u.rng) c = d; } }
+  let c = 1e9; for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = D[x + y * BW]; if (d >= 0 && d < c) { const m = rdist(x, y, e.x, e.y); if (m >= 1 && m <= u.rng) c = d; } }
   return c;
 }
 // closest enemy: anyone already in range first (keeps its current one), else the fewest steps away. Sticks to its target unless another is clearly closer.
 function gridTarget(s, u) {
   const foes = s.units.filter(e => e.side !== u.side && targetable(s, e)); if (!foes.length) return null;
   const cur = u.tgt && foes.includes(u.tgt) ? u.tgt : null, by = (a, b, ka, kb) => ka - kb || a.hp - b.hp || (a.uid < b.uid ? -1 : 1);
-  const inR = foes.filter(e => manh(u.x, u.y, e.x, e.y) <= u.rng);
-  if (inR.length) { const near = inR.sort((a, b) => by(a, b, manh(u.x, u.y, a.x, a.y), manh(u.x, u.y, b.x, b.y)))[0]; return cur && inR.includes(cur) && manh(u.x, u.y, cur.x, cur.y) <= manh(u.x, u.y, near.x, near.y) ? cur : near; }
+  const dist = e => rdist(u.x, u.y, e.x, e.y) * 10 + manh(u.x, u.y, e.x, e.y); // nearest by reach, then by steps
+  const inR = foes.filter(e => rdist(u.x, u.y, e.x, e.y) <= u.rng);
+  if (inR.length) { const near = inR.sort((a, b) => by(a, b, dist(a), dist(b)))[0]; return cur && inR.includes(cur) && dist(cur) <= dist(near) ? cur : near; }
   const D = walkMap(s, u), cost = new Map(foes.map(e => [e, walkCost(s, u, e, D)]));
   const best = foes.slice().sort((a, b) => by(a, b, cost.get(a), cost.get(b)))[0];
   if (cur && cost.get(cur) < 1e9 && cost.get(cur) <= cost.get(best) + 1) return cur;
   if (cost.get(best) < 1e9) return best;
-  return cur || foes.sort((a, b) => by(a, b, manh(u.x, u.y, a.x, a.y), manh(u.x, u.y, b.x, b.y)))[0]; // boxed in: wait facing the closest
+  return cur || foes.sort((a, b) => by(a, b, dist(a), dist(b)))[0]; // boxed in: wait facing the closest
 }
 // one step along the shortest open path to a tile within range of t. Never steps sideways without getting closer, so no back-and-forth.
 function gridStep(s, u, t) {
   const D = new Array(BW * BH).fill(-1), q = [], open = (x, y) => (x === u.x && y === u.y) || free(s, x, y);
-  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const m = manh(x, y, t.x, t.y); if (m >= 1 && m <= u.rng && open(x, y) && !isObs(s, x, y)) { D[x + y * BW] = 0; q.push(x + y * BW); } }
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const m = rdist(x, y, t.x, t.y); if (m >= 1 && m <= u.rng && open(x, y) && !isObs(s, x, y)) { D[x + y * BW] = 0; q.push(x + y * BW); } }
   for (let i = 0; i < q.length; i++) { const c = q[i], cx = c % BW, cy = (c - cx) / BW;
     for (const [dx, dy] of DIR4) { const nx = cx + dx, ny = cy + dy, k = nx + ny * BW; if (!inB(nx, ny) || D[k] >= 0 || !open(nx, ny)) continue; D[k] = D[c] + 1; q.push(k); } }
   const here = D[u.x + u.y * BW]; if (here <= 0) return false;
@@ -1441,7 +1445,7 @@ function chooseTarget(s, u) {
   let best = null, bd = 99;
   for (const e of s.units) {
     if (e.side === u.side || !targetable(s, e)) continue;
-    const d = s.grid ? manh(u.x, u.y, e.x, e.y) : cheb(u.x, u.y, e.x, e.y);
+    const d = s.grid ? rdist(u.x, u.y, e.x, e.y) * 10 + manh(u.x, u.y, e.x, e.y) : cheb(u.x, u.y, e.x, e.y);
     if (d < bd || (d === bd && (e.hp < best.hp || (e.hp === best.hp && e.uid < best.uid)))) { bd = d; best = e; }
   }
   return best;
@@ -2597,7 +2601,7 @@ function bvDraw(V, now) {
   if (V.drag) { const u = V.drag.bench ? { rng: heroStats(V.drag.hid).rng, side: 0 } : byUid(rs, V.drag.uid), h = V.hover || { x: Math.floor(V.drag.px / TILE), y: Math.floor(V.drag.py / TILE) }; if (u && inB(h.x, h.y) && !V.drag.toBench) { rgU = u; rgX = h.x; rgY = h.y; } }
   else if (V.sel) { const u = byUid(rs, V.sel); if (u && u.alive) { const [ux, uy] = unitPos(u, V.rt); rgU = u; rgX = Math.round(ux); rgY = Math.round(uy); } }
   if (rgU && rgU.rng) { const u = rgU, cx = rgX, cy = rgY, col = u.side === 0 ? '255,210,63' : '255,79,107'; {
-    for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = Math.abs(x - cx) + Math.abs(y - cy); if (d < 1 || d > u.rng) continue; g.fillStyle = `rgba(${col},0.2)`; g.fillRect(x * TILE + 1, y * TILE + 1, TILE - 2, TILE - 2); g.fillStyle = `rgba(${col},0.5)`; g.fillRect(x * TILE + 1, y * TILE + 1, TILE - 2, 1); } } }
+    for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = rdist(x, y, cx, cy); if (d < 1 || d > u.rng) continue; g.fillStyle = `rgba(${col},0.2)`; g.fillRect(x * TILE + 1, y * TILE + 1, TILE - 2, TILE - 2); g.fillStyle = `rgba(${col},0.5)`; g.fillRect(x * TILE + 1, y * TILE + 1, TILE - 2, 1); } } }
   // prediction: where the enemy stood last round (faded), and where your round-start abilities will land
   if (V.mode === 'setup') {
     if (V.ghosts) for (const gh of V.ghosts) {
@@ -3813,7 +3817,7 @@ function helpHTML() {
   <p>${icon('i_laser','ib')}<span><b>Round-start abilities</b> go off before anyone moves, so guess where the enemy will stand.</span></p>
   <p>${icon('i_tnear','ib')}<span>Heroes step <b>one tile at a time</b>, never diagonally, and can't walk through anyone. They always go after the <b>closest</b> enemy.</span></p>
   <p>${icon('i_orb','ib')}<span><b>Rift Orbs:</b> every hero costs 1 to 4 orbs (the blue orbs on its card). You get ${SLOT_START} orbs in round 1 and 1 more every round, plus a gold one after losing a round. Your captain always fights; tap or drag heroes from the bench to spend the rest.</span></p>
-  <p>${icon('i_bow','ib')}<span>Each hero has a <b>range</b> from 1 (right next to the enemy) to 4 tiles. Tap a hero to see the tiles it can hit.</span></p>
+  <p>${icon('i_bow','ib')}<span>Each hero has a <b>range</b> from 1 (the 8 tiles around it) to 4 tiles, diagonals included. Heroes still walk only up, down, left and right. Tap a hero to see the tiles it can hit.</span></p>
   ${WORLDS_ON ? `<p>${icon('i_globe','ib')}<span>Heroes from the <b>same world</b> are stronger together.</span></p>` : ''}
   <p>${icon('i_key','ib')}<span>Every win adds a chest to your shelf. Open chests with keys: you get a new key every 5 hours.</span></p>
   <p>${icon('i_htrophy','ib')}<span>Every Hero Chest holds <b>1 hero trophy</b>: each one is +1 hero level. Level 1 unlocks the hero and its first ability, level 5 the second, level 10 the third. Every level has a reward on that hero's road.</span></p>
