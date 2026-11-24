@@ -273,7 +273,7 @@ function homeHTML() {
   <div class="panel tight chestp"><button class="keyb" onclick="keyInfo()">${icon('i_key', 'ib')}<div><b>${S.keys}</b><small>${S.keys < KEY_MAX ? `<span data-until="${S.keyNext}"></span>` : 'full'}</small></div></button><div class="shelf">${shelf}</div></div>
   <button class="duelbtn ${older ? 'older' : ''}" onclick="openDuel()"><canvas id="arena-cv"></canvas><span class="dtxt"><small>${icon('i_swords', 'ii')} Duel · tap to change</small><b>${esc(A.name)}</b>
     <span class="drow"><span class="dchip" style="--dc:${d.color}">${d.name}</span>${older ? '<span class="tiny">no trophies at stake</span>' : `<span class="bar gold thin"><i style="width:${Math.round(pr * 100)}%"></i></span>`}</span></span><span class="dgo">${icon('i_right', 'ii')}</span></button>
-  <button class="btn gold big full battlebtn" onclick="startBattle()">${icon('i_swords','ib')} BATTLE</button>
+  <div class="playrow"><button class="btn gold big full battlebtn" onclick="startBattle()">${icon('i_swords','ib')} BATTLE</button>${S.tutorialDone ? advButtonHTML() : ''}</div>
   </div>`;
 }
 function keyInfo() { modal(`<h2>Keys</h2><div class="center">${icon('i_key', 'ib')}</div><p class="center">You have <b>${S.keys}</b> of ${KEY_MAX} keys. 1 key opens 1 chest.</p><p class="center small mute">${S.keys < KEY_MAX ? `Next key in <b data-until="${S.keyNext}">${fmtDur(S.keyNext - now())}</b>. ` : ''}A new key every ${KEY_HOURS} hours, or buy them in the Shop. Every win puts a chest on your shelf (up to ${SHELF_MAX}).</p><button class="btn gold full" data-close>OK</button>`); }
@@ -718,6 +718,7 @@ function helpHTML() {
   <p>${icon('i_key','ib')}<span>Every win adds a chest to your shelf. Open chests with keys: you get a new key every 5 hours.</span></p>
   <p>${icon('i_htrophy','ib')}<span>Every Hero Chest holds <b>1 hero trophy</b>: each one is +1 hero level. Level 1 unlocks the hero and its first ability, level 5 the second, level 10 the third. Every level has a reward on that hero's road.</span></p>
   <p>${icon('i_wild','ib')}<span><b>Wild trophies</b> are rare chest drops you can put on any hero you like.</span></p>
+  <p>${icon('star','ib')}<span><b>Adventure</b> (under BATTLE): beat levels in order for their rewards. Stars: win, lose at most 1 round, lose none. Every new star is +1 gem. Each chapter ends with a boss.</span></p>
   <p>${icon('i_save','ib')}<span>Your progress is saved on this phone. Make a backup code in Settings sometimes.</span></p></div>`;
 }
 function openSettings() {
@@ -792,7 +793,7 @@ function roundSeed() { return (M.setup.seed + M.round * 7919) >>> 0; }
 function beginMatch(setup, saved) {
   M = { setup, phase: 'prep', vis: {}, sel: null, drag: null, hover: null, speed: (S.settings.fast && !setup.tut ? 2 : 1), acc: 0, rt: 0, last: performance.now(), sfxT: 0, mark: null, cheer: null, slowUntil: 0 };
   const fresh = { lastW: null, round: 1, score: [0, 0], prev: [null, null], agg: { dmg: 0, kills: 0, abil: 0 }, flawless: 0, rounds: 0, lineups: null, heroes: {}, clutch: 0, down02: false, feats: {} };
-  if (saved) Object.assign(M, fresh, { lastW: saved.lastW != null ? saved.lastW : null, sides: saved.sides, round: saved.round, score: saved.score, prev: saved.prev, agg: saved.agg, flawless: saved.flawless, rounds: saved.rounds, lineups: saved.lineups || null, heroes: saved.heroes || {}, clutch: saved.clutch || 0, down02: !!saved.down02, feats: saved.feats || {} });
+  if (saved) Object.assign(M, fresh, { bossHp: saved.bossHp != null ? saved.bossHp : null, lastW: saved.lastW != null ? saved.lastW : null, sides: saved.sides, round: saved.round, score: saved.score, prev: saved.prev, agg: saved.agg, flawless: saved.flawless, rounds: saved.rounds, lineups: saved.lineups || null, heroes: saved.heroes || {}, clutch: saved.clutch || 0, down02: !!saved.down02, feats: saved.feats || {} });
   else Object.assign(M, fresh, { sides: [newMatchSide(setup.myDeck), newMatchSide(setup.foeDeck)] });
   M.style = setup.tut ? 'mix' : aiStyleFor(setup.seed >>> 2);
   M.variant = setup.variant; const eb = eventBoard(setup.event, M.variant); M.obs = eb.obs;
@@ -809,7 +810,7 @@ function beginMatch(setup, saved) {
 }
 function saveMatch() {
   if (!M || M.setup.tut) return;
-  lsSet(STORE_BATTLE, JSON.stringify({ bh: BH, lastW: M.lastW, setup: M.setup, sides: M.sides, round: M.round, score: M.score, prev: M.prev, agg: M.agg, flawless: M.flawless, rounds: M.rounds, lineups: M.lineups, heroes: M.heroes, clutch: M.clutch, down02: M.down02, feats: M.feats }));
+  lsSet(STORE_BATTLE, JSON.stringify({ bh: BH, lastW: M.lastW, bossHp: M.bossHp, setup: M.setup, sides: M.sides, round: M.round, score: M.score, prev: M.prev, agg: M.agg, flawless: M.flawless, rounds: M.rounds, lineups: M.lineups, heroes: M.heroes, clutch: M.clutch, down02: M.down02, feats: M.feats }));
 }
 
 // ----- iOS Home Screen app fix -----
@@ -927,26 +928,31 @@ async function prepRound() {
   const moved = setRoundBoard(r);
   if (moved && r > 1) { await hazardShift(); if (!M) return; }
   // slots: the limit grows every round, and whoever lost the last round gets 1 extra
-  M.caps = [sideCap(r, M.lastW === 1), sideCap(r, M.lastW === 0)];
-  aiPickBoard(M.sides[1], M.caps[1], M.style || 'mix', D, matchRnd('fb' + r), M.prev[0]);
+  M.caps = [sideCap(r, M.lastW === 1), sideCap(r, M.lastW === 0) + (M.setup.foeOrbs || 0)];
+  if (!M.setup.fixedFoe) aiPickBoard(M.sides[1], M.caps[1], M.style || 'mix', D, matchRnd('fb' + r), M.prev[0]);
   if (r === 1 && M.setup.tut) autoFill(M.sides[0], M.caps[0]); else trimBoard(M.sides[0], M.caps[0]);
   const my = myLineup(); if (M.setup.tut && r === 1) my.charge0 = 0.8;
   $('#b-hint2') && ($('#b-hint2').textContent = 'Enemy is planning…');
   await new Promise(r2 => setTimeout(r2, 40));
   const ctx = { event: M.setup.event, variant: M.variant, captain: M.sides[1].captain, oppBoard: M.sides[0].board };
   const guess = M.prev[0] ? estimateLineup(M.sides[0].board, M.prev[0], 0, M.sides[0].captain, M.obs) : (DIFF[D].idx >= 2 ? my : null);
-  const foe = aiLineup(M.sides[1].board, 1, D, guess, ctx, (M.setup.seed + r * 131) >>> 0);
+  let foe;
+  if (M.setup.fixedFoe) { // puzzles and bosses: the same exact spots every round
+    foe = { captain: M.sides[1].captain, units: M.setup.fixedFoe.map(u => Object.assign({}, u)) };
+    if (M.setup.boss) { if (M.bossHp == null) M.bossHp = HERO[M.setup.boss].hp; foe.units.forEach(u => { if (u.hid === M.setup.boss) u.hpNow = M.bossHp; }); }
+  } else foe = aiLineup(M.sides[1].board, 1, D, guess, ctx, (M.setup.seed + r * 131) >>> 0);
   if (M.setup.foeHp) foe.hpMul = M.setup.foeHp;
   // before round 1 you already know who they brought: show them faded in their usual spots (the real spots can differ)
-  if (r === 1) M.scout = { units: aiLineup(M.sides[1].board, 1, D, null, ctx, (M.setup.seed ^ 0x9e37) >>> 0).units, captain: M.sides[1].captain };
+  if (r === 1) M.scout = M.setup.fixedFoe ? { units: foe.units, captain: foe.captain, all: true } : { units: aiLineup(M.sides[1].board, 1, D, null, ctx, (M.setup.seed ^ 0x9e37) >>> 0).units, captain: M.sides[1].captain };
   M.lineups = [my, foe];
   M.phase = 'setup'; rebuildPreview(); saveMatch(); hud(); panel(); tutHook('setup', r);
-  if (r === 1 && !M.setup.tut) toast(`${icon('i_orb', 'ii')} Spend your <b>${M.caps[0]} Rift Orbs</b>: tap or drag heroes from the bench`);
+  if (r === 1 && !M.setup.tut) toast(M.setup.fixedFoe && !M.setup.boss ? `${icon('i_target', 'ii')} Puzzle: their exact spots are shown. Spend your <b>${M.caps[0]} Rift Orbs</b>`
+    : M.setup.boss ? `${icon('i_skull', 'ii')} The ${esc(HERO[M.setup.boss].name)}'s damage stays between rounds. Spend your <b>${M.caps[0]} Rift Orbs</b>` : `${icon('i_orb', 'ii')} Spend your <b>${M.caps[0]} Rift Orbs</b>: tap or drag heroes from the bench`);
   if (r > 1) { const free = M.caps[0] - slotsUsed(M.sides[0].board); toast(`${icon('i_orb', 'ii')} <b>${M.caps[0]} Rift Orbs</b> this round${M.lastW === 1 ? ' (gold one for losing the last round)' : ''}${free > 0 && M.sides[0].bench.length ? ` · ${free} to spend` : ''}`); }
 }
 // faded enemies: last round's spots, or before round 1 their usual spots
 // faded enemies: where they stood last round; before round 1 you only know their captain
-function ghostLine() { return M.prev && M.prev[1] ? M.prev[1] : M.round === 1 && M.scout ? Object.assign({}, M.scout, { units: M.scout.units.filter(u => u.hid === M.sides[1].captain) }) : null; }
+function ghostLine() { return M.prev && M.prev[1] ? M.prev[1] : M.round === 1 && M.scout ? Object.assign({}, M.scout, { units: M.scout.all ? M.scout.units : M.scout.units.filter(u => u.hid === M.sides[1].captain) }) : null; }
 function roundVariant(r) { return r <= 1 || M.setup.tut ? M.setup.variant : (((hashStr('hz' + r) ^ M.setup.seed) >>> 0) % 1e9) + 2; }
 function setRoundBoard(r) {
   const E = EVENTS[M.setup.event], v = roundVariant(r), changed = v !== M.variant;
@@ -1059,6 +1065,7 @@ function fxEvents(evs, nowT) {
       case 'opening': { const box = $('#b-cap'); if (box && M.round === 1) { const d = document.createElement('div'); d.className = 'capl'; d.innerHTML = `${icon('i_clock', 'ii')} <b>Round-start abilities</b> go off first. Nobody moves yet!`; box.appendChild(d); while (box.children.length > 2) box.firstChild.remove(); setTimeout(() => d.classList.add('fade'), 2200); setTimeout(() => d.remove(), 2700); } break; }
       case 'taunt': { tutHook('taunt', e); const p = pos(e.uid); bvFx({ type: 'ringfx', x: p[0], y: p[1], r: 2.4, color: '#ff4f6b', dur: 520 }); for (const tu of e.tuids) { const q = pos(tu); bvFx({ type: 'line', x0: p[0], y0: p[1], x1: q[0], y1: q[1], color: '#ff4f6b', w: 1, dur: 700 }); } bvShake(2, 200); tone(160, 0.25, 'sawtooth', 0.05, 320); break; }
       case 'cap': addCaption(e); break;
+      case 'tele': bvFx({ type: 'hazpulse', tiles: e.tiles, color: '#ff4f6b', dur: e.dur * 1000 / Math.max(1, M.speed) }); SFX.tap(); break;
       case 'blast': bvFx({ type: 'blast', tiles: e.tiles, color: e.color, dur: e.boom ? 450 : 350 }); if (e.boom) { bvShake(3, 300); const c = e.tiles[Math.floor(e.tiles.length / 2)], list = []; for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2; list.push({ x: c.x * TILE + 9, y: c.y * TILE + 9, vx: Math.cos(a) * (0.8 + Math.random()), vy: Math.sin(a) * (0.8 + Math.random()) - 0.5, color: i % 3 ? '#ff8a2a' : '#ffd23f' }); } bvFx({ type: 'parts', list, dur: 500 }); SFX.die(); } buzz(15); break;
       case 'dmg': {
         const p = pos(e.uid); v.flash = nowT + 70;
@@ -1125,6 +1132,7 @@ function roundOver() {
   for (const f in M.rs.feats[0]) M.feats[f] = 1;
   if (w === 0) M.score[0]++; else if (w === 1) M.score[1]++;
   M.lastW = w === 0 || w === 1 ? w : null;
+  if (M.setup.boss) { const b = M.rs.units.find(u => u.boss); M.bossHp = b && b.alive ? b.hp : 0; if (!M.bossHp) M.score[0] = Math.max(M.score[0], toWin()); }
   if (M.score[0] === 0 && M.score[1] >= 2) M.down02 = true;
   if (w === 0 || w === 1) M.cheer = { side: w, t0: bvNow() };
   if (M.zoomed) { M.zoomed = false; bvZoom(null); }
@@ -1244,6 +1252,7 @@ async function finishMatch(fled) {
   if (!fled) await matchEndShow(win, draw);
   if (!M) return;
   if (M.setup.tut) { finishTutorialMatch(win, fled, sc); return; }
+  if (M.setup.adv) { finishAdventureMatch(win, fled, sc); return; }
   const finalHids = M.lineups ? M.lineups[0].units.map(u => u.hid) : [];
   const res = finishBattle(S, M.setup, { winner, score: sc, stats: M.agg, flawless: M.flawless, rounds: M.rounds, syn3: activeSynergies(finalHids).some(x => x.n >= 3), captain: M.sides[0].captain,
     heroes: M.heroes, clutch: M.clutch, comeback: win && M.down02, feats: M.feats }, now());
@@ -1296,6 +1305,99 @@ function countUp(root) {
     setTimeout(() => requestAnimationFrame(f), 250);
   });
 }
+// ---------- adventure ----------
+function advButtonHTML() {
+  const C = ADVENTURE[0], got = advChapterStars(S, C.id), max = C.levels.length * 3, nxt = advNext(S, C.id);
+  return `<button class="advbtn" onclick="openAdventure()"><span class="ai">${icon('star', 'ib')}</span><span class="at"><b>Adventure</b><small>${got >= max ? 'Chapter ' + C.id + ' complete' : advLevel(C.id, nxt).type === 'boss' ? 'Boss: ' + esc(advLevel(C.id, nxt).name) : 'Level ' + (nxt + 1)} · ${esc(C.name)}</small></span><span class="as">${icon('star', 'ii')}${got}/${max}</span>${icon('i_right', 'ii')}</button>`;
+}
+function closeAdventure() { const a = $('#advl'); if (a) a.remove(); }
+function advRewardTiles(L, claimed) {
+  const R = L.r, t = [];
+  const tile = (img, n, cls) => `<div class="rw3 ${cls || ''} ${claimed ? 'got' : ''}">${img}${n ? `<span>${fmt(n)}</span>` : ''}${claimed ? `<img class="ck px" src="${sprURL('i_check')}">` : ''}</div>`;
+  if (R.chest) t.push(tile(`<img class="px" src="${chestURL(R.chest)}">`, 0, 'k-chest'));
+  if (R.wild) t.push(tile(icon('i_wild', ''), R.wild, 'k-wild'));
+  if (R.coins) t.push(tile(icon('coin', ''), R.coins));
+  if (R.gems) t.push(tile(icon('gem', ''), R.gems));
+  if (R.keys) t.push(tile(icon('i_key', ''), R.keys));
+  return t.join('');
+}
+function openAdventure(chId, focus) {
+  closeAdventure(); if (M) return;
+  const C = ADVENTURE.find(c => c.id === (chId || ADVENTURE[0].id)), n = C.levels.length, here = advNext(S, C.id);
+  const got = advChapterStars(S, C.id), max = n * 3;
+  const el = document.createElement('div'); el.id = 'advl'; el.className = 'adv';
+  el.innerHTML = `<div class="adv-hd"><button class="btn sm gray" id="adv-x" aria-label="Close">${icon('i_x', 'ii')}</button><div class="adv-tt"><h2>Adventure</h2><small>Chapter ${C.id} · ${esc(C.name)}</small></div><span class="adv-st">${icon('star', '')}<b>${got} / ${max}</b></span></div><div class="adv-map"><div class="adv-in"></div></div>`;
+  // sits under the top bar so coins and gems stay in view (and rewards can fly into them)
+  const tb = $('#topbar'), top = tb ? Math.round(tb.getBoundingClientRect().bottom) : 0; el.style.top = top + 'px';
+  if (document.documentElement.classList.contains('vfix')) el.style.height = `calc(var(--app-h) - ${top}px)`;
+  document.body.appendChild(el);
+  const map = $('.adv-map', el), inner = $('.adv-in', el), W = map.clientWidth || 360, GAP = 92, PAD = 70, BOSSH = 170, H = PAD + (n - 1) * GAP + BOSSH + 40;
+  inner.style.height = H + 'px';
+  // arena floor behind the path
+  const fc = document.createElement('canvas'); fc.width = 36; fc.height = 36; const fg = fc.getContext('2d'); for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) drawFloorTile(fg, x * 18, y * 18, x, y, C.arena, 7);
+  map.style.backgroundImage = `url(${fc.toDataURL()})`;
+  const X = [0.5, 0.27, 0.5, 0.73], pos = i => i === n - 1 ? [Math.round(W / 2), H - PAD - (n - 2) * GAP - BOSSH + 20] : [Math.round(W * X[i % 4]), H - PAD - i * GAP];
+  const pts = C.levels.map((L, i) => pos(i)), doneN = C.levels.filter((L, i) => advStars(S, C.id, i) > 0).length;
+  let html = `<svg class="adv-path" width="${W}" height="${H}"><polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="#0b0716aa" stroke-width="12" stroke-linejoin="round" stroke-dasharray="2 13" stroke-linecap="round"/>${doneN ? `<polyline points="${pts.slice(0, Math.min(n, doneN + 1)).map(p => p.join(',')).join(' ')}" fill="none" stroke="#ffd23f" stroke-width="8" stroke-linejoin="round" stroke-dasharray="2 13" stroke-linecap="round"/>` : ''}</svg>`;
+  C.levels.forEach((L, i) => {
+    const [x, y] = pts[i], st = advStars(S, C.id, i), open = advOpen(S, C.id, i), T = ADV_TYPES[L.type];
+    if (L.type === 'boss') { html += `<button class="boss2 ${open ? '' : 'locked'} ${st ? 'done' : ''}" data-lv="${i}" style="left:${x}px;top:${y}px"><span class="bl">BOSS</span><img class="bs px" src="${sprURL(L.cap, null, open ? '' : 'sil', 128)}"><span class="bn">${esc(L.name)}</span>${st ? `<span class="stars">${[0, 1, 2].map(k => `<img class="px ${k < st ? '' : 'e'}" src="${sprURL('star')}">`).join('')}</span>` : ''}</button>`; return; }
+    html += `<button class="st2 ${st ? 'done' : ''} ${open && !st ? 'here' : ''} ${open ? '' : 'locked'}" data-lv="${i}" style="left:${x}px;top:${y}px">${open ? i + 1 : `<img class="px lk" src="${sprURL('lock')}">`}${T ? `<span class="ty"><img class="px" src="${sprURL(T.icon)}"></span>` : ''}${st ? `<span class="stars">${[0, 1, 2].map(k => `<img class="px ${k < st ? '' : 'e'}" src="${sprURL('star')}">`).join('')}</span>` : ''}</button>`;
+  });
+  inner.innerHTML = html;
+  const fi = focus != null ? focus : here; map.scrollTop = Math.max(0, pts[fi][1] - map.clientHeight * 0.62);
+  $('#adv-x', el).onclick = () => { SFX.tap(); closeAdventure(); };
+  el.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => { SFX.tap(); advLevelBox(C, +b.dataset.lv, el); });
+  if (focus != null) setTimeout(() => advLevelBox(C, focus, el), 250);
+}
+// tap a level: its name, what's special, the enemy captain, rewards and PLAY
+function advLevelBox(C, i, el) {
+  el.querySelectorAll('.lvpop, .lvdim').forEach(x => x.remove()); el.querySelectorAll('.picked').forEach(x => x.classList.remove('picked'));
+  const L = C.levels[i], st = advStars(S, C.id, i), open = advOpen(S, C.id, i), T = ADV_TYPES[L.type], inner = $('.adv-in', el), map = $('.adv-map', el);
+  const node = inner.querySelector(`[data-lv="${i}"]`); node.classList.add('picked');
+  const dim = document.createElement('div'); dim.className = 'lvdim'; dim.onclick = () => { pop.remove(); dim.remove(); node.classList.remove('picked'); }; inner.appendChild(dim);
+  const pop = document.createElement('div'); pop.className = 'lvpop';
+  const capH = HERO[L.cap];
+  pop.innerHTML = `<button class="lx" aria-label="Close">${icon('i_x', 'ii')}</button>
+    <div class="lh"><span class="ln">${L.type === 'boss' ? 'Chapter boss' : 'Level ' + (i + 1)}</span>${T ? `<span class="lt" style="background:${T.color}33;color:${T.color}">${icon(T.icon, '')}${T.name}</span>` : ''}${st ? `<span class="lst">${[0, 1, 2].map(k => `<img class="px ${k < st ? '' : 'e'}" src="${sprURL('star')}">`).join('')}</span>` : ''}</div>
+    <h3>${esc(L.name)}</h3><div class="ld">${esc(L.desc)}</div>
+    <div class="le"><div class="ec">${L.type === 'boss' ? '' : `<img class="cr px" src="${sprURL('i_crown')}">`}<img class="px" src="${sprURL(L.cap)}"></div><div><small>${L.type === 'boss' ? 'Boss' : 'Enemy captain'}</small><b>${esc(capH.name)}</b></div></div>
+    <div class="lr"><small>${st ? 'Rewards (collected)' : 'Rewards for the first win'}</small><div class="lrt">${advRewardTiles(L, st > 0)}</div>
+    <div class="lsg">${icon('gem', 'ii')} +1 gem for every star: win, lose at most 1 round, lose none</div></div>
+    ${open ? `<button class="btn gold full lp">${st ? 'PLAY AGAIN' : 'PLAY'}</button>` : `<div class="lockmsg">${icon('lock', 'ii')} Beat level ${i} first</div>`}`;
+  inner.appendChild(pop);
+  const [nx, ny] = [parseFloat(node.style.left), parseFloat(node.style.top)], W = inner.clientWidth, PW = Math.min(310, W - 20);
+  pop.style.width = PW + 'px'; pop.style.left = Math.max(10, Math.min(W - 10 - PW, nx - PW / 2)) + 'px';
+  const ph = pop.offsetHeight, rad = L.type === 'boss' ? 70 : 34, above = ny - rad - 16 - ph > map.scrollTop + 4;
+  pop.style.top = (above ? ny - rad - 16 - ph : ny + rad + 16) + 'px'; pop.classList.toggle('below', !above);
+  pop.style.setProperty('--ax', Math.max(20, Math.min(PW - 34, nx - parseFloat(pop.style.left) - 13)) + 'px');
+  if (!above && ny + rad + 16 + ph > map.scrollTop + map.clientHeight) map.scrollTo({ top: ny + rad + ph - map.clientHeight + 40, behavior: 'smooth' });
+  else if (above && ny - rad - 16 - ph < map.scrollTop) map.scrollTo({ top: ny - rad - 30 - ph, behavior: 'smooth' });
+  $('.lx', pop).onclick = dim.onclick;
+  const play = $('.lp', pop); if (play) play.onclick = () => { if (M) return; SFX.cast(); closeAdventure(); beginMatch(advSetup(S, C.id, i), null); persist(); };
+}
+function finishAdventureMatch(win, fled, sc) {
+  const setup = M.setup, { ch, i } = setup.adv, L = advLevel(ch, i);
+  const out = advFinish(S, setup, { winner: fled ? 1 : win ? 0 : 1, score: sc, stats: M.agg });
+  S.activeBattle = false; lsDel(STORE_BATTLE); persist();
+  const stars = [0, 1, 2].map(k => `<img class="px advstar ${k < out.stars ? 'on' : ''} ${k >= out.prev && k < out.stars ? 'new' : ''}" style="animation-delay:${0.35 + k * 0.28}s" src="${sprURL('star')}">`).join('');
+  const r = out.r || {}, g = { coins: r.coins || 0, gems: (r.gems || 0) + out.gems };
+  const tiles = rewardTiles({ coins: g.coins, gems: g.gems, keys: r.keys || 0, wild: r.wild || 0 }) + (out.chestType ? `<div class="rewards"><div class="rw new drop"><img src="${chestURL(out.chestType)}"><span>${CHESTS[out.chestType].name.split(' ')[0]}</span><small>chest</small></div></div>` : '');
+  holdRes(g);
+  const m = modal(`${resultHeader(out.stars ? (L.type === 'boss' ? 'BOSS DOWN' : 'LEVEL CLEAR') : 'DEFEAT', out.stars ? 'win' : 'lose')}
+    <p class="center" style="margin:0 0 4px;font-size:24px"><b>${esc(L.name)}</b> <span class="small mute">${sc[0]} – ${sc[1]}${fled ? ' (left)' : ''}</span></p>
+    <div class="advstars">${stars}</div>
+    ${out.gems ? `<p class="center small" style="color:var(--gold);margin:2px 0 6px">${out.gems} new star${out.gems > 1 ? 's' : ''}: +${out.gems} gem${out.gems > 1 ? 's' : ''}</p>` : out.stars && out.stars <= out.prev ? `<p class="center small mute" style="margin:2px 0 6px">Best: ${out.prev} star${out.prev > 1 ? 's' : ''}</p>` : ''}
+    ${g.coins || g.gems || r.keys || r.wild || out.chestType ? tiles : out.stars ? '' : `<p class="center small mute">Stars: win, lose at most 1 round, lose none. Try a different lineup!</p>`}
+    <button class="btn gold full" id="cont">Continue</button>`, { noClose: true });
+  if (out.stars) SFX.coin();
+  $('#cont', m).onclick = () => {
+    const rects = {}; for (const k in g) { const t = m.querySelector(`[data-res="${k}"]`); if (t) rects[k] = t.getBoundingClientRect(); }
+    m.remove(); closeBattle(); openAdventure(ch, out.stars && i + 1 < advLevelCount(ch) ? i + 1 : i);
+    setTimeout(() => { for (const k in g) if (g[k]) flood({ [k]: g[k] }, rects[k] || null); else releaseRes(k, 0); if (out.chest) openSpecChest(CHESTS[out.chestType].name, out.chest); }, 80);
+  };
+}
+function advLevelCount(ch) { return ADVENTURE.find(c => c.id === ch).levels.length; }
 function finishTutorialMatch(win, fled, sc) {
   const first = finishTutorial(S); persist();
   if (fled) { const skipped = M.tutSkipped; tutHook('matchDone', { win: false, fled: true }); TUT = null; coachHide(); closeBattle(); if (first) toast(skipped ? 'Tutorial skipped. A Hero Chest is waiting on your shelf!' : 'A Hero Chest is waiting on your shelf!'); return; }
@@ -1366,7 +1468,7 @@ function boot() {
       if (sv.bh !== BH || (sv.lineups && sv.lineups.some(offBoard)) || (sv.prev && sv.prev.some(offBoard))) { sv.lineups = null; sv.prev = [null, null]; }
       const m = modal(`<h2>Match in progress</h2><p class="center">You left a match against <b>${esc(sv.setup.foeName)}</b> (${sv.score[0]}–${sv.score[1]}). Jump back in?</p><div class="row" style="gap:8px"><button class="btn red grow" id="ff">Forfeit</button><button class="btn gold grow" id="rs">Resume</button></div>`, { noClose: true });
       $('#rs', m).onclick = () => { m.remove(); beginMatch(sv.setup, sv); };
-      $('#ff', m).onclick = () => { m.remove(); finishBattle(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg, flawless: 0, rounds: sv.rounds }, now()); S.activeBattle = false; lsDel(STORE_BATTLE); persist(); render(); toast('Match forfeited'); };
+      $('#ff', m).onclick = () => { m.remove(); if (sv.setup.adv) advFinish(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg }); else finishBattle(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg, flawless: 0, rounds: sv.rounds }, now()); S.activeBattle = false; lsDel(STORE_BATTLE); persist(); render(); toast('Match forfeited'); };
     } catch (e) { S.activeBattle = false; lsDel(STORE_BATTLE); persist(); }
   } else if (S.activeBattle) { S.activeBattle = false; persist(); }
   if (fresh && BUILD === 'test') modal(`<h2>Test Build</h2><p class="center small">All 20 heroes are unlocked with all 3 abilities, plus 999,999 coins, 99,999 gems and 10 keys. This save is separate from the normal preview.</p><p class="center small mute">More tools in ${icon('i_gear','ii')} Settings ${icon('i_right','ii')} Test tools: jump to any arena, reset hero trophies, skip time to test keys, fill the chest shelf.</p><button class="btn gold full" data-close>Show me the heroes</button>`, { onClose: () => go('heroes') });

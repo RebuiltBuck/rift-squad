@@ -27,7 +27,7 @@ function newSave(now) {
     road: [], season: { id: seasonKey(now), xp: 0, claimed: [], peak: 0, bonusClaimed: 0 },
     quests: null, shop: null, winCoins: { day: dayKey(now), n: 0 },
     stats: newStats(),
-    formation: {}, ach: {}, heroStats: {},
+    formation: {}, ach: {}, heroStats: {}, adv: { st: {}, tries: {} },
     settings: { sound: true, music: true, fast: false }, lastDiff: 'normal', tutorialDone: false, pendingEvents: [],
   };
   START_HEROES.forEach(h => s.heroes[h] = newHeroRec(1));
@@ -65,6 +65,7 @@ function migrate(s) {
   if (!s.ach) s.ach = {}; if (!s.heroStats) s.heroStats = {};
   // hero roads (v3): the first ability comes free with the hero; rc = road levels already claimed
   if (s.wild == null) s.wild = 0;
+  if (!s.adv) s.adv = { st: {}, tries: {} }; // adventure: best stars per level, attempts
   for (const h in s.heroes) { const o = s.heroes[h]; if (!o.rc) o.rc = []; if (o.tr >= 1 && !o.un[0]) o.un[0] = 1; if (o.tr >= 1 && o.eq < 0) o.eq = 0; }
   if (s.tutorialDone == null || (!s.tutorialDone && s.stats.battles > 0)) s.tutorialDone = true; // players who already battled skip the tutorial
   if (s.lastDiff == null) s.lastDiff = 'normal';
@@ -494,6 +495,42 @@ function finishTutorial(s) {
   const first = !s.tutorialDone; s.tutorialDone = true;
   if (first) addToShelf(s, 'hero', 0);
   return first;
+}
+
+// ---------- adventure ----------
+function advLevel(ch, i) { const C = ADVENTURE.find(c => c.id === ch); return C && C.levels[i]; }
+function advStars(s, ch, i) { return (s.adv.st[advKey(ch, i)] || 0); }
+function advOpen(s, ch, i) { return i === 0 || advStars(s, ch, i - 1) > 0; }
+function advChapterStars(s, ch) { const C = ADVENTURE.find(c => c.id === ch); return C.levels.reduce((n, L, i) => n + advStars(s, ch, i), 0); }
+function advNext(s, ch) { const C = ADVENTURE.find(c => c.id === ch); const i = C.levels.findIndex((L, k) => advStars(s, ch, k) === 0); return i < 0 ? C.levels.length - 1 : i; }
+// a match for one level, using your squad
+function advSetup(s, ch, i) {
+  const C = ADVENTURE.find(c => c.id === ch), L = C.levels[i], key = advKey(ch, i), tries = (s.adv.tries[key] || 0) + 1; s.adv.tries[key] = tries;
+  const seed = (hashStr('adv' + key) ^ (L.fixed ? 0 : tries * 2654435761)) >>> 0, rnd = mulberry32(seed);
+  const abOf = (h, k) => HERO_ABILITIES[h] ? HERO_ABILITIES[h][i < 2 ? 0 : (k + i) % 3] : null;
+  const foeHids = L.fixed ? L.fixed.map(f => f[0]) : [L.cap, ...L.team];
+  return { adv: { ch, i, key }, arena: C.arena, diff: L.diff, foeName: L.name, foeTier: 1, seed, event: L.event, variant: Math.floor(rnd() * 2),
+    foeHp: L.hp !== 1 ? L.hp : null, foeOrbs: L.orbs || 0, boss: L.type === 'boss' ? L.cap : null,
+    fixedFoe: L.fixed ? L.fixed.map((f, k) => ({ hid: f[0], ab: abOf(f[0], k), x: f[1], y: f[2] })) : null,
+    myDeck: s.squad.map(h => ({ hid: h, ab: equippedAb(s, h) })),
+    foeDeck: (L.fixed ? [L.cap, ...foeHids.filter(h => h !== L.cap)] : foeHids).map((h, k) => ({ hid: h, ab: abOf(h, k) })) };
+}
+// stars: 1 = win, 2 = lost at most 1 round, 3 = lost none. First win pays the level's reward; every new star pays 1 gem.
+function advFinish(s, setup, res) {
+  const { ch, i, key } = setup.adv, L = advLevel(ch, i), prev = s.adv.st[key] || 0;
+  const stars = res.winner === 0 ? (res.score[1] === 0 ? 3 : res.score[1] === 1 ? 2 : 1) : 0;
+  const out = { stars, prev, first: stars > 0 && prev === 0, gems: Math.max(0, stars - prev) * ADV_STAR_GEMS, r: null, chest: null };
+  s.stats.battles++; questAdd(s, 'battles', 1);
+  s.stats.kills += res.stats.kills; s.stats.dmg += res.stats.dmg; s.stats.abil += res.stats.abil;
+  questAdd(s, 'kills', res.stats.kills); questAdd(s, 'dmg', res.stats.dmg); questAdd(s, 'abil', res.stats.abil);
+  if (res.winner === 0) { s.stats.wins++; questAdd(s, 'wins', 1); }
+  if (stars > prev) s.adv.st[key] = stars;
+  if (out.gems) s.gems += out.gems;
+  if (out.first) {
+    const R = L.r; out.r = { coins: R.coins || 0, gems: R.gems || 0, keys: R.keys || 0, wild: R.wild || 0 }; grant(s, out.r);
+    if (R.chest) { out.chest = openInstant(s, R.chest, ADVENTURE.find(c => c.id === ch).arena, 'adv' + key); out.chestType = R.chest; }
+  }
+  return out;
 }
 
 // ---------- backup ----------

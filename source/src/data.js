@@ -195,6 +195,39 @@ const HEROES = [
   { id: 'ember',  name: 'Ember',        world: 'kingdom',  origin: 'Fire Mage',      rarity: 'mythic',    role: 'ranged',  color: '#ff8a2a', hp: 4, dmg: 2, as: 1.5, cost: 3, rng: 4, look: 'fireball', lc: '#ff8a2a' },
 ];
 const HERO = {}; HEROES.forEach(h => HERO[h.id] = h);
+// ----- bosses (Adventure only: not collectable, not in HEROES) -----
+// big: stands on 2x2 tiles and never moves. hpMax is the whole fight's health; it carries over between rounds.
+const BOSSES = {
+  golem: { id: 'golem', boss: true, big: true, name: 'Rift Golem', world: 'wild', rarity: 'legendary', role: 'tank', color: '#8a5ad8', hp: 140, dmg: 3, as: 1.6, cost: 4, rng: 1, look: 'smash', lc: '#ff4fd8',
+    slam: { every: 6, wind: 1.6, dmg: 5 }, desc: 'Stands on 4 tiles. Every few seconds it marks a 3x3 area in red, then slams it. Its damage stays between rounds.' },
+};
+Object.assign(HERO, BOSSES);
+
+// ----- Adventure: chapters of levels. Each level has a reward for the first win, and up to 3 stars worth 1 gem each -----
+// stars: 1 = win, 2 = win losing at most 1 round, 3 = win without losing a round
+// enemy: cap + team (picks its board with Rift Orbs like a normal match), or fixed: exact spots every round (puzzles, bosses)
+// fixed spots use the enemy half: rows 0 (back) to 3 (front), columns 0-4
+const ADV_STAR_GEMS = 1;
+const ADVENTURE = [
+  { id: 1, name: 'Training Meadow', arena: 0, levels: [
+    { name: 'First Steps', desc: 'A few goblins out for a stroll.', diff: 'easy', hp: 0.6, orbs: -1, event: 'clear', cap: 'bruno', team: ['gus', 'zip', 'kit', 'nova', 'dusty'], r: { coins: 50 } },
+    { name: 'Goblin Patrol', desc: 'They march in a tight group.', diff: 'easy', hp: 0.7, orbs: -1, event: 'clear', cap: 'marla', team: ['gus', 'kit', 'volt', 'bao', 'zip'], r: { keys: 1 } },
+    { name: 'The Lane', type: 'puzzle', desc: 'They all stand in one lane. Their exact spots are shown: plan around them.', diff: 'normal', hp: 0.8, event: 'clear', cap: 'bruno',
+      fixed: [['bruno', 2, 3], ['gus', 2, 2], ['zip', 2, 1], ['nova', 2, 0]], r: { gems: 10 } },
+    { name: 'Bandit Camp', desc: 'Rocks everywhere. Watch your paths.', diff: 'normal', hp: 0.85, event: 'rocks', cap: 'marla', team: ['kit', 'vex', 'dusty', 'gus', 'yuki'], r: { coins: 100 } },
+    { name: 'Mossy Bridge', desc: 'Healing springs help whoever stands on them.', diff: 'normal', hp: 0.9, event: 'springs', cap: 'rocco', team: ['bao', 'luna', 'volt', 'zorp', 'kit'], r: { chest: 'hero' } },
+    { name: 'Goblin Ambush', type: 'elite', desc: 'Stronger heroes, and they bring 1 extra Rift Orb.', diff: 'hard', hp: 0.9, orbs: 1, event: 'clear', cap: 'mumbo', team: ['gus', 'kit', 'vex', 'hex', 'dusty'], r: { wild: 1, coins: 100, keys: 1 } },
+    { name: 'Old Windmill', desc: 'Lava pools burn anyone who stands in them.', diff: 'normal', hp: 1, event: 'lava', cap: 'chrono', team: ['ember', 'zip', 'yuki', 'ragnar', 'nova'], r: { coins: 150 } },
+    { name: 'Locked Gate', type: 'puzzle', desc: 'A wall of three guards, two snipers in the corners. Their exact spots are shown.', diff: 'hard', hp: 0.9, event: 'clear', cap: 'rocco',
+      fixed: [['rocco', 2, 3], ['volt', 1, 3], ['kit', 3, 3], ['dusty', 0, 0], ['zip', 4, 0]], r: { keys: 2 } },
+    { name: 'Rift Crack', desc: 'The rift is opening. Everything hits harder here.', diff: 'hard', hp: 1.05, event: 'lava', cap: 'rex', team: ['ragnar', 'ember', 'hex', 'luna', 'vex'], r: { gems: 20 } },
+    { name: "Rocco's Guard", type: 'elite', desc: 'The Golem\'s bodyguards. 1 extra Rift Orb.', diff: 'normal', hp: 0.8, orbs: 1, event: 'rocks', cap: 'rocco', team: ['yuki', 'bao', 'dusty', 'zorp', 'kit'], r: { chest: 'hero' } },
+    { name: 'Rift Golem', type: 'boss', desc: HERO.golem.desc, diff: 'hard', hp: 1, event: 'clear', cap: 'golem',
+      fixed: [['golem', 1, 0], ['gus', 0, 2], ['kit', 4, 2]], r: { chest: 'mega', coins: 200 } },
+  ] },
+];
+const ADV_TYPES = { puzzle: { name: 'Puzzle', icon: 'i_target', color: '#4fa3ff' }, elite: { name: 'Elite', icon: 'i_skull', color: '#ff4f6b' }, boss: { name: 'Boss', icon: 'i_crown', color: '#ff4f6b' } };
+const advKey = (ch, i) => ch + '-' + (i + 1);
 const CAPTAIN_IDS = HEROES.filter(h => h.captain).map(h => h.id);
 const START_HEROES = ['bruno', 'zip', 'nova', 'gus', 'dusty', 'bao'];
 // Captains: one big, tough leader per world (their bigger stats are set above). Only Captains can fill the Captain slot.

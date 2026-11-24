@@ -123,6 +123,7 @@ function newRound(opts) {
     s.revive[side] = capFx.revive || 0;
     S.units.forEach((d, i) => {
       const H = HERO[d.hid];
+      const H2 = HERO[d.hid]; if (H2.boss) { const b = makeUnit(s, (side ? 'e' : 'p') + i, d.hid, side, null, d.x, d.y, { i, cap: d.hid === S.captain, hp: H2.hp }); b.big = !!H2.big; b.boss = true; if (d.hpNow != null) b.hp = Math.max(1, Math.min(b.maxHp, d.hpNow)); s.units.push(b); return; }
       s.units.push(makeUnit(s, (side ? 'e' : 'p') + i, d.hid, side, d.ab, d.x, d.y, {
         i, cap: d.hid === S.captain, hpAdd: (capFx.hp || 0) + worldBonus(counts, H.world), hpMul: S.hpMul || 1,
         abilHaste: Math.max(0.3, 1 + (capFx.abilHaste || 0)), abil: capFx.abilDmg || 0, block: capFx.abilBlock || 0, shield: capFx.shieldStart || 0, charge0: S.charge0 }));
@@ -134,7 +135,11 @@ function newRound(opts) {
 function mkStats() { return { dmg: 0, kills: 0, abil: 0, heal: 0, lost: 0 }; }
 
 // ----- helpers -----
-function unitAt(s, x, y) { for (const u of s.units) if (u.alive && !(u.st.goneT > s.t) && u.x === x && u.y === y) return u; return null; }
+function unitAt(s, x, y) { for (const u of s.units) if (u.alive && !(u.st.goneT > s.t) && (u.x === x || (u.big && u.x + 1 === x)) && (u.y === y || (u.big && u.y + 1 === y))) return u; return null; }
+// the tile of t closest to (x, y): big bosses cover 2x2
+function near(t, x, y) { return t.big ? [Math.max(t.x, Math.min(t.x + 1, x)), Math.max(t.y, Math.min(t.y + 1, y))] : [t.x, t.y]; }
+const rdTo = (x, y, t) => { const p = near(t, x, y); return rdist(x, y, p[0], p[1]); };
+const mhTo = (x, y, t) => { const p = near(t, x, y); return manh(x, y, p[0], p[1]); };
 function byUid(s, uid) { for (const u of s.units) if (u.uid === uid) return u; return null; }
 function isObs(s, x, y) { return s.obs[y * BW + x] === 1; }
 function tileAt(s, x, y) { return s.tiles[y * BW + x]; }
@@ -264,15 +269,15 @@ function walkMap(s, u) {
 }
 // steps needed before u can hit e (stand on any open tile within range of it); 1e9 = no way there right now
 function walkCost(s, u, e, D) {
-  let c = 1e9; for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = D[x + y * BW]; if (d >= 0 && d < c) { const m = rdist(x, y, e.x, e.y); if (m >= 1 && m <= u.rng) c = d; } }
+  let c = 1e9; for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = D[x + y * BW]; if (d >= 0 && d < c) { const m = rdTo(x, y, e); if (m >= 1 && m <= u.rng) c = d; } }
   return c;
 }
 // closest enemy: anyone already in range first (keeps its current one), else the fewest steps away. Sticks to its target unless another is clearly closer.
 function gridTarget(s, u) {
   const foes = s.units.filter(e => e.side !== u.side && targetable(s, e)); if (!foes.length) return null;
   const cur = u.tgt && foes.includes(u.tgt) ? u.tgt : null, by = (a, b, ka, kb) => ka - kb || a.hp - b.hp || (a.uid < b.uid ? -1 : 1);
-  const dist = e => rdist(u.x, u.y, e.x, e.y) * 10 + manh(u.x, u.y, e.x, e.y); // nearest by reach, then by steps
-  const inR = foes.filter(e => rdist(u.x, u.y, e.x, e.y) <= u.rng);
+  const dist = e => rdTo(u.x, u.y, e) * 10 + mhTo(u.x, u.y, e); // nearest by reach, then by steps
+  const inR = foes.filter(e => rdTo(u.x, u.y, e) <= u.rng);
   if (inR.length) { const near = inR.sort((a, b) => by(a, b, dist(a), dist(b)))[0]; return cur && inR.includes(cur) && dist(cur) <= dist(near) ? cur : near; }
   const D = walkMap(s, u), cost = new Map(foes.map(e => [e, walkCost(s, u, e, D)]));
   const best = foes.slice().sort((a, b) => by(a, b, cost.get(a), cost.get(b)))[0];
@@ -283,7 +288,7 @@ function gridTarget(s, u) {
 // one step along the shortest open path to a tile within range of t. Never steps sideways without getting closer, so no back-and-forth.
 function gridStep(s, u, t) {
   const D = new Array(BW * BH).fill(-1), q = [], open = (x, y) => (x === u.x && y === u.y) || free(s, x, y);
-  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const m = rdist(x, y, t.x, t.y); if (m >= 1 && m <= u.rng && open(x, y) && !isObs(s, x, y)) { D[x + y * BW] = 0; q.push(x + y * BW); } }
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const m = rdTo(x, y, t); if (m >= 1 && m <= u.rng && open(x, y) && !isObs(s, x, y)) { D[x + y * BW] = 0; q.push(x + y * BW); } }
   for (let i = 0; i < q.length; i++) { const c = q[i], cx = c % BW, cy = (c - cx) / BW;
     for (const [dx, dy] of DIR4) { const nx = cx + dx, ny = cy + dy, k = nx + ny * BW; if (!inB(nx, ny) || D[k] >= 0 || !open(nx, ny)) continue; D[k] = D[c] + 1; q.push(k); } }
   const here = D[u.x + u.y * BW]; if (here <= 0) return false;
@@ -291,7 +296,7 @@ function gridStep(s, u, t) {
   for (const [dx, dy] of DIR4) {
     const nx = u.x + dx, ny = u.y + dy; if (!inB(nx, ny) || !free(s, nx, ny) || D[nx + ny * BW] !== here - 1) continue;
     const back = u.lastDir && u.lastDir[0] === -dx && u.lastDir[1] === -dy ? 1 : 0;
-    const key = [manh(nx, ny, t.x, t.y), back, dy === fwd ? 0 : 1, dx];
+    const key = [mhTo(nx, ny, t), back, dy === fwd ? 0 : 1, dx];
     if (!bk || (key[0] - bk[0] || key[1] - bk[1] || key[2] - bk[2] || key[3] - bk[3]) < 0) { bk = key; best = [nx, ny, dx, dy]; }
   }
   if (!best) return false;
@@ -299,7 +304,7 @@ function gridStep(s, u, t) {
   const st = moveTime(s, u, false) * GRID_SLOW; u.mt1 = s.t + Math.min(GRID_HOP, st); u.moveCd = s.t + st;
   return true;
 }
-function placeAt(u, x, y, s, dur) { u.fx = u.x; u.fy = u.y; u.x = x; u.y = y; u.mt0 = s.t; u.mt1 = s.t + (dur || 0); }
+function placeAt(u, x, y, s, dur) { if (u.big) return; u.fx = u.x; u.fy = u.y; u.x = x; u.y = y; u.mt0 = s.t; u.mt1 = s.t + (dur || 0); }
 // slide a unit to a tile (knockback / pulls); returns true if it moved
 function shove(s, u, x, y, ev, dur) { if (!free(s, x, y)) return false; placeAt(u, x, y, s, dur || 0.25); pushEv(ev, { t: 'shove', uid: u.uid }); return true; }
 
@@ -332,7 +337,7 @@ function chooseTarget(s, u) {
 const closestFoes = (s, u, n, from) => { from = from || u; return foesOf(s, u).filter(e => !(e.st.vanishT > s.t)).sort((a, b) => cheb(from.x, from.y, a.x, a.y) - cheb(from.x, from.y, b.x, b.y) || a.hp - b.hp || (a.uid < b.uid ? -1 : 1)).slice(0, n); };
 const laneFoes = (s, u) => { const fwd = u.side === 0 ? -1 : 1; return foesOf(s, u).filter(e => e.x === u.x && (e.y - u.y) * fwd > 0).sort((a, b) => Math.abs(a.y - u.y) - Math.abs(b.y - u.y)); };
 const mostHurt = (s, u, n) => friendsOf(s, u).filter(a => a.hp < a.maxHp).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp || a.hp - b.hp).slice(0, n || 1);
-const around = (s, u, cx, cy, r) => foesOf(s, u).filter(e => cheb(cx, cy, e.x, e.y) <= r);
+const around = (s, u, cx, cy, r) => foesOf(s, u).filter(e => { const p = near(e, cx, cy); return cheb(cx, cy, p[0], p[1]) <= r; });
 
 // ----- round-start abilities (fire once, so placement matters) -----
 function startAbility(s, u, ev) {
@@ -408,14 +413,14 @@ function startAbility(s, u, ev) {
     case 'clone': { const sp = [[1, 0], [-1, 0], [0, -fwd], [0, fwd], [1, -fwd], [-1, -fwd]].map(([dx, dy]) => [u.x + dx, u.y + dy]).find(([x, y]) => free(s, x, y)); if (!sp) return; cast();
       const c = makeUnit(s, u.uid + 'c', u.hid, u.side, null, sp[0], sp[1], { hp: 2, atk: 1, clone: true, i: 3 }); c.fx = u.x; c.fy = u.y; c.mt0 = 0; c.mt1 = 0.3; s.units.push(c);
       pushEv(ev, { t: 'spawn', uid: c.uid }); cap(ev, u, 'made a copy of himself'); return; }
-    case 'abduct': { const e = closestFoes(s, u, 1)[0]; if (!e) return; cast(); pushEv(ev, { t: 'abduct', uid: e.uid }); e.st.goneT = t0 + 4; s.units.forEach(o => { if (o.tgt === e) o.retgt = 0; }); cap(ev, u, `abducted ${HERO[e.hid].name} for 4s`); return; }
+    case 'abduct': { const e = closestFoes(s, u, 3).find(x => !x.big); if (!e) return; cast(); pushEv(ev, { t: 'abduct', uid: e.uid }); e.st.goneT = t0 + 4; s.units.forEach(o => { if (o.tgt === e) o.retgt = 0; }); cap(ev, u, `abducted ${HERO[e.hid].name} for 4s`); return; }
   }
 }
 
 // ----- charge abilities: return true if cast -----
 function castAbility(s, u, ev) {
   const ab = u.ab; const t = u.tgt && targetable(s, u.tgt) && u.tgt.side !== u.side ? u.tgt : null;
-  const d = t ? reach(s, u.x, u.y, t.x, t.y) : 99;
+  const d = t ? (s.grid ? rdTo(u.x, u.y, t) : reach(s, u.x, u.y, t.x, t.y)) : 99;
   const cast = () => { pushEv(ev, { t: 'cast', uid: u.uid, ab, color: HERO[u.hid].color }); s.stats[u.side].abil++; };
   const shot = (tg, look, color, dl) => pushEv(ev, { t: 'atk', uid: u.uid, tuid: tg.uid, ranged: true, look, color, d: dl || 0.15 });
   const nm = e => HERO[e.hid].name;
@@ -474,7 +479,7 @@ function castAbility(s, u, ev) {
       list.filter(e => e !== t).sort((a, b) => cheb(t.x, t.y, a.x, a.y) - cheb(t.x, t.y, b.x, b.y)).forEach(e => { if (cheb(t.x, t.y, e.x, e.y) > 1) shove(s, e, e.x - Math.sign(e.x - t.x), e.y - Math.sign(e.y - t.y), ev, 0.3); });
       list.forEach(e => zap(s, u, e, 1, ev)); cap(ev, u, `pulled in ${plural(list.length, 'enemy')}`); return true; }
     case 'whirl': { const list = around(s, u, u.x, u.y, 1); if (!list.length) return false; cast(); pushEv(ev, { t: 'spin', uid: u.uid }); list.forEach(e => hit(s, u, e, 1, ev, 'abil')); cap(ev, u, `spun into ${plural(list.length, 'enemy')}`); return true; }
-    case 'charm': { if (!t || d > 2) return false; if (!friendsOf(s, t).some(f => f !== t)) return false; cast(); shot(t, 'orb', '#ff8ac8', 0.15); t.st.charmT = s.t + 3; t.tgt = null; t.retgt = 0; pushEv(ev, { t: 'status', uid: t.uid, kind: 'charm' }); cap(ev, u, `charmed ${nm(t)}`); return true; }
+    case 'charm': { if (!t || d > 2 || t.big) return false; if (!friendsOf(s, t).some(f => f !== t)) return false; cast(); shot(t, 'orb', '#ff8ac8', 0.15); t.st.charmT = s.t + 3; t.tgt = null; t.retgt = 0; pushEv(ev, { t: 'status', uid: t.uid, kind: 'charm' }); cap(ev, u, `charmed ${nm(t)}`); return true; }
     case 'shrink': { if (!t || d > u.rng) return false; cast(); shot(t, 'zap', '#c07bff', 0.1); t.st.shrinkT = s.t + 3; pushEv(ev, { t: 'status', uid: t.uid, kind: 'shrink' }); cap(ev, u, `shrank ${nm(t)}: double damage`); return true; }
     case 'flamering': { const list = around(s, u, u.x, u.y, 2); if (!list.length) return false; cast(); pushEv(ev, { t: 'ringfx', uid: u.uid, r: 2, color: '#ff8a2a' }); list.forEach(e => zap(s, u, e, 1, ev)); cap(ev, u, `burned ${plural(list.length, 'enemy')}`); return true; }
   }
@@ -533,8 +538,9 @@ function step(s, ev) {
       u.charge += DT * u.m.abilHaste;
       if (u.charge >= u.cd) { if (castAbility(s, u, ev)) { u.charge = 0; if (u.mt1 > s.t || !u.alive) continue; } else u.charge = u.cd; }
     }
+    if (u.boss) { bossTick(s, u, ev); if (!u.alive || s.winner != null) continue; }
     const t = u.tgt; if (!t || !targetable(s, t)) continue;
-    if (reach(s, u.x, u.y, t.x, t.y) <= u.rng) {
+    if ((s.grid ? Math.min(...(u.big ? [[0, 0], [1, 0], [0, 1], [1, 1]] : [[0, 0]]).map(([a, b]) => rdTo(u.x + a, u.y + b, t))) : reach(s, u.x, u.y, t.x, t.y)) <= u.rng) {
       if (s.t >= u.nextAtk) {
         u.nextAtk = s.t + interval(s, u);
         const L = LOOKS[HERO[u.hid].look] || LOOKS.slash;
@@ -542,6 +548,8 @@ function step(s, ev) {
         if (u.rng > 1) later(s, L.d, ev2 => hit(s, u, t, 0, ev2, 'atk'));
         else later(s, L.d, ev2 => { if (u.alive && !stunned(s, u)) hit(s, u, t, 0, ev2, 'atk'); });
       }
+    } else if (u.big) {
+      // bosses never move
     } else if (s.grid) {
       // tile movement: rest on the tile between steps; if boxed in, wait and look again shortly
       if (u.moveCd <= s.t && !gridStep(s, u, t)) u.retgt = Math.min(u.retgt, s.t + 0.3);
@@ -553,13 +561,39 @@ function step(s, ev) {
     }
   }
   // end conditions (clones don't keep a side alive on their own)
-  const a0 = s.units.some(u => u.alive && u.side === 0 && !u.clone), a1 = s.units.some(u => u.alive && u.side === 1 && !u.clone);
+  const bossDown = side => s.units.some(u => u.boss && u.side === side && !u.alive);
+  const a0 = s.units.some(u => u.alive && u.side === 0 && !u.clone) && !bossDown(0), a1 = s.units.some(u => u.alive && u.side === 1 && !u.clone) && !bossDown(1);
   if (!a0 || !a1) { s.winner = a0 ? 0 : a1 ? 1 : 'draw'; s.winBy = 'wipe'; return; }
   if (s.t >= s.timeLimit) {
     const f = side => s.units.filter(u => u.alive && u.side === side && !u.clone).reduce((a, u) => a + u.hp / u.maxHp, 0);
     const f0 = f(0), f1 = f(1); s.winBy = 'time';
     s.winner = Math.abs(f0 - f1) < 0.05 ? 'draw' : f0 > f1 ? 0 : 1;
   }
+}
+
+// ----- bosses -----
+// slam: mark the 3x3 area that catches the most enemies, then hit everyone still in it
+function bossTick(s, u, ev) {
+  const B = HERO[u.hid].slam; if (!B) return;
+  if (u.slamAt) {
+    if (s.t < u.slamAt.t - 1e-9) return;
+    const c = u.slamAt, tiles = []; u.slamAt = null; u.slamNext = s.t + B.every;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (inB(c.x + dx, c.y + dy)) tiles.push({ x: c.x + dx, y: c.y + dy });
+    pushEv(ev, { t: 'blast', tiles, color: '#ff4f6b', boom: true, slam: true });
+    let n = 0; for (const e of s.units.slice()) if (e.side !== u.side && present(s, e) && tiles.some(p => p.x === e.x && p.y === e.y)) { dealDamage(s, u, e, B.dmg, ev, 'slam'); n++; }
+    cap(ev, u, n ? `slammed ${plural(n, 'enemy')}` : 'slammed the ground');
+    return;
+  }
+  if (s.t < (u.slamNext != null ? u.slamNext : 2.5)) return;
+  let best = null, bn = 0;
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) {
+    const n = s.units.filter(e => e.side !== u.side && present(s, e) && Math.abs(e.x - x) <= 1 && Math.abs(e.y - y) <= 1).length;
+    if (n > bn) { bn = n; best = { x, y }; }
+  }
+  if (!best) { u.slamNext = s.t + 1; return; }
+  u.slamAt = { x: best.x, y: best.y, t: s.t + B.wind };
+  const idx = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (inB(best.x + dx, best.y + dy)) idx.push((best.y + dy) * BW + best.x + dx);
+  pushEv(ev, { t: 'tele', uid: u.uid, tiles: idx, dur: B.wind });
 }
 
 function simulateRound(opts) {

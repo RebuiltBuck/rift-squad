@@ -3,6 +3,8 @@ const SPR = SPRITES_DATA, SPR_COMMON = SPR._common;
 const _sprCache = new Map(), _urlCache = new Map();
 
 const HERO_SPR = (typeof SPRITES32 !== 'undefined') ? SPRITES32 : {};
+// bosses reuse a hero's pixels in their own colours: the Rift Golem is Rocco turned to glowing rift stone
+if (HERO_SPR.rocco && !HERO_SPR.golem) HERO_SPR.golem = Object.assign({}, HERO_SPR.rocco, { pal: ['#1b1325', '#c06bff', '#8a3fd8', '#b8a6e8', '#8f7cc8', '#5a2a9a', '#6a5aa8', '#2c2050', '#ff4fd8', '#7a68b8', '#5c4c98', '#3a2c66'] });
 const EYE_COL = '#283040';
 // heroes whose eyes aren't the standard eye colour: pixels that close when they blink
 const BLINK_EXTRA = { rocco: [[4, 5], [5, 5], [6, 5], [9, 5], [10, 5], [11, 5]], mumbo: [[6, 7], [9, 7]], vex: [[6, 7], [9, 7]], luna: [[6, 7], [9, 7]], zorp: [[4, 7], [11, 7]], volt: [[5, 6], [6, 6], [7, 6], [8, 6]] };
@@ -350,14 +352,14 @@ function bvDraw(V, now) {
     const blink = u.alive && !frozen && now >= v.blinkAt && now < v.blinkAt + 140;
     const frog = u.st.frogT > 0 && u.st.frogT > V.rt, shrink = u.st.shrinkT > 0 && u.st.shrinkT > V.rt;
     const img = frog ? sprCanvas('i_frog') : heroFrame(u.hid, br, lift, blink, false);
-    const sw = shrink ? Math.round(img.width * 0.6) : img.width, shh = shrink ? Math.round(img.height * 0.6) : img.height;
-    const bx0 = half((ux + ox / TILE) * TILE), by0 = half((uy + oy / TILE) * TILE);
-    const px = bx0 + 1 + (16 - sw) / 2, py = by0 + 17 - shh - half(z);
+    const BG = u.big ? 2 : 1, sw = (shrink ? Math.round(img.width * 0.6) : img.width) * BG, shh = (shrink ? Math.round(img.height * 0.6) : img.height) * BG;
+    const bx0 = half((ux + ox / TILE) * TILE), by0 = half((uy + oy / TILE) * TILE), cxo = u.big ? TILE : 9, foot = u.big ? TILE + 17 : 17;
+    const px = bx0 + cxo - sw / 2, py = by0 + foot - shh - half(z);
     g.globalAlpha = alpha;
     // ground shadow + team marker (stay on the floor while hopping)
-    const sh = Math.max(6, 12 - Math.round(z / 2));
-    g.fillStyle = 'rgba(10,6,20,0.35)'; g.fillRect(bx0 + 9 - sh / 2, by0 + 15, sh, 2);
-    g.fillStyle = u.side === 0 ? '#4fa3ff' : '#ff4f6b'; g.fillRect(bx0 + 9 - sh / 2 + 1, by0 + 16, sh - 2, 1);
+    const sh = Math.max(6, 12 - Math.round(z / 2)) * BG;
+    g.fillStyle = 'rgba(10,6,20,0.35)'; g.fillRect(bx0 + cxo - sh / 2, by0 + foot - 2, sh, 2 * BG);
+    g.fillStyle = u.side === 0 ? '#4fa3ff' : '#ff4f6b'; g.fillRect(bx0 + cxo - sh / 2 + 1, by0 + foot - 1, sh - 2, 1);
     const drawSpr = (im) => { if (face < 0) { g.save(); g.translate(px + sw, py); g.scale(-1, 1); g.drawImage(im, 0, 0, sw, shh); g.restore(); } else g.drawImage(im, px, py, sw, shh); };
     drawSpr(img);
     if (!frog && (now < v.flash || (!u.alive && now - v.deadAt < 90))) { g.globalAlpha = 0.5 * alpha; drawSpr(heroFrame(u.hid, br, lift, false, true)); g.globalAlpha = alpha; }
@@ -375,12 +377,11 @@ function bvDraw(V, now) {
       if (u.st.tauntT > rs.t) { pxRect(g, px + 7, py - 6, 2, 3, '#ff4f6b'); pxRect(g, px + 7, py - 2, 2, 1, '#ff4f6b'); }
       if (u.st.vulnT > rs.t) { pxRect(g, px + sw - 2, py + 1, 2, 2, '#c07bff'); pxRect(g, px + sw - 1, py, 1, 1, '#ffffff'); }
       // hp bar drains smoothly, leaving a white trail; purple = ability charge (none for round-start abilities)
-      const bx = bx0 + 7, bty = by0 + 17 - shh - 5;
+      const BWD = u.big ? 26 : 10, bx = bx0 + cxo - BWD / 2 + 1, bty = by0 + foot - shh - 5;
       if (v.hpShow == null) v.hpShow = u.hp;
       v.hpShow = v.hpShow > u.hp ? Math.max(u.hp, v.hpShow - (v.hpShow - u.hp) * Math.min(1, dtF * 5) - u.maxHp * 0.2 * dtF) : u.hp;
       const f = Math.max(0, u.hp / u.maxHp), fs = Math.max(0, v.hpShow / u.maxHp);
       const startAb = !u.ab || ABILITIES[u.ab].kind !== 'charge';
-      const BWD = 10;
       pxRect(g, bx - 1, bty - 0.5, BWD + 2, startAb ? 3.5 : 4.5, '#1b1325');
       if (fs > f) pxRect(g, bx, bty + 0.5, Math.max(1, Math.round(BWD * fs)), 1.5, '#ffffff');
       pxRect(g, bx, bty + 0.5, Math.max(0.5, Math.round(BWD * f * 2) / 2), 1.5, f > 0.5 ? (u.side === 0 ? '#5fd068' : '#ff6b6b') : f > 0.25 ? '#ffd23f' : '#ff4f6b');
