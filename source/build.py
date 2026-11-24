@@ -63,7 +63,7 @@ open(os.path.join(pwa, 'sw.js'), 'w').write(rd('sw.js').replace('__VERSION__', v
 manifest = {
     'name': 'Rift Squad', 'short_name': 'Rift Squad', 'description': 'Offline pixel squad-tactics game',
     'start_url': './index.html', 'scope': './', 'display': 'standalone', 'orientation': 'portrait',
-    'background_color': '#14112a', 'theme_color': '#14112a',
+    'background_color': '#1d1838', 'theme_color': '#1d1838',
     'icons': [{'src': 'icon-192.png', 'sizes': '192x192', 'type': 'image/png'}, {'src': 'icon-512.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any maskable'}],
 }
 json.dump(manifest, open(os.path.join(pwa, 'manifest.webmanifest'), 'w'), indent=2)

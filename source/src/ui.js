@@ -514,7 +514,7 @@ function heroInfo(hid, pick, opts) {
       <div class="livewrap sm ${o && o.un[2] ? 'goldc' : ''}" ${rarStyle(hid)}>${o ? liveHero(hid, big ? 5.6 : 4.5) : `<img class="bigspr px" src="${sprURL(hid, null, 'sil', 128)}">`}</div>
       <div class="hi-side"><h2>${esc(H.name)}</h2>
         <div class="row" style="gap:4px;flex-wrap:wrap"><span class="tag" style="background:${R.color}">${R.name}</span><button class="tag costchip ${selK === 'cost' ? 'sel' : ''}" data-k="cost">${orbsHTML(heroCost(hid), 'in')}${heroCost(hid)} Rift Orb${heroCost(hid) > 1 ? 's' : ''}</button>${WORLDS_ON ? `<span class="tag" style="background:${W.color}">${icon('w_' + H.world, 'ii')} ${W.name}</span>` : ''}</div>
-        <div class="hstats"><span>${icon('i_heart', 'ii')}<b>${st.hp}</b></span><span>${icon('i_swords', 'ii')}<b>${st.atk}</b></span><span>${icon('i_boot', 'ii')}<b>${SPEEDS[heroSpeed(hid)].name}</b></span>
+        <div class="hstats"><span>${icon('i_heart', 'ii')}<b>${st.hp}</b></span><span>${icon('i_swords', 'ii')}<b>${st.atk}</b></span><span>${speedHTML(hid, icon('i_boot', 'ii'))}</span>
           <button class="tgchip ${selK === 'tg' ? 'sel' : ''}" data-k="tg">${icon('i_bow', 'ii')}<b>Range ${st.rng}</b></button></div>
       </div></div>
     ${o ? '' : how}
@@ -708,6 +708,7 @@ function openProfile(tab) {
 function helpHTML() {
   return `<div class="help">
   <p>${icon('i_swords','ib')}<span><b>Matches</b> are first to 3 round wins.</span></p>
+  <p>${icon('i_boot','ib')}<span><b>Speed</b>: how often a hero steps and attacks. A Fast hero (0.8s) moves and hits about three times as often as a Slow one (2.4s).</span></p>
   <p>${icon('i_crown','ib')}<span>Your <b>Captain</b> starts every round. Before rounds 1–3 you pick a hero to add.</span></p>
   <p>${icon('i_hand','ib')}<span><b>Drag</b> your heroes where you want them, then tap <b>Fight!</b> They battle on their own.</span></p>
   <p>${icon('i_laser','ib')}<span><b>Round-start abilities</b> go off before anyone moves, so guess where the enemy will stand.</span></p>
@@ -814,20 +815,18 @@ function saveMatch() {
 }
 
 // ----- iOS Home Screen app fix -----
-// WebKit bug: in a Home Screen app, full-screen fixed layers can stop short of the bottom of the screen,
-// leaving the tab bar floating high with a dead band under it. When that happens, size them to the real screen.
-let VP_PROBE = null;
+// WebKit bug (iOS 26.1+, back again in 26.5 and 27): a Home Screen app can't draw in a band at the bottom of the
+// screen as tall as the status bar. iOS fills it with the page background, and nothing on the page can reach it.
+// (Sizing the app to the full screen, the old fix, just pushed the bottom of every screen under that band.)
+// So lay out in the space we really get, colour the band like the tab bar so it reads as part of it,
+// and drop the home-indicator padding, since the band already sits under the home indicator.
 function fixViewport() {
   const root = document.documentElement;
   const st = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
-  if (!st) { if (root.classList.contains('vfix')) { root.classList.remove('vfix'); root.style.removeProperty('--app-h'); root.style.removeProperty('--sab'); } return; }
-  if (!VP_PROBE) { VP_PROBE = document.createElement('div'); VP_PROBE.style.cssText = 'position:fixed;top:0;bottom:0;left:0;width:1px;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);box-sizing:border-box'; document.body.appendChild(VP_PROBE); }
   const portrait = innerHeight >= innerWidth, sh = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-  const cs = getComputedStyle(VP_PROBE), vh = VP_PROBE.offsetHeight, sat = parseFloat(cs.paddingTop) || 0, sab = parseFloat(cs.paddingBottom) || 0, gap = Math.round(sh - vh);
-  if (gap < 8 || gap > 220) { root.classList.remove('vfix'); root.style.removeProperty('--app-h'); root.style.removeProperty('--sab'); return; }
-  root.style.setProperty('--app-h', sh + 'px'); root.classList.add('vfix');
-  const fixB = Math.max(sab, Math.min(34, gap - sat)); // the home-indicator inset gets lost along with the gap
-  if (fixB > sab) root.style.setProperty('--sab', fixB + 'px'); else root.style.removeProperty('--sab');
+  const gap = st ? Math.round(sh - innerHeight) : 0, band = gap >= 20 && gap <= 120;
+  root.classList.toggle('vband', band);
+  if (band) root.style.setProperty('--sab', '0px'); else root.style.removeProperty('--sab');
 }
 
 // ----- bench: heroes you brought but aren't using this round -----
@@ -1329,7 +1328,6 @@ function openAdventure(chId, focus) {
   el.innerHTML = `<div class="adv-hd"><button class="btn sm gray" id="adv-x" aria-label="Close">${icon('i_x', 'ii')}</button><div class="adv-tt"><h2>Adventure</h2><small>Chapter ${C.id} · ${esc(C.name)}</small></div><span class="adv-st">${icon('star', '')}<b>${got} / ${max}</b></span></div><div class="adv-map"><div class="adv-in"></div></div>`;
   // sits under the top bar so coins and gems stay in view (and rewards can fly into them)
   const tb = $('#topbar'), top = tb ? Math.round(tb.getBoundingClientRect().bottom) : 0; el.style.top = top + 'px';
-  if (document.documentElement.classList.contains('vfix')) el.style.height = `calc(var(--app-h) - ${top}px)`;
   document.body.appendChild(el);
   const map = $('.adv-map', el), inner = $('.adv-in', el), W = map.clientWidth || 360, GAP = 92, PAD = 70, BOSSH = 170, H = PAD + (n - 1) * GAP + BOSSH + 40;
   inner.style.height = H + 'px';

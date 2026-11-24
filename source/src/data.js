@@ -147,10 +147,11 @@ const TARGETING = {
 function rangeText(n) { return n <= 1 ? 'Hits enemies right next to it, diagonals included. It still walks only up, down, left and right.' : `Hits enemies up to ${n} tiles away in a round area, diagonals included. It still walks only up, down, left and right.`; }
 function heroTarget(hid) { return (typeof GRID_MODE !== 'undefined' && GRID_MODE) ? 'near' : HERO[hid].tg || 'near'; } // grid test mode: everyone hits the closest
 
-// Movement speed: seconds to cross one tile
-const SPEEDS = { slow: { name: 'Slow', t: 0.75 }, normal: { name: 'Normal', t: 0.55 }, fast: { name: 'Fast', t: 0.38 } };
-const ROLE_SPEED = { tank: 'slow', fighter: 'normal', ranged: 'normal', healer: 'normal' };
-function heroSpeed(hid) { const h = HERO[hid]; return h.spd || ROLE_SPEED[h.role]; }
+// One Speed stat: a hero takes a step and swings at the same pace, every `t` seconds (attack time x 1.25 in battle)
+const SPEEDS = { fast: { name: 'Fast' }, normal: { name: 'Normal' }, slow: { name: 'Slow' } };
+function heroPace(hid) { const h = HERO[hid]; return +((h.as || ROLES[h.role].as) * 1.25).toFixed(2); }
+function heroSpeed(hid) { const t = heroPace(hid); return t <= 1.1 ? 'fast' : t >= 1.8 ? 'slow' : 'normal'; }
+function speedHTML(hid, icon) { return `${icon}<b>${SPEEDS[heroSpeed(hid)].name}</b><small class="pace">${heroPace(hid).toFixed(1)}s</small>`; }
 
 // Worlds: 2 heroes from the same world on the board = +1 health each, 3+ = +2 health each
 const WORLD_BONUS = [1, 2];
@@ -167,7 +168,7 @@ const WORLDS = {
 
 // cap = Captain power (Captains only)
 const HEROES = [
-  { id: 'bruno',  captain: true, name: 'Sir Bruno',     world: 'kingdom',  origin: 'Knight',           rarity: 'common',    role: 'tank',    color: '#3a6fd8', hp: 15, dmg: 1, as: 1.2, cost: 3, rng: 1, look: 'slash', lc: '#ffffff', spd: 'normal',
+  { id: 'bruno',  captain: true, name: 'Sir Bruno',     world: 'kingdom',  origin: 'Knight',           rarity: 'common',    role: 'tank',    color: '#3a6fd8', hp: 15, dmg: 1, as: 1.2, cost: 3, rng: 1, look: 'slash', lc: '#ffffff',
     cap: { name: 'Shield Wall', desc: 'Team starts each round with a 2 shield.', fx: { shieldStart: 2 } } },
   { id: 'marla',  captain: true, name: 'Captain Marla', world: 'rogues',   origin: 'Pirate',           rarity: 'common',    role: 'fighter', color: '#c0392b', hp: 10, dmg: 2, as: 1.1, cost: 2, rng: 1, look: 'slash2', lc: '#ffe9a8',
     cap: { name: 'Plunder', desc: 'Team abilities deal +1 damage.', fx: { abilDmg: 1 } } },
@@ -177,20 +178,20 @@ const HEROES = [
     cap: { name: 'Undying', desc: 'First friend to fall gets back up with half health.', fx: { revive: 0.5 } } },
   { id: 'rex',    captain: true, name: 'Titan Rex',     world: 'machines', origin: 'Dino Mech',        rarity: 'legendary', role: 'tank',    color: '#4caf50', hp: 16, dmg: 2, as: 1.6, cost: 4, rng: 1, look: 'chomp', lc: '#ffffff',
     cap: { name: 'Titan Plating', desc: 'Every hero on the team gets +2 health.', fx: { hp: 2 } } },
-  { id: 'chrono', captain: true, name: 'Chrono',        world: 'cosmic',   origin: 'Time Wizard',      rarity: 'legendary', role: 'healer',  color: '#3b5bdb', hp: 8, dmg: 1, as: 1.2, cost: 2, rng: 3, look: 'orb', lc: '#7fb2ff', spd: 'slow',
+  { id: 'chrono', captain: true, name: 'Chrono',        world: 'cosmic',   origin: 'Time Wizard',      rarity: 'legendary', role: 'healer',  color: '#3b5bdb', hp: 8, dmg: 1, as: 1.2, cost: 2, rng: 3, look: 'orb', lc: '#7fb2ff',
     cap: { name: 'Haste', desc: 'Team abilities charge faster.', fx: { abilHaste: 0.6 } } },
   { id: 'zip',    name: 'Zip-9',        world: 'machines', origin: 'Robot',          rarity: 'common',    role: 'ranged',  color: '#4ff0ff', hp: 4, dmg: 1, as: 1.0, cost: 1, rng: 3, look: 'bolt', lc: '#4ff0ff' },
-  { id: 'nova',   name: 'Nova',         world: 'cosmic',   origin: 'Space Medic',    rarity: 'common',    role: 'healer',  color: '#ff7ab8', hp: 5, dmg: 1, as: 1.1, cost: 1, rng: 2, look: 'orb', lc: '#ff8ac8', spd: 'fast' },
-  { id: 'gus',    name: 'Gus',          world: 'wild',     origin: 'Goblin',         rarity: 'common',    role: 'fighter', color: '#6cc24a', hp: 6, dmg: 1, as: 0.7, tg: 'back', cost: 1, rng: 1, look: 'stab', lc: '#e8eef5', spd: 'fast' },
+  { id: 'nova',   name: 'Nova',         world: 'cosmic',   origin: 'Space Medic',    rarity: 'common',    role: 'healer',  color: '#ff7ab8', hp: 5, dmg: 1, as: 1.1, cost: 1, rng: 2, look: 'orb', lc: '#ff8ac8' },
+  { id: 'gus',    name: 'Gus',          world: 'wild',     origin: 'Goblin',         rarity: 'common',    role: 'fighter', color: '#6cc24a', hp: 6, dmg: 1, as: 0.7, tg: 'back', cost: 1, rng: 1, look: 'stab', lc: '#e8eef5' },
   { id: 'dusty',  name: 'Dusty',        world: 'rogues',   origin: 'Cowboy',         rarity: 'common',    role: 'ranged',  color: '#c98a3a', hp: 4, dmg: 2, as: 1.6, tg: 'weak', cost: 2, rng: 4, look: 'bullet', lc: '#ffd23f' },
-  { id: 'bao',    name: 'Chef Bao',     world: 'kingdom',  origin: 'Royal Chef',     rarity: 'common',    role: 'healer',  color: '#ff9aa8', hp: 6, dmg: 1, as: 1.3, cost: 2, rng: 2, look: 'lob', lc: '#fff3d6', spd: 'slow' },
-  { id: 'kit',    name: 'Kit',          world: 'rogues',   origin: 'Ninja',          rarity: 'rare',      role: 'fighter', color: '#e03c3c', hp: 5, dmg: 1, as: 0.6, tg: 'back', cost: 1, rng: 1, look: 'slash2', lc: '#ffffff', spd: 'fast' },
+  { id: 'bao',    name: 'Chef Bao',     world: 'kingdom',  origin: 'Royal Chef',     rarity: 'common',    role: 'healer',  color: '#ff9aa8', hp: 6, dmg: 1, as: 1.3, cost: 2, rng: 2, look: 'lob', lc: '#fff3d6' },
+  { id: 'kit',    name: 'Kit',          world: 'rogues',   origin: 'Ninja',          rarity: 'rare',      role: 'fighter', color: '#e03c3c', hp: 5, dmg: 1, as: 0.6, tg: 'back', cost: 1, rng: 1, look: 'slash2', lc: '#ffffff' },
   { id: 'yuki',   name: 'Yuki',         world: 'wild',     origin: 'Yeti',           rarity: 'rare',      role: 'tank',    color: '#7cc8f2', hp: 13, dmg: 1, as: 1.4, cost: 2, rng: 1, look: 'punch', lc: '#bfe8ff' },
-  { id: 'volt',   name: 'Volt',         world: 'machines', origin: 'Mech Racer',     rarity: 'rare',      role: 'fighter', color: '#ffd23f', hp: 7, dmg: 1, as: 0.8, cost: 1, rng: 1, look: 'punch', lc: '#ffe94f', spd: 'fast' },
+  { id: 'volt',   name: 'Volt',         world: 'machines', origin: 'Mech Racer',     rarity: 'rare',      role: 'fighter', color: '#ffd23f', hp: 7, dmg: 1, as: 0.8, cost: 1, rng: 1, look: 'punch', lc: '#ffe94f' },
   { id: 'hex',    name: 'Hex',          world: 'spooky',   origin: 'Witch',          rarity: 'epic',      role: 'ranged',  color: '#7b3fd1', hp: 4, dmg: 1, as: 1.2, tg: 'weak', cost: 2, rng: 3, look: 'hex', lc: '#c07bff' },
   { id: 'luna',   name: 'Luna',         world: 'cosmic',   origin: 'Astronaut',      rarity: 'epic',      role: 'ranged',  color: '#8fd3ff', hp: 5, dmg: 1, as: 1.1, cost: 2, rng: 3, look: 'star', lc: '#fff3a8' },
   { id: 'ragnar', name: 'Ragnar',       world: 'kingdom',  origin: 'Viking',         rarity: 'epic',      role: 'fighter', color: '#e07b2a', hp: 9, dmg: 3, as: 1.9, tg: 'big', cost: 3, rng: 1, look: 'chop', lc: '#ffffff' },
-  { id: 'vex',    name: 'Countess Vex', world: 'spooky',   origin: 'Vampire',        rarity: 'mythic',    role: 'fighter', color: '#e0193a', hp: 7, dmg: 2, as: 1.0, tg: 'back', cost: 2, rng: 1, look: 'claw', lc: '#ff3b5c', spd: 'fast' },
+  { id: 'vex',    name: 'Countess Vex', world: 'spooky',   origin: 'Vampire',        rarity: 'mythic',    role: 'fighter', color: '#e0193a', hp: 7, dmg: 2, as: 1.0, tg: 'back', cost: 2, rng: 1, look: 'claw', lc: '#ff3b5c' },
   { id: 'zorp',   name: 'Zorp',         world: 'cosmic',   origin: 'Alien',          rarity: 'mythic',    role: 'ranged',  color: '#7ee05a', hp: 4, dmg: 1, as: 1.0, tg: 'weak', cost: 2, rng: 3, look: 'zap', lc: '#7dff6b' },
   { id: 'ember',  name: 'Ember',        world: 'kingdom',  origin: 'Fire Mage',      rarity: 'mythic',    role: 'ranged',  color: '#ff8a2a', hp: 4, dmg: 2, as: 1.5, cost: 3, rng: 4, look: 'fireball', lc: '#ff8a2a' },
 ];

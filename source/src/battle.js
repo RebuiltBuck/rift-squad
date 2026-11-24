@@ -41,7 +41,7 @@ const FRONT_ROLES = { tank: 1, fighter: 1 };
 function heroStats(hid) {
   const h = HERO[hid], r = ROLES[h.role];
   const c = heroCost(hid);
-  return { hp: Math.round((h.hp || r.hp) * (COST_HP[c] || 1)), atk: (h.dmg || r.dmg) + (COST_DMG[c] || 0), as: +((h.as || r.as) * 1.25).toFixed(3), rng: h.rng || r.rng, spd: SPEEDS[heroSpeed(hid)].t, cost: c };
+  return { hp: Math.round((h.hp || r.hp) * (COST_HP[c] || 1)), atk: (h.dmg || r.dmg) + (COST_DMG[c] || 0), as: +((h.as || r.as) * 1.25).toFixed(3), rng: h.rng || r.rng, spd: (h.as || r.as) * 1.25 / GRID_SLOW, cost: c }; // steps at the same pace it attacks
 }
 
 // ----- events / tiles -----
