@@ -162,8 +162,6 @@ input.txt { width: 100%; background: var(--line); color: var(--text); border: 2p
 /* battle */
 #battle { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; background: var(--bg); max-width: 560px; margin: 0 auto; }
 .bhud { display: flex; align-items: center; gap: 8px; padding: calc(6px + var(--sat)) 8px 6px; background: var(--bg2); border-bottom: 3px solid var(--line); }
-.bhud .foe { flex: 1; min-width: 0; font-size: 21px; line-height: 1.15; }
-.bhud .foe b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bhud .rnd { text-align: right; font-size: 18px; line-height: 1.15; }
 .bhud .rnd b { font-size: 25px; }
 .relicbar { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 5px 8px; font-size: 17px; font-weight: 700; background: #0003; }
@@ -406,8 +404,6 @@ body:has(#coach) #toast { top: calc(150px + var(--sat)); }
 .abd-b { display: flex; justify-content: flex-end; align-items: center; }
 /* ---- battle screen: fixed layout, board edge to edge ---- */
 .bhud { gap: 6px; min-height: 52px; }
-.bhud .foe span { display: flex; align-items: center; gap: 4px; color: var(--mute); white-space: nowrap; overflow: hidden; }
-.bhud .foe .evdot { display: inline-block; }
 .bhud .score { flex: none; display: flex; align-items: center; gap: 4px; font-size: 22px; }
 .bboard { padding: 0; align-items: center; }
 .bpanel { flex: none; height: calc(150px + var(--sab)); position: relative; display: flex; flex-direction: column; padding: 6px 8px calc(6px + var(--sab)); }
@@ -816,6 +812,10 @@ html.vfix .adv { bottom: auto; }
   .playrow .advbtn .at { flex: none; align-items: center; } .playrow .advbtn .at b { font-size: 21px; }
   .playrow .advbtn .as { font-size: 17px; padding: 0 6px; }
 }
+#battle .hs-row > * { flex: none; min-width: max-content; }
+/* top bar: the score stays dead centre whatever sits either side of it */
+#battle .bhud { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+#battle .hright { min-width: 0; max-width: 100%; } #battle .hazchip { max-width: 100%; overflow: hidden; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -3488,7 +3488,7 @@ function render() {
   if (TAB === 'battle') el.innerHTML = homeHTML(); else if (TAB === 'heroes') el.innerHTML = heroesHTML();
   else if (TAB === 'season') el.innerHTML = seasonHTML(); else if (TAB === 'road') el.innerHTML = roadHTML(); else if (TAB === 'shop') el.innerHTML = shopHTML();
   if (TAB === 'battle') { const a = selArena(); const c = arenaBanner(a, [], 12, 3); const old = $('#arena-cv'); if (old) { c.id = 'arena-cv'; old.replaceWith(c); } }
-  if (TAB === 'road') { const h = $('#road-here'); if (h) setTimeout(() => h.scrollIntoView({ block: 'center' }), 30); }
+  if (TAB === 'road') { const h = $('#road-here'); if (h) setTimeout(() => { el.scrollTop += h.getBoundingClientRect().top - el.getBoundingClientRect().top - (el.clientHeight - h.offsetHeight) / 2; }, 30); } // scroll only the list (scrollIntoView also shoved the whole page up on iPhone)
   updateTimers();
 }
 function updateTimers() {
@@ -4715,6 +4715,14 @@ function boot() {
   window.addEventListener('resize', () => { fixViewport(); if (M) bvLayout(); });
   window.addEventListener('orientationchange', () => setTimeout(fixViewport, 300));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) fixViewport(); });
+  // the page itself must never scroll (only lists inside it do). On iPhone a drag that runs past the end of a list, or the keyboard
+  // closing after typing a name, can leave the whole app pushed up with a gap under the tab bar, so snap it back
+  const typing = () => { const a = document.activeElement; return !!a && /^(INPUT|TEXTAREA)$/.test(a.tagName); };
+  const unshove = () => { if (typing()) return; const se = document.scrollingElement || document.documentElement; if (scrollY || se.scrollTop || document.body.scrollTop) { scrollTo(0, 0); se.scrollTop = 0; document.body.scrollTop = 0; } };
+  window.addEventListener('scroll', unshove, { passive: true });
+  document.addEventListener('focusout', () => setTimeout(() => { unshove(); fixViewport(); }, 150));
+  document.addEventListener('touchend', () => setTimeout(unshove, 60), { passive: true });
+  if (window.visualViewport) visualViewport.addEventListener('resize', () => { if (!typing()) { unshove(); fixViewport(); } });
   fixViewport(); setTimeout(fixViewport, 500);
   go('battle'); ACH_QUIET = false;
   let lastSig = '';

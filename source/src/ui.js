@@ -216,7 +216,7 @@ function render() {
   if (TAB === 'battle') el.innerHTML = homeHTML(); else if (TAB === 'heroes') el.innerHTML = heroesHTML();
   else if (TAB === 'season') el.innerHTML = seasonHTML(); else if (TAB === 'road') el.innerHTML = roadHTML(); else if (TAB === 'shop') el.innerHTML = shopHTML();
   if (TAB === 'battle') { const a = selArena(); const c = arenaBanner(a, [], 12, 3); const old = $('#arena-cv'); if (old) { c.id = 'arena-cv'; old.replaceWith(c); } }
-  if (TAB === 'road') { const h = $('#road-here'); if (h) setTimeout(() => h.scrollIntoView({ block: 'center' }), 30); }
+  if (TAB === 'road') { const h = $('#road-here'); if (h) setTimeout(() => { el.scrollTop += h.getBoundingClientRect().top - el.getBoundingClientRect().top - (el.clientHeight - h.offsetHeight) / 2; }, 30); } // scroll only the list (scrollIntoView also shoved the whole page up on iPhone)
   updateTimers();
 }
 function updateTimers() {
@@ -1443,6 +1443,14 @@ function boot() {
   window.addEventListener('resize', () => { fixViewport(); if (M) bvLayout(); });
   window.addEventListener('orientationchange', () => setTimeout(fixViewport, 300));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) fixViewport(); });
+  // the page itself must never scroll (only lists inside it do). On iPhone a drag that runs past the end of a list, or the keyboard
+  // closing after typing a name, can leave the whole app pushed up with a gap under the tab bar, so snap it back
+  const typing = () => { const a = document.activeElement; return !!a && /^(INPUT|TEXTAREA)$/.test(a.tagName); };
+  const unshove = () => { if (typing()) return; const se = document.scrollingElement || document.documentElement; if (scrollY || se.scrollTop || document.body.scrollTop) { scrollTo(0, 0); se.scrollTop = 0; document.body.scrollTop = 0; } };
+  window.addEventListener('scroll', unshove, { passive: true });
+  document.addEventListener('focusout', () => setTimeout(() => { unshove(); fixViewport(); }, 150));
+  document.addEventListener('touchend', () => setTimeout(unshove, 60), { passive: true });
+  if (window.visualViewport) visualViewport.addEventListener('resize', () => { if (!typing()) { unshove(); fixViewport(); } });
   fixViewport(); setTimeout(fixViewport, 500);
   go('battle'); ACH_QUIET = false;
   let lastSig = '';

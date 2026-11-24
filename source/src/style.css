@@ -148,8 +148,6 @@ input.txt { width: 100%; background: var(--line); color: var(--text); border: 2p
 /* battle */
 #battle { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; background: var(--bg); max-width: 560px; margin: 0 auto; }
 .bhud { display: flex; align-items: center; gap: 8px; padding: calc(6px + var(--sat)) 8px 6px; background: var(--bg2); border-bottom: 3px solid var(--line); }
-.bhud .foe { flex: 1; min-width: 0; font-size: 21px; line-height: 1.15; }
-.bhud .foe b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bhud .rnd { text-align: right; font-size: 18px; line-height: 1.15; }
 .bhud .rnd b { font-size: 25px; }
 .relicbar { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 5px 8px; font-size: 17px; font-weight: 700; background: #0003; }
@@ -392,8 +390,6 @@ body:has(#coach) #toast { top: calc(150px + var(--sat)); }
 .abd-b { display: flex; justify-content: flex-end; align-items: center; }
 /* ---- battle screen: fixed layout, board edge to edge ---- */
 .bhud { gap: 6px; min-height: 52px; }
-.bhud .foe span { display: flex; align-items: center; gap: 4px; color: var(--mute); white-space: nowrap; overflow: hidden; }
-.bhud .foe .evdot { display: inline-block; }
 .bhud .score { flex: none; display: flex; align-items: center; gap: 4px; font-size: 22px; }
 .bboard { padding: 0; align-items: center; }
 .bpanel { flex: none; height: calc(150px + var(--sab)); position: relative; display: flex; flex-direction: column; padding: 6px 8px calc(6px + var(--sab)); }
@@ -802,3 +798,7 @@ html.vfix .adv { bottom: auto; }
   .playrow .advbtn .at { flex: none; align-items: center; } .playrow .advbtn .at b { font-size: 21px; }
   .playrow .advbtn .as { font-size: 17px; padding: 0 6px; }
 }
+#battle .hs-row > * { flex: none; min-width: max-content; }
+/* top bar: the score stays dead centre whatever sits either side of it */
+#battle .bhud { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+#battle .hright { min-width: 0; max-width: 100%; } #battle .hazchip { max-width: 100%; overflow: hidden; white-space: nowrap; }
