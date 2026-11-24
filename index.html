@@ -892,6 +892,16 @@ img.sm { width: 12px; height: 12px; }
 .hcard .lvl { display: flex; align-items: center; justify-content: center; gap: 4px; }
 .hcard .lvl .lvup { width: 18px; height: 18px; animation: lvupBob .8s ease-in-out infinite alternate; filter: drop-shadow(0 1px 0 #000); }
 @keyframes lvupBob { from { transform: translateY(1px); } to { transform: translateY(-3px); } }
+/* ---- mode picker ---- */
+.mlist { display: flex; flex-direction: column; gap: 9px; margin-top: 6px; }
+.mrow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: #241d40; border: 3px solid #3e3866; cursor: pointer; box-shadow: 0 4px 0 #0008; }
+.mrow.on { border-color: #ffd23f; background: #2f2650; box-shadow: 0 0 0 3px #ffd23f44, 0 4px 0 #0008; }
+.mrow.locked { opacity: .55; }
+.mrow .mi { flex: none; width: 46px; height: 46px; border-radius: 12px; background: #0b0716; display: flex; align-items: center; justify-content: center; } .mrow .mi img { width: 30px; height: 30px; }
+.mrow .mt { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.08; text-align: left; }
+.mrow .mt b { font-size: 25px; } .mrow .mt small { font-size: 16px; color: #c9c0f0; } .mrow .mt em { font-style: normal; font-size: 16px; color: #ffd23f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .mrow .mt em img { width: 13px; height: 13px; vertical-align: -1px; }
+.mrow .mck img { width: 24px; height: 24px; } .mrow .btn.sm { flex: none; }
+.duelbtn .drow .tiny img { width: 12px; height: 12px; vertical-align: -1px; }
 </style>
 </head>
 <body>
@@ -3765,7 +3775,7 @@ function render() {
   const el = $('#screen');
   if (TAB === 'battle') el.innerHTML = homeHTML(); else if (TAB === 'heroes') el.innerHTML = heroesHTML();
   else if (TAB === 'season') el.innerHTML = seasonHTML(); else if (TAB === 'road') el.innerHTML = roadHTML(); else if (TAB === 'shop') el.innerHTML = shopHTML();
-  if (TAB === 'battle') { const a = selArena(); const c = arenaBanner(a, [], 12, 3); const old = $('#arena-cv'); if (old) { c.id = 'arena-cv'; old.replaceWith(c); } }
+  if (TAB === 'battle') { const a = modeArena(); const c = arenaBanner(a, [], 12, 3); const old = $('#arena-cv'); if (old) { c.id = 'arena-cv'; old.replaceWith(c); } }
   if (TAB === 'road') { const h = $('#road-here'); if (h) setTimeout(() => { el.scrollTop += h.getBoundingClientRect().top - el.getBoundingClientRect().top - (el.clientHeight - h.offsetHeight) / 2; }, 30); } // scroll only the list (scrollIntoView also shoved the whole page up on iPhone)
   updateTimers();
 }
@@ -3786,6 +3796,56 @@ function abIcon(ab, cls) { return ab ? icon(ABILITIES[ab].icon, cls || 'ii') : '
 // arena picked on the home screen (null = your current arena)
 function selArena() { const top = arenaIndex(S.trophies); return S.pickArena == null ? top : Math.max(0, Math.min(top, S.pickArena)); }
 function pickArena(dir) { const top = arenaIndex(S.trophies), a = Math.max(0, Math.min(top, selArena() + dir)); S.pickArena = a === top ? null : a; persist(); SFX.tap(); render(); }
+// ---------- the three main modes: the home card shows the chosen one, tap it to switch ----------
+const MODES = {
+  duel: { name: 'Duel', icon: 'i_swords', what: 'Win trophies in your arena' },
+  adv:  { name: 'Adventure', icon: 'star', what: 'Beat levels for rewards and stars' },
+  run:  { name: 'Rift Run', icon: 'i_orb', what: `Climb ${RUN_STAGES} stages with one squad` },
+};
+function curMode() { return S.tutorialDone && MODES[S.mode] ? S.mode : 'duel'; }
+function modeArena() { const m = curMode(); return m === 'adv' ? ADVENTURE[0].arena : m === 'run' ? ARENAS.length - 1 : selArena(); }
+function modeStatus(id) {
+  if (id === 'duel') { const d = DIFF[S.lastDiff] || DIFF.normal; return `${esc(ARENAS[selArena()].name)} · ${d.name}`; }
+  if (id === 'adv') { const C = ADVENTURE[0], got = advChapterStars(S, C.id), max = C.levels.length * 3, nxt = advNext(S, C.id);
+    return `${got >= max ? 'Chapter ' + C.id + ' done' : advLevel(C.id, nxt).type === 'boss' ? 'Boss level' : 'Level ' + (nxt + 1)} · ${icon('star', 'ii')}${got}/${max}`; }
+  const R = S.run;
+  return !R ? (S.runBest ? `Best: stage ${S.runBest} of ${RUN_STAGES}` : 'New mode!') : R.phase === 'over' ? 'Run over: collect rewards' : R.phase === 'captain' || R.phase === 'draft' ? 'Drafting your squad' : `Stage ${R.stage} of ${RUN_STAGES} · ${R.hearts}${icon('i_heart', 'ii')}`;
+}
+function modeCardHTML() {
+  const m = curMode(), M2 = MODES[m];
+  let title, row;
+  if (m === 'duel') {
+    const top = arenaIndex(S.trophies), a = selArena(), A = ARENAS[a], next = ARENAS[top + 1], older = a < top, d = DIFF[S.lastDiff] || DIFF.normal;
+    const pr = next ? (S.trophies - ARENAS[top].t) / (next.t - ARENAS[top].t) : 1;
+    title = esc(A.name);
+    row = `<span class="dchip" style="--dc:${d.color}">${d.name}</span>${older ? '<span class="tiny">no trophies at stake</span>' : `<span class="bar gold thin"><i style="width:${Math.round(pr * 100)}%"></i></span>`}`;
+  } else if (m === 'adv') { const C = ADVENTURE[0]; title = `Chapter ${C.id}: ${esc(C.name)}`; row = `<span class="tiny">${modeStatus('adv')}</span>`; }
+  else { title = 'Rift Run'; row = `<span class="tiny">${modeStatus('run')}</span>`; }
+  return `<button class="duelbtn mode-${m} ${m === 'duel' && selArena() < arenaIndex(S.trophies) ? 'older' : ''}" onclick="openModes()"><canvas id="arena-cv"></canvas><span class="dtxt"><small>${icon(M2.icon, 'ii')} ${M2.name} · tap to change</small><b>${title}</b>
+    <span class="drow">${row}</span></span><span class="dgo">${icon('i_right', 'ii')}</span></button>`;
+}
+function modePlayLabel() {
+  const m = curMode();
+  if (m === 'adv') return `${icon('star', 'ib')} ADVENTURE`;
+  if (m === 'run') return `${icon('i_orb', 'ib')} ${S.run ? 'CONTINUE RUN' : 'RIFT RUN'}`;
+  return `${icon('i_swords', 'ib')} BATTLE`;
+}
+function playMode() { const m = curMode(); if (m === 'adv') openAdventure(); else if (m === 'run') openRun(); else startBattle(); }
+function openModes() {
+  SFX.tap();
+  const cur = curMode();
+  const row = id => { const M2 = MODES[id], locked = id !== 'duel' && !S.tutorialDone;
+    return `<div class="mrow ${id === cur ? 'on' : ''} ${locked ? 'locked' : ''}" data-mode="${id}"><span class="mi">${icon(locked ? 'lock' : M2.icon, '')}</span>
+      <span class="mt"><b>${M2.name}</b><small>${locked ? 'Finish the tutorial first' : M2.what}</small><em>${locked ? '' : modeStatus(id)}</em></span>
+      ${id === 'duel' && !locked ? `<button class="btn sm gray" data-arena>${icon('i_gear', 'ii')} Arena</button>` : id === cur ? `<span class="mck">${icon('i_check', '')}</span>` : ''}</div>`; };
+  const m = modal(`<h2>Choose a mode</h2><div class="mlist">${['duel', 'adv', 'run'].map(row).join('')}</div>`);
+  m.querySelectorAll('[data-mode]').forEach(el => el.onclick = e => {
+    const id = el.dataset.mode;
+    if (e.target.closest('[data-arena]')) { m.close(); S.mode = 'duel'; persist(); render(); openDuel(); return; }
+    if (el.classList.contains('locked')) { toast('Finish the tutorial first'); return; }
+    S.mode = id; persist(); SFX.tap(); m.close(); render();
+  });
+}
 // Duel popup: pick the arena (any you've reached) and the difficulty
 function openDuel() {
   const m = modal(`<h2>Duel</h2><div id="duel"></div><button class="btn gold big full" id="duel-go" style="margin-top:10px">${icon('i_swords', 'ib')} BATTLE</button>`);
@@ -3824,9 +3884,8 @@ function homeHTML() {
   <div class="panel tight"><div class="squad">${squad}</div>
     <div class="capline">${icon('i_crown','ii')} <b>${esc(HERO[S.squad[0]].cap.name)}</b> button: ${esc(HERO[S.squad[0]].cap.desc.replace(/^Tap: /, ''))}</div>${syn.length ? `<div class="synrow" style="margin-top:4px">${syn.map(x => `<span class="chip2" style="border-color:${WORLDS[x.world].color}">${icon('w_' + x.world, 'ii')} <b style="color:${WORLDS[x.world].color}">${WORLDS[x.world].name} ×${x.n}</b></span>`).join('')}</div>` : ''}</div>
   <div class="panel tight chestp"><button class="keyb" onclick="keyInfo()">${icon('i_key', 'ib')}<div><b>${S.keys}</b><small>${S.keys < KEY_MAX ? `<span data-until="${S.keyNext}"></span>` : 'full'}</small></div></button><div class="shelf">${shelf}</div></div>
-  <button class="duelbtn ${older ? 'older' : ''}" onclick="openDuel()"><canvas id="arena-cv"></canvas><span class="dtxt"><small>${icon('i_swords', 'ii')} Duel · tap to change</small><b>${esc(A.name)}</b>
-    <span class="drow"><span class="dchip" style="--dc:${d.color}">${d.name}</span>${older ? '<span class="tiny">no trophies at stake</span>' : `<span class="bar gold thin"><i style="width:${Math.round(pr * 100)}%"></i></span>`}</span></span><span class="dgo">${icon('i_right', 'ii')}</span></button>
-  <div class="playrow"><button class="btn gold big full battlebtn" onclick="startBattle()">${icon('i_swords','ib')} BATTLE</button>${S.tutorialDone ? `<div class="modes">${advButtonHTML()}${runButtonHTML()}</div>` : ''}</div>
+  ${modeCardHTML()}
+  <div class="playrow"><button class="btn gold big full battlebtn" onclick="playMode()">${modePlayLabel()}</button></div>
   </div>`;
 }
 function keyInfo() { modal(`<h2>Keys</h2><div class="center">${icon('i_key', 'ib')}</div><p class="center">You have <b>${S.keys}</b> of ${KEY_MAX} keys. 1 key opens 1 chest.</p><p class="center small mute">${S.keys < KEY_MAX ? `Next key in <b data-until="${S.keyNext}">${fmtDur(S.keyNext - now())}</b>. ` : ''}A new key every ${KEY_HOURS} hours, or buy them in the Shop. Every win puts a chest on your shelf (up to ${SHELF_MAX}).</p><button class="btn gold full" data-close>OK</button>`); }
@@ -5034,7 +5093,7 @@ function openAdventure(chId, focus) {
   });
   inner.innerHTML = html;
   const fi = focus != null ? focus : here; map.scrollTop = Math.max(0, pts[fi][1] - map.clientHeight * 0.62);
-  $('#adv-x', el).onclick = () => { SFX.tap(); closeAdventure(); };
+  $('#adv-x', el).onclick = () => { SFX.tap(); closeAdventure(); render(); };
   el.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => { SFX.tap(); advLevelBox(C, +b.dataset.lv, el); });
   if (focus != null) setTimeout(() => advLevelBox(C, focus, el), 250);
 }

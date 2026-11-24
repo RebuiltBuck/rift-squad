@@ -33,7 +33,9 @@ async def main():
         await pg.evaluate("document.querySelectorAll('.modal-bg').forEach(m=>m.remove())")
         await pg.click('#tabs [data-tab=battle]'); await pg.wait_for_timeout(300)
         await pg.screenshot(path=f'{OUT}/01_home.png')
-        await pg.click('.runbtn'); await pg.wait_for_timeout(400); await pg.screenshot(path=f'{OUT}/02_intro.png')
+        await pg.click('.duelbtn'); await pg.wait_for_timeout(300); await pg.screenshot(path=f'{OUT}/01b_modes.png'); await pg.click('[data-mode=run]'); await pg.wait_for_timeout(300)
+        await pg.screenshot(path=f'{OUT}/01c_home_run.png')
+        await pg.click('.battlebtn'); await pg.wait_for_timeout(400); await pg.screenshot(path=f'{OUT}/02_intro.png')
         await pg.click('#run-go'); await pg.wait_for_timeout(400); await pg.screenshot(path=f'{OUT}/03_captain.png')
         await pg.click('[data-o="0"]'); await pg.wait_for_timeout(400)
         for k in range(3):
@@ -43,7 +45,7 @@ async def main():
         print('run:', await pg.evaluate("JSON.stringify({phase:S.run.phase, cap:S.run.cap.hid, squad:S.run.squad.map(u=>u.hid+':'+u.ab)})"))
         g0, c0 = await pg.evaluate("S.gems"), await pg.evaluate("S.coins")
         stage_log = []
-        for f in range(14):
+        for f in range(40):
             R = await pg.evaluate("S.run ? S.run.phase : 'none'")
             if R in ('none', 'over'): break
             if R == 'reward':

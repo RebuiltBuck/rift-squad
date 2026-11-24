@@ -878,3 +878,13 @@ img.sm { width: 12px; height: 12px; }
 .hcard .lvl { display: flex; align-items: center; justify-content: center; gap: 4px; }
 .hcard .lvl .lvup { width: 18px; height: 18px; animation: lvupBob .8s ease-in-out infinite alternate; filter: drop-shadow(0 1px 0 #000); }
 @keyframes lvupBob { from { transform: translateY(1px); } to { transform: translateY(-3px); } }
+/* ---- mode picker ---- */
+.mlist { display: flex; flex-direction: column; gap: 9px; margin-top: 6px; }
+.mrow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: #241d40; border: 3px solid #3e3866; cursor: pointer; box-shadow: 0 4px 0 #0008; }
+.mrow.on { border-color: #ffd23f; background: #2f2650; box-shadow: 0 0 0 3px #ffd23f44, 0 4px 0 #0008; }
+.mrow.locked { opacity: .55; }
+.mrow .mi { flex: none; width: 46px; height: 46px; border-radius: 12px; background: #0b0716; display: flex; align-items: center; justify-content: center; } .mrow .mi img { width: 30px; height: 30px; }
+.mrow .mt { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.08; text-align: left; }
+.mrow .mt b { font-size: 25px; } .mrow .mt small { font-size: 16px; color: #c9c0f0; } .mrow .mt em { font-style: normal; font-size: 16px; color: #ffd23f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .mrow .mt em img { width: 13px; height: 13px; vertical-align: -1px; }
+.mrow .mck img { width: 24px; height: 24px; } .mrow .btn.sm { flex: none; }
+.duelbtn .drow .tiny img { width: 12px; height: 12px; vertical-align: -1px; }
