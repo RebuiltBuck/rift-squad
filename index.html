@@ -753,6 +753,69 @@ html.vfix #app, html.vfix #battle, html.vfix #modal-root, html.vfix .copen, html
 .orbfly { position: fixed; z-index: 160; width: 16px; height: 16px; pointer-events: none; filter: drop-shadow(0 0 3px #5fb8ff); }
 .bcard.pop { animation: orbpop .25s ease-out; }
 .tag.costchip { border-color: #4fa3ff; }
+/* ---- adventure ---- */
+.advbtn { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 8px 12px; border-radius: 14px; background: linear-gradient(90deg, #3a2a6a, #2a2244); border: 3px solid #6a5ac8; color: #fff; font: inherit; text-align: left; box-shadow: 0 4px 0 #0008; cursor: pointer; }
+.advbtn .ai img { width: 34px; height: 34px; } .advbtn .at { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.05; }
+.advbtn .at b { font-size: 25px; } .advbtn .at small { font-size: 16px; color: #c9c0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.advbtn .as { display: flex; align-items: center; gap: 3px; font-size: 19px; font-weight: 700; background: #0b071688; padding: 2px 8px; border-radius: 9px; }
+.adv { position: fixed; inset: 0; z-index: 35; max-width: 560px; margin: 0 auto; background: #140c22; display: flex; flex-direction: column; }
+html.vfix .adv { bottom: auto; }
+.adv-hd { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #1d1530; border-bottom: 3px solid #2e2550; }
+.adv-tt { min-width: 0; } .adv-hd h2 { margin: 0; font-size: 30px; line-height: 1; text-align: left; } .adv-hd small { color: #bdb5e0; font-size: 17px; white-space: nowrap; }
+.adv-st { margin-left: auto; display: flex; align-items: center; gap: 4px; background: #0b0716; border-radius: 10px; padding: 4px 10px; font-size: 21px; white-space: nowrap; }
+.adv-st img { width: 22px; height: 22px; }
+.adv-map { position: relative; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; background-size: 96px 96px; image-rendering: pixelated; scrollbar-width: none; padding-bottom: var(--sab); }
+.adv-map::-webkit-scrollbar { display: none; }
+.adv-in { position: relative; image-rendering: auto; }
+.adv-path { position: absolute; left: 0; top: 0; pointer-events: none; }
+.st2 { position: absolute; width: 52px; height: 52px; margin: -26px 0 0 -26px; padding: 0; border-radius: 50%; background: #2a2244; border: 4px solid #6a6490; display: flex; align-items: center; justify-content: center; font: inherit; font-size: 25px; font-weight: 700; color: #bdb5e0; z-index: 2; box-shadow: 0 4px 0 #0008; cursor: pointer; }
+.st2.done { background: #ffd23f; border-color: #b37a00; color: #3a2400; }
+.st2.here { width: 62px; height: 62px; margin: -31px 0 0 -31px; background: #4fa3ff; border-color: #fff; color: #fff; font-size: 29px; box-shadow: 0 0 0 4px #4fa3ff55, 0 0 18px #4fa3ffaa, 0 4px 0 #0008; animation: advpulse 1.6s ease-in-out infinite; }
+.st2.locked { background: #221c38; border-color: #3e3866; } .st2 .lk { width: 22px; height: 22px; opacity: .7; }
+@keyframes advpulse { 50% { box-shadow: 0 0 0 7px #4fa3ff33, 0 0 26px #4fa3ffcc, 0 4px 0 #0008; } }
+.st2 .ty { position: absolute; top: -11px; right: -11px; width: 26px; height: 26px; border-radius: 50%; background: #0b0716; border: 2px solid #ffffff40; display: flex; align-items: center; justify-content: center; }
+.st2 .ty img { width: 18px; height: 18px; }
+.st2 .stars, .boss2 .stars { position: absolute; bottom: -17px; left: 50%; transform: translateX(-50%); display: flex; }
+.st2 .stars img, .boss2 .stars img, .lst img { width: 16px; height: 16px; } .stars img.e, .lst img.e { filter: grayscale(1) brightness(.35); }
+.boss2 { position: absolute; width: 132px; height: 132px; margin: -66px 0 0 -66px; padding: 0; border-radius: 20px; background: radial-gradient(#4a1f5e, #1d0f2a); border: 5px solid #ff4f6b; display: flex; align-items: center; justify-content: center; z-index: 2; box-shadow: 0 0 0 4px #ff4f6b44, 0 0 24px #ff4f6b88, 0 5px 0 #0008; cursor: pointer; }
+.boss2.locked { border-color: #6a6490; box-shadow: 0 5px 0 #0008; background: #221c38; } .boss2.done { border-color: #ffd23f; }
+.boss2 img.bs { width: 108px; height: 108px; filter: drop-shadow(0 3px 0 #0008); }
+.boss2 .bl { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); background: #ff4f6b; color: #fff; font-weight: 700; font-size: 18px; padding: 1px 10px; border-radius: 7px; }
+.boss2 .bn { position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); background: #0b0716; color: #ffb3c0; font-size: 17px; padding: 1px 8px; border-radius: 7px; white-space: nowrap; }
+.boss2.done .stars { bottom: -34px; }
+.lvdim { position: absolute; inset: 0; background: #0b071655; z-index: 4; }
+.st2.picked, .boss2.picked { z-index: 5; box-shadow: 0 0 0 5px #ffd23f, 0 0 22px #ffd23faa, 0 4px 0 #0008; animation: none; }
+.lvpop { position: absolute; z-index: 6; background: #1d1530; border: 3px solid #ffd23f; border-radius: 16px; padding: 12px 14px 14px; box-shadow: 0 6px 0 #0009, 0 0 30px #0008; }
+.lvpop::after { content: ''; position: absolute; left: var(--ax, 40px); bottom: -14px; width: 22px; height: 22px; background: #1d1530; border-right: 3px solid #ffd23f; border-bottom: 3px solid #ffd23f; transform: rotate(45deg); }
+.lvpop.below::after { bottom: auto; top: -14px; transform: rotate(225deg); }
+.lvpop .lx { position: absolute; right: 8px; top: 8px; width: 32px; height: 32px; padding: 0; border-radius: 8px; background: #2e2550; border: 0; display: flex; align-items: center; justify-content: center; }
+.lvpop .lh { display: flex; gap: 8px; align-items: center; padding-right: 38px; } .lvpop .ln { color: #bdb5e0; font-size: 18px; }
+.lvpop .lt { display: flex; align-items: center; gap: 3px; font-size: 16px; padding: 1px 8px 1px 4px; border-radius: 7px; } .lvpop .lt img { width: 18px; height: 18px; }
+.lvpop .lst { display: flex; }
+.lvpop h3 { margin: 2px 0 4px; font-size: 29px; line-height: 1; }
+.lvpop .ld { font-size: 17px; color: #d8d2f0; line-height: 1.15; }
+.lvpop .le { display: flex; align-items: center; gap: 10px; margin: 10px 0 8px; } .lvpop .le small, .lvpop .lr small { display: block; color: #bdb5e0; font-size: 15px; } .lvpop .le b { font-size: 21px; }
+.lvpop .ec { width: 52px; height: 52px; border-radius: 10px; background: #2a2244; border: 3px solid #ff4f6b; display: flex; align-items: center; justify-content: center; position: relative; flex: none; } .lvpop .ec img { width: 40px; height: 40px; } .lvpop .ec .cr { position: absolute; top: -9px; width: 18px; height: 18px; }
+.lvpop .lrt { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 6px; }
+.rw3 { position: relative; width: 56px; height: 56px; border-radius: 11px; background: #2a2244; border: 3px solid #6a6490; display: flex; align-items: center; justify-content: center; } .rw3 > img:first-child { width: 38px; height: 38px; }
+.rw3 span { position: absolute; right: -6px; bottom: -8px; background: #2e2550; font-size: 15px; font-weight: 700; padding: 1px 5px; border-radius: 5px; } .rw3.k-wild { border-color: #c07bff; } .rw3.k-chest { border-color: #4fa3ff; }
+.rw3.got > img:first-child { opacity: .5; } .rw3 .ck { position: absolute; left: -7px; top: -7px; width: 20px; height: 20px; }
+.lvpop .lsg { font-size: 15px; color: #bdb5e0; margin: 2px 0 10px; display: flex; align-items: center; gap: 4px; } .lvpop .lsg img { width: 16px; height: 16px; }
+.lvpop .lp { font-size: 28px; padding: 10px; }
+.lvpop .lockmsg { text-align: center; font-size: 19px; color: #bdb5e0; padding: 6px 0 2px; } .lvpop .lockmsg img { width: 18px; height: 18px; vertical-align: -3px; }
+.advstars { display: flex; justify-content: center; gap: 6px; margin: 4px 0; }
+.advstar { width: 48px; height: 48px; filter: grayscale(1) brightness(.3); }
+.advstar.on { filter: none; animation: starpop .45s cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes starpop { 0% { transform: scale(0) rotate(-40deg); } 100% { transform: scale(1) rotate(0); } }
+.playrow { display: flex; flex-direction: column; gap: 10px; } .playrow .advbtn { margin-top: 0; }
+/* short phones: Adventure sits beside BATTLE instead of under it */
+@media (max-height: 740px) {
+  .playrow { flex-direction: row; gap: 8px; align-items: stretch; } .playrow .battlebtn { flex: 1; min-width: 0; }
+  .playrow .advbtn { width: 31%; flex: none; flex-direction: column; justify-content: center; gap: 0; padding: 4px 6px; }
+  .playrow .advbtn .ai, .playrow .advbtn .at small, .playrow .advbtn > img:last-child { display: none; }
+  .playrow .advbtn .at { flex: none; align-items: center; } .playrow .advbtn .at b { font-size: 21px; }
+  .playrow .advbtn .as { font-size: 17px; padding: 0 6px; }
+}
 </style>
 </head>
 <body>
@@ -986,6 +1049,39 @@ const HEROES = [
   { id: 'ember',  name: 'Ember',        world: 'kingdom',  origin: 'Fire Mage',      rarity: 'mythic',    role: 'ranged',  color: '#ff8a2a', hp: 4, dmg: 2, as: 1.5, cost: 3, rng: 4, look: 'fireball', lc: '#ff8a2a' },
 ];
 const HERO = {}; HEROES.forEach(h => HERO[h.id] = h);
+// ----- bosses (Adventure only: not collectable, not in HEROES) -----
+// big: stands on 2x2 tiles and never moves. hpMax is the whole fight's health; it carries over between rounds.
+const BOSSES = {
+  golem: { id: 'golem', boss: true, big: true, name: 'Rift Golem', world: 'wild', rarity: 'legendary', role: 'tank', color: '#8a5ad8', hp: 140, dmg: 3, as: 1.6, cost: 4, rng: 1, look: 'smash', lc: '#ff4fd8',
+    slam: { every: 6, wind: 1.6, dmg: 5 }, desc: 'Stands on 4 tiles. Every few seconds it marks a 3x3 area in red, then slams it. Its damage stays between rounds.' },
+};
+Object.assign(HERO, BOSSES);
+
+// ----- Adventure: chapters of levels. Each level has a reward for the first win, and up to 3 stars worth 1 gem each -----
+// stars: 1 = win, 2 = win losing at most 1 round, 3 = win without losing a round
+// enemy: cap + team (picks its board with Rift Orbs like a normal match), or fixed: exact spots every round (puzzles, bosses)
+// fixed spots use the enemy half: rows 0 (back) to 3 (front), columns 0-4
+const ADV_STAR_GEMS = 1;
+const ADVENTURE = [
+  { id: 1, name: 'Training Meadow', arena: 0, levels: [
+    { name: 'First Steps', desc: 'A few goblins out for a stroll.', diff: 'easy', hp: 0.6, orbs: -1, event: 'clear', cap: 'bruno', team: ['gus', 'zip', 'kit', 'nova', 'dusty'], r: { coins: 50 } },
+    { name: 'Goblin Patrol', desc: 'They march in a tight group.', diff: 'easy', hp: 0.7, orbs: -1, event: 'clear', cap: 'marla', team: ['gus', 'kit', 'volt', 'bao', 'zip'], r: { keys: 1 } },
+    { name: 'The Lane', type: 'puzzle', desc: 'They all stand in one lane. Their exact spots are shown: plan around them.', diff: 'normal', hp: 0.8, event: 'clear', cap: 'bruno',
+      fixed: [['bruno', 2, 3], ['gus', 2, 2], ['zip', 2, 1], ['nova', 2, 0]], r: { gems: 10 } },
+    { name: 'Bandit Camp', desc: 'Rocks everywhere. Watch your paths.', diff: 'normal', hp: 0.85, event: 'rocks', cap: 'marla', team: ['kit', 'vex', 'dusty', 'gus', 'yuki'], r: { coins: 100 } },
+    { name: 'Mossy Bridge', desc: 'Healing springs help whoever stands on them.', diff: 'normal', hp: 0.9, event: 'springs', cap: 'rocco', team: ['bao', 'luna', 'volt', 'zorp', 'kit'], r: { chest: 'hero' } },
+    { name: 'Goblin Ambush', type: 'elite', desc: 'Stronger heroes, and they bring 1 extra Rift Orb.', diff: 'hard', hp: 0.9, orbs: 1, event: 'clear', cap: 'mumbo', team: ['gus', 'kit', 'vex', 'hex', 'dusty'], r: { wild: 1, coins: 100, keys: 1 } },
+    { name: 'Old Windmill', desc: 'Lava pools burn anyone who stands in them.', diff: 'normal', hp: 1, event: 'lava', cap: 'chrono', team: ['ember', 'zip', 'yuki', 'ragnar', 'nova'], r: { coins: 150 } },
+    { name: 'Locked Gate', type: 'puzzle', desc: 'A wall of three guards, two snipers in the corners. Their exact spots are shown.', diff: 'hard', hp: 0.9, event: 'clear', cap: 'rocco',
+      fixed: [['rocco', 2, 3], ['volt', 1, 3], ['kit', 3, 3], ['dusty', 0, 0], ['zip', 4, 0]], r: { keys: 2 } },
+    { name: 'Rift Crack', desc: 'The rift is opening. Everything hits harder here.', diff: 'hard', hp: 1.05, event: 'lava', cap: 'rex', team: ['ragnar', 'ember', 'hex', 'luna', 'vex'], r: { gems: 20 } },
+    { name: "Rocco's Guard", type: 'elite', desc: 'The Golem\'s bodyguards. 1 extra Rift Orb.', diff: 'normal', hp: 0.8, orbs: 1, event: 'rocks', cap: 'rocco', team: ['yuki', 'bao', 'dusty', 'zorp', 'kit'], r: { chest: 'hero' } },
+    { name: 'Rift Golem', type: 'boss', desc: HERO.golem.desc, diff: 'hard', hp: 1, event: 'clear', cap: 'golem',
+      fixed: [['golem', 1, 0], ['gus', 0, 2], ['kit', 4, 2]], r: { chest: 'mega', coins: 200 } },
+  ] },
+];
+const ADV_TYPES = { puzzle: { name: 'Puzzle', icon: 'i_target', color: '#4fa3ff' }, elite: { name: 'Elite', icon: 'i_skull', color: '#ff4f6b' }, boss: { name: 'Boss', icon: 'i_crown', color: '#ff4f6b' } };
+const advKey = (ch, i) => ch + '-' + (i + 1);
 const CAPTAIN_IDS = HEROES.filter(h => h.captain).map(h => h.id);
 const START_HEROES = ['bruno', 'zip', 'nova', 'gus', 'dusty', 'bao'];
 // Captains: one big, tough leader per world (their bigger stats are set above). Only Captains can fill the Captain slot.
@@ -1244,6 +1340,7 @@ function newRound(opts) {
     s.revive[side] = capFx.revive || 0;
     S.units.forEach((d, i) => {
       const H = HERO[d.hid];
+      const H2 = HERO[d.hid]; if (H2.boss) { const b = makeUnit(s, (side ? 'e' : 'p') + i, d.hid, side, null, d.x, d.y, { i, cap: d.hid === S.captain, hp: H2.hp }); b.big = !!H2.big; b.boss = true; if (d.hpNow != null) b.hp = Math.max(1, Math.min(b.maxHp, d.hpNow)); s.units.push(b); return; }
       s.units.push(makeUnit(s, (side ? 'e' : 'p') + i, d.hid, side, d.ab, d.x, d.y, {
         i, cap: d.hid === S.captain, hpAdd: (capFx.hp || 0) + worldBonus(counts, H.world), hpMul: S.hpMul || 1,
         abilHaste: Math.max(0.3, 1 + (capFx.abilHaste || 0)), abil: capFx.abilDmg || 0, block: capFx.abilBlock || 0, shield: capFx.shieldStart || 0, charge0: S.charge0 }));
@@ -1255,7 +1352,11 @@ function newRound(opts) {
 function mkStats() { return { dmg: 0, kills: 0, abil: 0, heal: 0, lost: 0 }; }
 
 // ----- helpers -----
-function unitAt(s, x, y) { for (const u of s.units) if (u.alive && !(u.st.goneT > s.t) && u.x === x && u.y === y) return u; return null; }
+function unitAt(s, x, y) { for (const u of s.units) if (u.alive && !(u.st.goneT > s.t) && (u.x === x || (u.big && u.x + 1 === x)) && (u.y === y || (u.big && u.y + 1 === y))) return u; return null; }
+// the tile of t closest to (x, y): big bosses cover 2x2
+function near(t, x, y) { return t.big ? [Math.max(t.x, Math.min(t.x + 1, x)), Math.max(t.y, Math.min(t.y + 1, y))] : [t.x, t.y]; }
+const rdTo = (x, y, t) => { const p = near(t, x, y); return rdist(x, y, p[0], p[1]); };
+const mhTo = (x, y, t) => { const p = near(t, x, y); return manh(x, y, p[0], p[1]); };
 function byUid(s, uid) { for (const u of s.units) if (u.uid === uid) return u; return null; }
 function isObs(s, x, y) { return s.obs[y * BW + x] === 1; }
 function tileAt(s, x, y) { return s.tiles[y * BW + x]; }
@@ -1385,15 +1486,15 @@ function walkMap(s, u) {
 }
 // steps needed before u can hit e (stand on any open tile within range of it); 1e9 = no way there right now
 function walkCost(s, u, e, D) {
-  let c = 1e9; for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = D[x + y * BW]; if (d >= 0 && d < c) { const m = rdist(x, y, e.x, e.y); if (m >= 1 && m <= u.rng) c = d; } }
+  let c = 1e9; for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const d = D[x + y * BW]; if (d >= 0 && d < c) { const m = rdTo(x, y, e); if (m >= 1 && m <= u.rng) c = d; } }
   return c;
 }
 // closest enemy: anyone already in range first (keeps its current one), else the fewest steps away. Sticks to its target unless another is clearly closer.
 function gridTarget(s, u) {
   const foes = s.units.filter(e => e.side !== u.side && targetable(s, e)); if (!foes.length) return null;
   const cur = u.tgt && foes.includes(u.tgt) ? u.tgt : null, by = (a, b, ka, kb) => ka - kb || a.hp - b.hp || (a.uid < b.uid ? -1 : 1);
-  const dist = e => rdist(u.x, u.y, e.x, e.y) * 10 + manh(u.x, u.y, e.x, e.y); // nearest by reach, then by steps
-  const inR = foes.filter(e => rdist(u.x, u.y, e.x, e.y) <= u.rng);
+  const dist = e => rdTo(u.x, u.y, e) * 10 + mhTo(u.x, u.y, e); // nearest by reach, then by steps
+  const inR = foes.filter(e => rdTo(u.x, u.y, e) <= u.rng);
   if (inR.length) { const near = inR.sort((a, b) => by(a, b, dist(a), dist(b)))[0]; return cur && inR.includes(cur) && dist(cur) <= dist(near) ? cur : near; }
   const D = walkMap(s, u), cost = new Map(foes.map(e => [e, walkCost(s, u, e, D)]));
   const best = foes.slice().sort((a, b) => by(a, b, cost.get(a), cost.get(b)))[0];
@@ -1404,7 +1505,7 @@ function gridTarget(s, u) {
 // one step along the shortest open path to a tile within range of t. Never steps sideways without getting closer, so no back-and-forth.
 function gridStep(s, u, t) {
   const D = new Array(BW * BH).fill(-1), q = [], open = (x, y) => (x === u.x && y === u.y) || free(s, x, y);
-  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const m = rdist(x, y, t.x, t.y); if (m >= 1 && m <= u.rng && open(x, y) && !isObs(s, x, y)) { D[x + y * BW] = 0; q.push(x + y * BW); } }
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const m = rdTo(x, y, t); if (m >= 1 && m <= u.rng && open(x, y) && !isObs(s, x, y)) { D[x + y * BW] = 0; q.push(x + y * BW); } }
   for (let i = 0; i < q.length; i++) { const c = q[i], cx = c % BW, cy = (c - cx) / BW;
     for (const [dx, dy] of DIR4) { const nx = cx + dx, ny = cy + dy, k = nx + ny * BW; if (!inB(nx, ny) || D[k] >= 0 || !open(nx, ny)) continue; D[k] = D[c] + 1; q.push(k); } }
   const here = D[u.x + u.y * BW]; if (here <= 0) return false;
@@ -1412,7 +1513,7 @@ function gridStep(s, u, t) {
   for (const [dx, dy] of DIR4) {
     const nx = u.x + dx, ny = u.y + dy; if (!inB(nx, ny) || !free(s, nx, ny) || D[nx + ny * BW] !== here - 1) continue;
     const back = u.lastDir && u.lastDir[0] === -dx && u.lastDir[1] === -dy ? 1 : 0;
-    const key = [manh(nx, ny, t.x, t.y), back, dy === fwd ? 0 : 1, dx];
+    const key = [mhTo(nx, ny, t), back, dy === fwd ? 0 : 1, dx];
     if (!bk || (key[0] - bk[0] || key[1] - bk[1] || key[2] - bk[2] || key[3] - bk[3]) < 0) { bk = key; best = [nx, ny, dx, dy]; }
   }
   if (!best) return false;
@@ -1420,7 +1521,7 @@ function gridStep(s, u, t) {
   const st = moveTime(s, u, false) * GRID_SLOW; u.mt1 = s.t + Math.min(GRID_HOP, st); u.moveCd = s.t + st;
   return true;
 }
-function placeAt(u, x, y, s, dur) { u.fx = u.x; u.fy = u.y; u.x = x; u.y = y; u.mt0 = s.t; u.mt1 = s.t + (dur || 0); }
+function placeAt(u, x, y, s, dur) { if (u.big) return; u.fx = u.x; u.fy = u.y; u.x = x; u.y = y; u.mt0 = s.t; u.mt1 = s.t + (dur || 0); }
 // slide a unit to a tile (knockback / pulls); returns true if it moved
 function shove(s, u, x, y, ev, dur) { if (!free(s, x, y)) return false; placeAt(u, x, y, s, dur || 0.25); pushEv(ev, { t: 'shove', uid: u.uid }); return true; }
 
@@ -1453,7 +1554,7 @@ function chooseTarget(s, u) {
 const closestFoes = (s, u, n, from) => { from = from || u; return foesOf(s, u).filter(e => !(e.st.vanishT > s.t)).sort((a, b) => cheb(from.x, from.y, a.x, a.y) - cheb(from.x, from.y, b.x, b.y) || a.hp - b.hp || (a.uid < b.uid ? -1 : 1)).slice(0, n); };
 const laneFoes = (s, u) => { const fwd = u.side === 0 ? -1 : 1; return foesOf(s, u).filter(e => e.x === u.x && (e.y - u.y) * fwd > 0).sort((a, b) => Math.abs(a.y - u.y) - Math.abs(b.y - u.y)); };
 const mostHurt = (s, u, n) => friendsOf(s, u).filter(a => a.hp < a.maxHp).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp || a.hp - b.hp).slice(0, n || 1);
-const around = (s, u, cx, cy, r) => foesOf(s, u).filter(e => cheb(cx, cy, e.x, e.y) <= r);
+const around = (s, u, cx, cy, r) => foesOf(s, u).filter(e => { const p = near(e, cx, cy); return cheb(cx, cy, p[0], p[1]) <= r; });
 
 // ----- round-start abilities (fire once, so placement matters) -----
 function startAbility(s, u, ev) {
@@ -1529,14 +1630,14 @@ function startAbility(s, u, ev) {
     case 'clone': { const sp = [[1, 0], [-1, 0], [0, -fwd], [0, fwd], [1, -fwd], [-1, -fwd]].map(([dx, dy]) => [u.x + dx, u.y + dy]).find(([x, y]) => free(s, x, y)); if (!sp) return; cast();
       const c = makeUnit(s, u.uid + 'c', u.hid, u.side, null, sp[0], sp[1], { hp: 2, atk: 1, clone: true, i: 3 }); c.fx = u.x; c.fy = u.y; c.mt0 = 0; c.mt1 = 0.3; s.units.push(c);
       pushEv(ev, { t: 'spawn', uid: c.uid }); cap(ev, u, 'made a copy of himself'); return; }
-    case 'abduct': { const e = closestFoes(s, u, 1)[0]; if (!e) return; cast(); pushEv(ev, { t: 'abduct', uid: e.uid }); e.st.goneT = t0 + 4; s.units.forEach(o => { if (o.tgt === e) o.retgt = 0; }); cap(ev, u, `abducted ${HERO[e.hid].name} for 4s`); return; }
+    case 'abduct': { const e = closestFoes(s, u, 3).find(x => !x.big); if (!e) return; cast(); pushEv(ev, { t: 'abduct', uid: e.uid }); e.st.goneT = t0 + 4; s.units.forEach(o => { if (o.tgt === e) o.retgt = 0; }); cap(ev, u, `abducted ${HERO[e.hid].name} for 4s`); return; }
   }
 }
 
 // ----- charge abilities: return true if cast -----
 function castAbility(s, u, ev) {
   const ab = u.ab; const t = u.tgt && targetable(s, u.tgt) && u.tgt.side !== u.side ? u.tgt : null;
-  const d = t ? reach(s, u.x, u.y, t.x, t.y) : 99;
+  const d = t ? (s.grid ? rdTo(u.x, u.y, t) : reach(s, u.x, u.y, t.x, t.y)) : 99;
   const cast = () => { pushEv(ev, { t: 'cast', uid: u.uid, ab, color: HERO[u.hid].color }); s.stats[u.side].abil++; };
   const shot = (tg, look, color, dl) => pushEv(ev, { t: 'atk', uid: u.uid, tuid: tg.uid, ranged: true, look, color, d: dl || 0.15 });
   const nm = e => HERO[e.hid].name;
@@ -1595,7 +1696,7 @@ function castAbility(s, u, ev) {
       list.filter(e => e !== t).sort((a, b) => cheb(t.x, t.y, a.x, a.y) - cheb(t.x, t.y, b.x, b.y)).forEach(e => { if (cheb(t.x, t.y, e.x, e.y) > 1) shove(s, e, e.x - Math.sign(e.x - t.x), e.y - Math.sign(e.y - t.y), ev, 0.3); });
       list.forEach(e => zap(s, u, e, 1, ev)); cap(ev, u, `pulled in ${plural(list.length, 'enemy')}`); return true; }
     case 'whirl': { const list = around(s, u, u.x, u.y, 1); if (!list.length) return false; cast(); pushEv(ev, { t: 'spin', uid: u.uid }); list.forEach(e => hit(s, u, e, 1, ev, 'abil')); cap(ev, u, `spun into ${plural(list.length, 'enemy')}`); return true; }
-    case 'charm': { if (!t || d > 2) return false; if (!friendsOf(s, t).some(f => f !== t)) return false; cast(); shot(t, 'orb', '#ff8ac8', 0.15); t.st.charmT = s.t + 3; t.tgt = null; t.retgt = 0; pushEv(ev, { t: 'status', uid: t.uid, kind: 'charm' }); cap(ev, u, `charmed ${nm(t)}`); return true; }
+    case 'charm': { if (!t || d > 2 || t.big) return false; if (!friendsOf(s, t).some(f => f !== t)) return false; cast(); shot(t, 'orb', '#ff8ac8', 0.15); t.st.charmT = s.t + 3; t.tgt = null; t.retgt = 0; pushEv(ev, { t: 'status', uid: t.uid, kind: 'charm' }); cap(ev, u, `charmed ${nm(t)}`); return true; }
     case 'shrink': { if (!t || d > u.rng) return false; cast(); shot(t, 'zap', '#c07bff', 0.1); t.st.shrinkT = s.t + 3; pushEv(ev, { t: 'status', uid: t.uid, kind: 'shrink' }); cap(ev, u, `shrank ${nm(t)}: double damage`); return true; }
     case 'flamering': { const list = around(s, u, u.x, u.y, 2); if (!list.length) return false; cast(); pushEv(ev, { t: 'ringfx', uid: u.uid, r: 2, color: '#ff8a2a' }); list.forEach(e => zap(s, u, e, 1, ev)); cap(ev, u, `burned ${plural(list.length, 'enemy')}`); return true; }
   }
@@ -1654,8 +1755,9 @@ function step(s, ev) {
       u.charge += DT * u.m.abilHaste;
       if (u.charge >= u.cd) { if (castAbility(s, u, ev)) { u.charge = 0; if (u.mt1 > s.t || !u.alive) continue; } else u.charge = u.cd; }
     }
+    if (u.boss) { bossTick(s, u, ev); if (!u.alive || s.winner != null) continue; }
     const t = u.tgt; if (!t || !targetable(s, t)) continue;
-    if (reach(s, u.x, u.y, t.x, t.y) <= u.rng) {
+    if ((s.grid ? Math.min(...(u.big ? [[0, 0], [1, 0], [0, 1], [1, 1]] : [[0, 0]]).map(([a, b]) => rdTo(u.x + a, u.y + b, t))) : reach(s, u.x, u.y, t.x, t.y)) <= u.rng) {
       if (s.t >= u.nextAtk) {
         u.nextAtk = s.t + interval(s, u);
         const L = LOOKS[HERO[u.hid].look] || LOOKS.slash;
@@ -1663,6 +1765,8 @@ function step(s, ev) {
         if (u.rng > 1) later(s, L.d, ev2 => hit(s, u, t, 0, ev2, 'atk'));
         else later(s, L.d, ev2 => { if (u.alive && !stunned(s, u)) hit(s, u, t, 0, ev2, 'atk'); });
       }
+    } else if (u.big) {
+      // bosses never move
     } else if (s.grid) {
       // tile movement: rest on the tile between steps; if boxed in, wait and look again shortly
       if (u.moveCd <= s.t && !gridStep(s, u, t)) u.retgt = Math.min(u.retgt, s.t + 0.3);
@@ -1674,13 +1778,39 @@ function step(s, ev) {
     }
   }
   // end conditions (clones don't keep a side alive on their own)
-  const a0 = s.units.some(u => u.alive && u.side === 0 && !u.clone), a1 = s.units.some(u => u.alive && u.side === 1 && !u.clone);
+  const bossDown = side => s.units.some(u => u.boss && u.side === side && !u.alive);
+  const a0 = s.units.some(u => u.alive && u.side === 0 && !u.clone) && !bossDown(0), a1 = s.units.some(u => u.alive && u.side === 1 && !u.clone) && !bossDown(1);
   if (!a0 || !a1) { s.winner = a0 ? 0 : a1 ? 1 : 'draw'; s.winBy = 'wipe'; return; }
   if (s.t >= s.timeLimit) {
     const f = side => s.units.filter(u => u.alive && u.side === side && !u.clone).reduce((a, u) => a + u.hp / u.maxHp, 0);
     const f0 = f(0), f1 = f(1); s.winBy = 'time';
     s.winner = Math.abs(f0 - f1) < 0.05 ? 'draw' : f0 > f1 ? 0 : 1;
   }
+}
+
+// ----- bosses -----
+// slam: mark the 3x3 area that catches the most enemies, then hit everyone still in it
+function bossTick(s, u, ev) {
+  const B = HERO[u.hid].slam; if (!B) return;
+  if (u.slamAt) {
+    if (s.t < u.slamAt.t - 1e-9) return;
+    const c = u.slamAt, tiles = []; u.slamAt = null; u.slamNext = s.t + B.every;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (inB(c.x + dx, c.y + dy)) tiles.push({ x: c.x + dx, y: c.y + dy });
+    pushEv(ev, { t: 'blast', tiles, color: '#ff4f6b', boom: true, slam: true });
+    let n = 0; for (const e of s.units.slice()) if (e.side !== u.side && present(s, e) && tiles.some(p => p.x === e.x && p.y === e.y)) { dealDamage(s, u, e, B.dmg, ev, 'slam'); n++; }
+    cap(ev, u, n ? `slammed ${plural(n, 'enemy')}` : 'slammed the ground');
+    return;
+  }
+  if (s.t < (u.slamNext != null ? u.slamNext : 2.5)) return;
+  let best = null, bn = 0;
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) {
+    const n = s.units.filter(e => e.side !== u.side && present(s, e) && Math.abs(e.x - x) <= 1 && Math.abs(e.y - y) <= 1).length;
+    if (n > bn) { bn = n; best = { x, y }; }
+  }
+  if (!best) { u.slamNext = s.t + 1; return; }
+  u.slamAt = { x: best.x, y: best.y, t: s.t + B.wind };
+  const idx = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (inB(best.x + dx, best.y + dy)) idx.push((best.y + dy) * BW + best.x + dx);
+  pushEv(ev, { t: 'tele', uid: u.uid, tiles: idx, dur: B.wind });
 }
 
 function simulateRound(opts) {
@@ -1860,7 +1990,7 @@ function newSave(now) {
     road: [], season: { id: seasonKey(now), xp: 0, claimed: [], peak: 0, bonusClaimed: 0 },
     quests: null, shop: null, winCoins: { day: dayKey(now), n: 0 },
     stats: newStats(),
-    formation: {}, ach: {}, heroStats: {},
+    formation: {}, ach: {}, heroStats: {}, adv: { st: {}, tries: {} },
     settings: { sound: true, music: true, fast: false }, lastDiff: 'normal', tutorialDone: false, pendingEvents: [],
   };
   START_HEROES.forEach(h => s.heroes[h] = newHeroRec(1));
@@ -1898,6 +2028,7 @@ function migrate(s) {
   if (!s.ach) s.ach = {}; if (!s.heroStats) s.heroStats = {};
   // hero roads (v3): the first ability comes free with the hero; rc = road levels already claimed
   if (s.wild == null) s.wild = 0;
+  if (!s.adv) s.adv = { st: {}, tries: {} }; // adventure: best stars per level, attempts
   for (const h in s.heroes) { const o = s.heroes[h]; if (!o.rc) o.rc = []; if (o.tr >= 1 && !o.un[0]) o.un[0] = 1; if (o.tr >= 1 && o.eq < 0) o.eq = 0; }
   if (s.tutorialDone == null || (!s.tutorialDone && s.stats.battles > 0)) s.tutorialDone = true; // players who already battled skip the tutorial
   if (s.lastDiff == null) s.lastDiff = 'normal';
@@ -2329,6 +2460,42 @@ function finishTutorial(s) {
   return first;
 }
 
+// ---------- adventure ----------
+function advLevel(ch, i) { const C = ADVENTURE.find(c => c.id === ch); return C && C.levels[i]; }
+function advStars(s, ch, i) { return (s.adv.st[advKey(ch, i)] || 0); }
+function advOpen(s, ch, i) { return i === 0 || advStars(s, ch, i - 1) > 0; }
+function advChapterStars(s, ch) { const C = ADVENTURE.find(c => c.id === ch); return C.levels.reduce((n, L, i) => n + advStars(s, ch, i), 0); }
+function advNext(s, ch) { const C = ADVENTURE.find(c => c.id === ch); const i = C.levels.findIndex((L, k) => advStars(s, ch, k) === 0); return i < 0 ? C.levels.length - 1 : i; }
+// a match for one level, using your squad
+function advSetup(s, ch, i) {
+  const C = ADVENTURE.find(c => c.id === ch), L = C.levels[i], key = advKey(ch, i), tries = (s.adv.tries[key] || 0) + 1; s.adv.tries[key] = tries;
+  const seed = (hashStr('adv' + key) ^ (L.fixed ? 0 : tries * 2654435761)) >>> 0, rnd = mulberry32(seed);
+  const abOf = (h, k) => HERO_ABILITIES[h] ? HERO_ABILITIES[h][i < 2 ? 0 : (k + i) % 3] : null;
+  const foeHids = L.fixed ? L.fixed.map(f => f[0]) : [L.cap, ...L.team];
+  return { adv: { ch, i, key }, arena: C.arena, diff: L.diff, foeName: L.name, foeTier: 1, seed, event: L.event, variant: Math.floor(rnd() * 2),
+    foeHp: L.hp !== 1 ? L.hp : null, foeOrbs: L.orbs || 0, boss: L.type === 'boss' ? L.cap : null,
+    fixedFoe: L.fixed ? L.fixed.map((f, k) => ({ hid: f[0], ab: abOf(f[0], k), x: f[1], y: f[2] })) : null,
+    myDeck: s.squad.map(h => ({ hid: h, ab: equippedAb(s, h) })),
+    foeDeck: (L.fixed ? [L.cap, ...foeHids.filter(h => h !== L.cap)] : foeHids).map((h, k) => ({ hid: h, ab: abOf(h, k) })) };
+}
+// stars: 1 = win, 2 = lost at most 1 round, 3 = lost none. First win pays the level's reward; every new star pays 1 gem.
+function advFinish(s, setup, res) {
+  const { ch, i, key } = setup.adv, L = advLevel(ch, i), prev = s.adv.st[key] || 0;
+  const stars = res.winner === 0 ? (res.score[1] === 0 ? 3 : res.score[1] === 1 ? 2 : 1) : 0;
+  const out = { stars, prev, first: stars > 0 && prev === 0, gems: Math.max(0, stars - prev) * ADV_STAR_GEMS, r: null, chest: null };
+  s.stats.battles++; questAdd(s, 'battles', 1);
+  s.stats.kills += res.stats.kills; s.stats.dmg += res.stats.dmg; s.stats.abil += res.stats.abil;
+  questAdd(s, 'kills', res.stats.kills); questAdd(s, 'dmg', res.stats.dmg); questAdd(s, 'abil', res.stats.abil);
+  if (res.winner === 0) { s.stats.wins++; questAdd(s, 'wins', 1); }
+  if (stars > prev) s.adv.st[key] = stars;
+  if (out.gems) s.gems += out.gems;
+  if (out.first) {
+    const R = L.r; out.r = { coins: R.coins || 0, gems: R.gems || 0, keys: R.keys || 0, wild: R.wild || 0 }; grant(s, out.r);
+    if (R.chest) { out.chest = openInstant(s, R.chest, ADVENTURE.find(c => c.id === ch).arena, 'adv' + key); out.chestType = R.chest; }
+  }
+  return out;
+}
+
 // ---------- backup ----------
 function exportSave(s) { return 'RIFT1:' + btoaSafe(JSON.stringify(s)); }
 function importSave(str) {
@@ -2345,6 +2512,8 @@ const SPR = SPRITES_DATA, SPR_COMMON = SPR._common;
 const _sprCache = new Map(), _urlCache = new Map();
 
 const HERO_SPR = (typeof SPRITES32 !== 'undefined') ? SPRITES32 : {};
+// bosses reuse a hero's pixels in their own colours: the Rift Golem is Rocco turned to glowing rift stone
+if (HERO_SPR.rocco && !HERO_SPR.golem) HERO_SPR.golem = Object.assign({}, HERO_SPR.rocco, { pal: ['#1b1325', '#c06bff', '#8a3fd8', '#b8a6e8', '#8f7cc8', '#5a2a9a', '#6a5aa8', '#2c2050', '#ff4fd8', '#7a68b8', '#5c4c98', '#3a2c66'] });
 const EYE_COL = '#283040';
 // heroes whose eyes aren't the standard eye colour: pixels that close when they blink
 const BLINK_EXTRA = { rocco: [[4, 5], [5, 5], [6, 5], [9, 5], [10, 5], [11, 5]], mumbo: [[6, 7], [9, 7]], vex: [[6, 7], [9, 7]], luna: [[6, 7], [9, 7]], zorp: [[4, 7], [11, 7]], volt: [[5, 6], [6, 6], [7, 6], [8, 6]] };
@@ -2692,14 +2861,14 @@ function bvDraw(V, now) {
     const blink = u.alive && !frozen && now >= v.blinkAt && now < v.blinkAt + 140;
     const frog = u.st.frogT > 0 && u.st.frogT > V.rt, shrink = u.st.shrinkT > 0 && u.st.shrinkT > V.rt;
     const img = frog ? sprCanvas('i_frog') : heroFrame(u.hid, br, lift, blink, false);
-    const sw = shrink ? Math.round(img.width * 0.6) : img.width, shh = shrink ? Math.round(img.height * 0.6) : img.height;
-    const bx0 = half((ux + ox / TILE) * TILE), by0 = half((uy + oy / TILE) * TILE);
-    const px = bx0 + 1 + (16 - sw) / 2, py = by0 + 17 - shh - half(z);
+    const BG = u.big ? 2 : 1, sw = (shrink ? Math.round(img.width * 0.6) : img.width) * BG, shh = (shrink ? Math.round(img.height * 0.6) : img.height) * BG;
+    const bx0 = half((ux + ox / TILE) * TILE), by0 = half((uy + oy / TILE) * TILE), cxo = u.big ? TILE : 9, foot = u.big ? TILE + 17 : 17;
+    const px = bx0 + cxo - sw / 2, py = by0 + foot - shh - half(z);
     g.globalAlpha = alpha;
     // ground shadow + team marker (stay on the floor while hopping)
-    const sh = Math.max(6, 12 - Math.round(z / 2));
-    g.fillStyle = 'rgba(10,6,20,0.35)'; g.fillRect(bx0 + 9 - sh / 2, by0 + 15, sh, 2);
-    g.fillStyle = u.side === 0 ? '#4fa3ff' : '#ff4f6b'; g.fillRect(bx0 + 9 - sh / 2 + 1, by0 + 16, sh - 2, 1);
+    const sh = Math.max(6, 12 - Math.round(z / 2)) * BG;
+    g.fillStyle = 'rgba(10,6,20,0.35)'; g.fillRect(bx0 + cxo - sh / 2, by0 + foot - 2, sh, 2 * BG);
+    g.fillStyle = u.side === 0 ? '#4fa3ff' : '#ff4f6b'; g.fillRect(bx0 + cxo - sh / 2 + 1, by0 + foot - 1, sh - 2, 1);
     const drawSpr = (im) => { if (face < 0) { g.save(); g.translate(px + sw, py); g.scale(-1, 1); g.drawImage(im, 0, 0, sw, shh); g.restore(); } else g.drawImage(im, px, py, sw, shh); };
     drawSpr(img);
     if (!frog && (now < v.flash || (!u.alive && now - v.deadAt < 90))) { g.globalAlpha = 0.5 * alpha; drawSpr(heroFrame(u.hid, br, lift, false, true)); g.globalAlpha = alpha; }
@@ -2717,12 +2886,11 @@ function bvDraw(V, now) {
       if (u.st.tauntT > rs.t) { pxRect(g, px + 7, py - 6, 2, 3, '#ff4f6b'); pxRect(g, px + 7, py - 2, 2, 1, '#ff4f6b'); }
       if (u.st.vulnT > rs.t) { pxRect(g, px + sw - 2, py + 1, 2, 2, '#c07bff'); pxRect(g, px + sw - 1, py, 1, 1, '#ffffff'); }
       // hp bar drains smoothly, leaving a white trail; purple = ability charge (none for round-start abilities)
-      const bx = bx0 + 7, bty = by0 + 17 - shh - 5;
+      const BWD = u.big ? 26 : 10, bx = bx0 + cxo - BWD / 2 + 1, bty = by0 + foot - shh - 5;
       if (v.hpShow == null) v.hpShow = u.hp;
       v.hpShow = v.hpShow > u.hp ? Math.max(u.hp, v.hpShow - (v.hpShow - u.hp) * Math.min(1, dtF * 5) - u.maxHp * 0.2 * dtF) : u.hp;
       const f = Math.max(0, u.hp / u.maxHp), fs = Math.max(0, v.hpShow / u.maxHp);
       const startAb = !u.ab || ABILITIES[u.ab].kind !== 'charge';
-      const BWD = 10;
       pxRect(g, bx - 1, bty - 0.5, BWD + 2, startAb ? 3.5 : 4.5, '#1b1325');
       if (fs > f) pxRect(g, bx, bty + 0.5, Math.max(1, Math.round(BWD * fs)), 1.5, '#ffffff');
       pxRect(g, bx, bty + 0.5, Math.max(0.5, Math.round(BWD * f * 2) / 2), 1.5, f > 0.5 ? (u.side === 0 ? '#5fd068' : '#ff6b6b') : f > 0.25 ? '#ffd23f' : '#ff4f6b');
@@ -3377,7 +3545,7 @@ function homeHTML() {
   <div class="panel tight chestp"><button class="keyb" onclick="keyInfo()">${icon('i_key', 'ib')}<div><b>${S.keys}</b><small>${S.keys < KEY_MAX ? `<span data-until="${S.keyNext}"></span>` : 'full'}</small></div></button><div class="shelf">${shelf}</div></div>
   <button class="duelbtn ${older ? 'older' : ''}" onclick="openDuel()"><canvas id="arena-cv"></canvas><span class="dtxt"><small>${icon('i_swords', 'ii')} Duel · tap to change</small><b>${esc(A.name)}</b>
     <span class="drow"><span class="dchip" style="--dc:${d.color}">${d.name}</span>${older ? '<span class="tiny">no trophies at stake</span>' : `<span class="bar gold thin"><i style="width:${Math.round(pr * 100)}%"></i></span>`}</span></span><span class="dgo">${icon('i_right', 'ii')}</span></button>
-  <button class="btn gold big full battlebtn" onclick="startBattle()">${icon('i_swords','ib')} BATTLE</button>
+  <div class="playrow"><button class="btn gold big full battlebtn" onclick="startBattle()">${icon('i_swords','ib')} BATTLE</button>${S.tutorialDone ? advButtonHTML() : ''}</div>
   </div>`;
 }
 function keyInfo() { modal(`<h2>Keys</h2><div class="center">${icon('i_key', 'ib')}</div><p class="center">You have <b>${S.keys}</b> of ${KEY_MAX} keys. 1 key opens 1 chest.</p><p class="center small mute">${S.keys < KEY_MAX ? `Next key in <b data-until="${S.keyNext}">${fmtDur(S.keyNext - now())}</b>. ` : ''}A new key every ${KEY_HOURS} hours, or buy them in the Shop. Every win puts a chest on your shelf (up to ${SHELF_MAX}).</p><button class="btn gold full" data-close>OK</button>`); }
@@ -3822,6 +3990,7 @@ function helpHTML() {
   <p>${icon('i_key','ib')}<span>Every win adds a chest to your shelf. Open chests with keys: you get a new key every 5 hours.</span></p>
   <p>${icon('i_htrophy','ib')}<span>Every Hero Chest holds <b>1 hero trophy</b>: each one is +1 hero level. Level 1 unlocks the hero and its first ability, level 5 the second, level 10 the third. Every level has a reward on that hero's road.</span></p>
   <p>${icon('i_wild','ib')}<span><b>Wild trophies</b> are rare chest drops you can put on any hero you like.</span></p>
+  <p>${icon('star','ib')}<span><b>Adventure</b> (under BATTLE): beat levels in order for their rewards. Stars: win, lose at most 1 round, lose none. Every new star is +1 gem. Each chapter ends with a boss.</span></p>
   <p>${icon('i_save','ib')}<span>Your progress is saved on this phone. Make a backup code in Settings sometimes.</span></p></div>`;
 }
 function openSettings() {
@@ -3896,7 +4065,7 @@ function roundSeed() { return (M.setup.seed + M.round * 7919) >>> 0; }
 function beginMatch(setup, saved) {
   M = { setup, phase: 'prep', vis: {}, sel: null, drag: null, hover: null, speed: (S.settings.fast && !setup.tut ? 2 : 1), acc: 0, rt: 0, last: performance.now(), sfxT: 0, mark: null, cheer: null, slowUntil: 0 };
   const fresh = { lastW: null, round: 1, score: [0, 0], prev: [null, null], agg: { dmg: 0, kills: 0, abil: 0 }, flawless: 0, rounds: 0, lineups: null, heroes: {}, clutch: 0, down02: false, feats: {} };
-  if (saved) Object.assign(M, fresh, { lastW: saved.lastW != null ? saved.lastW : null, sides: saved.sides, round: saved.round, score: saved.score, prev: saved.prev, agg: saved.agg, flawless: saved.flawless, rounds: saved.rounds, lineups: saved.lineups || null, heroes: saved.heroes || {}, clutch: saved.clutch || 0, down02: !!saved.down02, feats: saved.feats || {} });
+  if (saved) Object.assign(M, fresh, { bossHp: saved.bossHp != null ? saved.bossHp : null, lastW: saved.lastW != null ? saved.lastW : null, sides: saved.sides, round: saved.round, score: saved.score, prev: saved.prev, agg: saved.agg, flawless: saved.flawless, rounds: saved.rounds, lineups: saved.lineups || null, heroes: saved.heroes || {}, clutch: saved.clutch || 0, down02: !!saved.down02, feats: saved.feats || {} });
   else Object.assign(M, fresh, { sides: [newMatchSide(setup.myDeck), newMatchSide(setup.foeDeck)] });
   M.style = setup.tut ? 'mix' : aiStyleFor(setup.seed >>> 2);
   M.variant = setup.variant; const eb = eventBoard(setup.event, M.variant); M.obs = eb.obs;
@@ -3913,7 +4082,7 @@ function beginMatch(setup, saved) {
 }
 function saveMatch() {
   if (!M || M.setup.tut) return;
-  lsSet(STORE_BATTLE, JSON.stringify({ bh: BH, lastW: M.lastW, setup: M.setup, sides: M.sides, round: M.round, score: M.score, prev: M.prev, agg: M.agg, flawless: M.flawless, rounds: M.rounds, lineups: M.lineups, heroes: M.heroes, clutch: M.clutch, down02: M.down02, feats: M.feats }));
+  lsSet(STORE_BATTLE, JSON.stringify({ bh: BH, lastW: M.lastW, bossHp: M.bossHp, setup: M.setup, sides: M.sides, round: M.round, score: M.score, prev: M.prev, agg: M.agg, flawless: M.flawless, rounds: M.rounds, lineups: M.lineups, heroes: M.heroes, clutch: M.clutch, down02: M.down02, feats: M.feats }));
 }
 
 // ----- iOS Home Screen app fix -----
@@ -4031,26 +4200,31 @@ async function prepRound() {
   const moved = setRoundBoard(r);
   if (moved && r > 1) { await hazardShift(); if (!M) return; }
   // slots: the limit grows every round, and whoever lost the last round gets 1 extra
-  M.caps = [sideCap(r, M.lastW === 1), sideCap(r, M.lastW === 0)];
-  aiPickBoard(M.sides[1], M.caps[1], M.style || 'mix', D, matchRnd('fb' + r), M.prev[0]);
+  M.caps = [sideCap(r, M.lastW === 1), sideCap(r, M.lastW === 0) + (M.setup.foeOrbs || 0)];
+  if (!M.setup.fixedFoe) aiPickBoard(M.sides[1], M.caps[1], M.style || 'mix', D, matchRnd('fb' + r), M.prev[0]);
   if (r === 1 && M.setup.tut) autoFill(M.sides[0], M.caps[0]); else trimBoard(M.sides[0], M.caps[0]);
   const my = myLineup(); if (M.setup.tut && r === 1) my.charge0 = 0.8;
   $('#b-hint2') && ($('#b-hint2').textContent = 'Enemy is planning…');
   await new Promise(r2 => setTimeout(r2, 40));
   const ctx = { event: M.setup.event, variant: M.variant, captain: M.sides[1].captain, oppBoard: M.sides[0].board };
   const guess = M.prev[0] ? estimateLineup(M.sides[0].board, M.prev[0], 0, M.sides[0].captain, M.obs) : (DIFF[D].idx >= 2 ? my : null);
-  const foe = aiLineup(M.sides[1].board, 1, D, guess, ctx, (M.setup.seed + r * 131) >>> 0);
+  let foe;
+  if (M.setup.fixedFoe) { // puzzles and bosses: the same exact spots every round
+    foe = { captain: M.sides[1].captain, units: M.setup.fixedFoe.map(u => Object.assign({}, u)) };
+    if (M.setup.boss) { if (M.bossHp == null) M.bossHp = HERO[M.setup.boss].hp; foe.units.forEach(u => { if (u.hid === M.setup.boss) u.hpNow = M.bossHp; }); }
+  } else foe = aiLineup(M.sides[1].board, 1, D, guess, ctx, (M.setup.seed + r * 131) >>> 0);
   if (M.setup.foeHp) foe.hpMul = M.setup.foeHp;
   // before round 1 you already know who they brought: show them faded in their usual spots (the real spots can differ)
-  if (r === 1) M.scout = { units: aiLineup(M.sides[1].board, 1, D, null, ctx, (M.setup.seed ^ 0x9e37) >>> 0).units, captain: M.sides[1].captain };
+  if (r === 1) M.scout = M.setup.fixedFoe ? { units: foe.units, captain: foe.captain, all: true } : { units: aiLineup(M.sides[1].board, 1, D, null, ctx, (M.setup.seed ^ 0x9e37) >>> 0).units, captain: M.sides[1].captain };
   M.lineups = [my, foe];
   M.phase = 'setup'; rebuildPreview(); saveMatch(); hud(); panel(); tutHook('setup', r);
-  if (r === 1 && !M.setup.tut) toast(`${icon('i_orb', 'ii')} Spend your <b>${M.caps[0]} Rift Orbs</b>: tap or drag heroes from the bench`);
+  if (r === 1 && !M.setup.tut) toast(M.setup.fixedFoe && !M.setup.boss ? `${icon('i_target', 'ii')} Puzzle: their exact spots are shown. Spend your <b>${M.caps[0]} Rift Orbs</b>`
+    : M.setup.boss ? `${icon('i_skull', 'ii')} The ${esc(HERO[M.setup.boss].name)}'s damage stays between rounds. Spend your <b>${M.caps[0]} Rift Orbs</b>` : `${icon('i_orb', 'ii')} Spend your <b>${M.caps[0]} Rift Orbs</b>: tap or drag heroes from the bench`);
   if (r > 1) { const free = M.caps[0] - slotsUsed(M.sides[0].board); toast(`${icon('i_orb', 'ii')} <b>${M.caps[0]} Rift Orbs</b> this round${M.lastW === 1 ? ' (gold one for losing the last round)' : ''}${free > 0 && M.sides[0].bench.length ? ` · ${free} to spend` : ''}`); }
 }
 // faded enemies: last round's spots, or before round 1 their usual spots
 // faded enemies: where they stood last round; before round 1 you only know their captain
-function ghostLine() { return M.prev && M.prev[1] ? M.prev[1] : M.round === 1 && M.scout ? Object.assign({}, M.scout, { units: M.scout.units.filter(u => u.hid === M.sides[1].captain) }) : null; }
+function ghostLine() { return M.prev && M.prev[1] ? M.prev[1] : M.round === 1 && M.scout ? Object.assign({}, M.scout, { units: M.scout.all ? M.scout.units : M.scout.units.filter(u => u.hid === M.sides[1].captain) }) : null; }
 function roundVariant(r) { return r <= 1 || M.setup.tut ? M.setup.variant : (((hashStr('hz' + r) ^ M.setup.seed) >>> 0) % 1e9) + 2; }
 function setRoundBoard(r) {
   const E = EVENTS[M.setup.event], v = roundVariant(r), changed = v !== M.variant;
@@ -4163,6 +4337,7 @@ function fxEvents(evs, nowT) {
       case 'opening': { const box = $('#b-cap'); if (box && M.round === 1) { const d = document.createElement('div'); d.className = 'capl'; d.innerHTML = `${icon('i_clock', 'ii')} <b>Round-start abilities</b> go off first. Nobody moves yet!`; box.appendChild(d); while (box.children.length > 2) box.firstChild.remove(); setTimeout(() => d.classList.add('fade'), 2200); setTimeout(() => d.remove(), 2700); } break; }
       case 'taunt': { tutHook('taunt', e); const p = pos(e.uid); bvFx({ type: 'ringfx', x: p[0], y: p[1], r: 2.4, color: '#ff4f6b', dur: 520 }); for (const tu of e.tuids) { const q = pos(tu); bvFx({ type: 'line', x0: p[0], y0: p[1], x1: q[0], y1: q[1], color: '#ff4f6b', w: 1, dur: 700 }); } bvShake(2, 200); tone(160, 0.25, 'sawtooth', 0.05, 320); break; }
       case 'cap': addCaption(e); break;
+      case 'tele': bvFx({ type: 'hazpulse', tiles: e.tiles, color: '#ff4f6b', dur: e.dur * 1000 / Math.max(1, M.speed) }); SFX.tap(); break;
       case 'blast': bvFx({ type: 'blast', tiles: e.tiles, color: e.color, dur: e.boom ? 450 : 350 }); if (e.boom) { bvShake(3, 300); const c = e.tiles[Math.floor(e.tiles.length / 2)], list = []; for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2; list.push({ x: c.x * TILE + 9, y: c.y * TILE + 9, vx: Math.cos(a) * (0.8 + Math.random()), vy: Math.sin(a) * (0.8 + Math.random()) - 0.5, color: i % 3 ? '#ff8a2a' : '#ffd23f' }); } bvFx({ type: 'parts', list, dur: 500 }); SFX.die(); } buzz(15); break;
       case 'dmg': {
         const p = pos(e.uid); v.flash = nowT + 70;
@@ -4229,6 +4404,7 @@ function roundOver() {
   for (const f in M.rs.feats[0]) M.feats[f] = 1;
   if (w === 0) M.score[0]++; else if (w === 1) M.score[1]++;
   M.lastW = w === 0 || w === 1 ? w : null;
+  if (M.setup.boss) { const b = M.rs.units.find(u => u.boss); M.bossHp = b && b.alive ? b.hp : 0; if (!M.bossHp) M.score[0] = Math.max(M.score[0], toWin()); }
   if (M.score[0] === 0 && M.score[1] >= 2) M.down02 = true;
   if (w === 0 || w === 1) M.cheer = { side: w, t0: bvNow() };
   if (M.zoomed) { M.zoomed = false; bvZoom(null); }
@@ -4348,6 +4524,7 @@ async function finishMatch(fled) {
   if (!fled) await matchEndShow(win, draw);
   if (!M) return;
   if (M.setup.tut) { finishTutorialMatch(win, fled, sc); return; }
+  if (M.setup.adv) { finishAdventureMatch(win, fled, sc); return; }
   const finalHids = M.lineups ? M.lineups[0].units.map(u => u.hid) : [];
   const res = finishBattle(S, M.setup, { winner, score: sc, stats: M.agg, flawless: M.flawless, rounds: M.rounds, syn3: activeSynergies(finalHids).some(x => x.n >= 3), captain: M.sides[0].captain,
     heroes: M.heroes, clutch: M.clutch, comeback: win && M.down02, feats: M.feats }, now());
@@ -4400,6 +4577,99 @@ function countUp(root) {
     setTimeout(() => requestAnimationFrame(f), 250);
   });
 }
+// ---------- adventure ----------
+function advButtonHTML() {
+  const C = ADVENTURE[0], got = advChapterStars(S, C.id), max = C.levels.length * 3, nxt = advNext(S, C.id);
+  return `<button class="advbtn" onclick="openAdventure()"><span class="ai">${icon('star', 'ib')}</span><span class="at"><b>Adventure</b><small>${got >= max ? 'Chapter ' + C.id + ' complete' : advLevel(C.id, nxt).type === 'boss' ? 'Boss: ' + esc(advLevel(C.id, nxt).name) : 'Level ' + (nxt + 1)} · ${esc(C.name)}</small></span><span class="as">${icon('star', 'ii')}${got}/${max}</span>${icon('i_right', 'ii')}</button>`;
+}
+function closeAdventure() { const a = $('#advl'); if (a) a.remove(); }
+function advRewardTiles(L, claimed) {
+  const R = L.r, t = [];
+  const tile = (img, n, cls) => `<div class="rw3 ${cls || ''} ${claimed ? 'got' : ''}">${img}${n ? `<span>${fmt(n)}</span>` : ''}${claimed ? `<img class="ck px" src="${sprURL('i_check')}">` : ''}</div>`;
+  if (R.chest) t.push(tile(`<img class="px" src="${chestURL(R.chest)}">`, 0, 'k-chest'));
+  if (R.wild) t.push(tile(icon('i_wild', ''), R.wild, 'k-wild'));
+  if (R.coins) t.push(tile(icon('coin', ''), R.coins));
+  if (R.gems) t.push(tile(icon('gem', ''), R.gems));
+  if (R.keys) t.push(tile(icon('i_key', ''), R.keys));
+  return t.join('');
+}
+function openAdventure(chId, focus) {
+  closeAdventure(); if (M) return;
+  const C = ADVENTURE.find(c => c.id === (chId || ADVENTURE[0].id)), n = C.levels.length, here = advNext(S, C.id);
+  const got = advChapterStars(S, C.id), max = n * 3;
+  const el = document.createElement('div'); el.id = 'advl'; el.className = 'adv';
+  el.innerHTML = `<div class="adv-hd"><button class="btn sm gray" id="adv-x" aria-label="Close">${icon('i_x', 'ii')}</button><div class="adv-tt"><h2>Adventure</h2><small>Chapter ${C.id} · ${esc(C.name)}</small></div><span class="adv-st">${icon('star', '')}<b>${got} / ${max}</b></span></div><div class="adv-map"><div class="adv-in"></div></div>`;
+  // sits under the top bar so coins and gems stay in view (and rewards can fly into them)
+  const tb = $('#topbar'), top = tb ? Math.round(tb.getBoundingClientRect().bottom) : 0; el.style.top = top + 'px';
+  if (document.documentElement.classList.contains('vfix')) el.style.height = `calc(var(--app-h) - ${top}px)`;
+  document.body.appendChild(el);
+  const map = $('.adv-map', el), inner = $('.adv-in', el), W = map.clientWidth || 360, GAP = 92, PAD = 70, BOSSH = 170, H = PAD + (n - 1) * GAP + BOSSH + 40;
+  inner.style.height = H + 'px';
+  // arena floor behind the path
+  const fc = document.createElement('canvas'); fc.width = 36; fc.height = 36; const fg = fc.getContext('2d'); for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) drawFloorTile(fg, x * 18, y * 18, x, y, C.arena, 7);
+  map.style.backgroundImage = `url(${fc.toDataURL()})`;
+  const X = [0.5, 0.27, 0.5, 0.73], pos = i => i === n - 1 ? [Math.round(W / 2), H - PAD - (n - 2) * GAP - BOSSH + 20] : [Math.round(W * X[i % 4]), H - PAD - i * GAP];
+  const pts = C.levels.map((L, i) => pos(i)), doneN = C.levels.filter((L, i) => advStars(S, C.id, i) > 0).length;
+  let html = `<svg class="adv-path" width="${W}" height="${H}"><polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="#0b0716aa" stroke-width="12" stroke-linejoin="round" stroke-dasharray="2 13" stroke-linecap="round"/>${doneN ? `<polyline points="${pts.slice(0, Math.min(n, doneN + 1)).map(p => p.join(',')).join(' ')}" fill="none" stroke="#ffd23f" stroke-width="8" stroke-linejoin="round" stroke-dasharray="2 13" stroke-linecap="round"/>` : ''}</svg>`;
+  C.levels.forEach((L, i) => {
+    const [x, y] = pts[i], st = advStars(S, C.id, i), open = advOpen(S, C.id, i), T = ADV_TYPES[L.type];
+    if (L.type === 'boss') { html += `<button class="boss2 ${open ? '' : 'locked'} ${st ? 'done' : ''}" data-lv="${i}" style="left:${x}px;top:${y}px"><span class="bl">BOSS</span><img class="bs px" src="${sprURL(L.cap, null, open ? '' : 'sil', 128)}"><span class="bn">${esc(L.name)}</span>${st ? `<span class="stars">${[0, 1, 2].map(k => `<img class="px ${k < st ? '' : 'e'}" src="${sprURL('star')}">`).join('')}</span>` : ''}</button>`; return; }
+    html += `<button class="st2 ${st ? 'done' : ''} ${open && !st ? 'here' : ''} ${open ? '' : 'locked'}" data-lv="${i}" style="left:${x}px;top:${y}px">${open ? i + 1 : `<img class="px lk" src="${sprURL('lock')}">`}${T ? `<span class="ty"><img class="px" src="${sprURL(T.icon)}"></span>` : ''}${st ? `<span class="stars">${[0, 1, 2].map(k => `<img class="px ${k < st ? '' : 'e'}" src="${sprURL('star')}">`).join('')}</span>` : ''}</button>`;
+  });
+  inner.innerHTML = html;
+  const fi = focus != null ? focus : here; map.scrollTop = Math.max(0, pts[fi][1] - map.clientHeight * 0.62);
+  $('#adv-x', el).onclick = () => { SFX.tap(); closeAdventure(); };
+  el.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => { SFX.tap(); advLevelBox(C, +b.dataset.lv, el); });
+  if (focus != null) setTimeout(() => advLevelBox(C, focus, el), 250);
+}
+// tap a level: its name, what's special, the enemy captain, rewards and PLAY
+function advLevelBox(C, i, el) {
+  el.querySelectorAll('.lvpop, .lvdim').forEach(x => x.remove()); el.querySelectorAll('.picked').forEach(x => x.classList.remove('picked'));
+  const L = C.levels[i], st = advStars(S, C.id, i), open = advOpen(S, C.id, i), T = ADV_TYPES[L.type], inner = $('.adv-in', el), map = $('.adv-map', el);
+  const node = inner.querySelector(`[data-lv="${i}"]`); node.classList.add('picked');
+  const dim = document.createElement('div'); dim.className = 'lvdim'; dim.onclick = () => { pop.remove(); dim.remove(); node.classList.remove('picked'); }; inner.appendChild(dim);
+  const pop = document.createElement('div'); pop.className = 'lvpop';
+  const capH = HERO[L.cap];
+  pop.innerHTML = `<button class="lx" aria-label="Close">${icon('i_x', 'ii')}</button>
+    <div class="lh"><span class="ln">${L.type === 'boss' ? 'Chapter boss' : 'Level ' + (i + 1)}</span>${T ? `<span class="lt" style="background:${T.color}33;color:${T.color}">${icon(T.icon, '')}${T.name}</span>` : ''}${st ? `<span class="lst">${[0, 1, 2].map(k => `<img class="px ${k < st ? '' : 'e'}" src="${sprURL('star')}">`).join('')}</span>` : ''}</div>
+    <h3>${esc(L.name)}</h3><div class="ld">${esc(L.desc)}</div>
+    <div class="le"><div class="ec">${L.type === 'boss' ? '' : `<img class="cr px" src="${sprURL('i_crown')}">`}<img class="px" src="${sprURL(L.cap)}"></div><div><small>${L.type === 'boss' ? 'Boss' : 'Enemy captain'}</small><b>${esc(capH.name)}</b></div></div>
+    <div class="lr"><small>${st ? 'Rewards (collected)' : 'Rewards for the first win'}</small><div class="lrt">${advRewardTiles(L, st > 0)}</div>
+    <div class="lsg">${icon('gem', 'ii')} +1 gem for every star: win, lose at most 1 round, lose none</div></div>
+    ${open ? `<button class="btn gold full lp">${st ? 'PLAY AGAIN' : 'PLAY'}</button>` : `<div class="lockmsg">${icon('lock', 'ii')} Beat level ${i} first</div>`}`;
+  inner.appendChild(pop);
+  const [nx, ny] = [parseFloat(node.style.left), parseFloat(node.style.top)], W = inner.clientWidth, PW = Math.min(310, W - 20);
+  pop.style.width = PW + 'px'; pop.style.left = Math.max(10, Math.min(W - 10 - PW, nx - PW / 2)) + 'px';
+  const ph = pop.offsetHeight, rad = L.type === 'boss' ? 70 : 34, above = ny - rad - 16 - ph > map.scrollTop + 4;
+  pop.style.top = (above ? ny - rad - 16 - ph : ny + rad + 16) + 'px'; pop.classList.toggle('below', !above);
+  pop.style.setProperty('--ax', Math.max(20, Math.min(PW - 34, nx - parseFloat(pop.style.left) - 13)) + 'px');
+  if (!above && ny + rad + 16 + ph > map.scrollTop + map.clientHeight) map.scrollTo({ top: ny + rad + ph - map.clientHeight + 40, behavior: 'smooth' });
+  else if (above && ny - rad - 16 - ph < map.scrollTop) map.scrollTo({ top: ny - rad - 30 - ph, behavior: 'smooth' });
+  $('.lx', pop).onclick = dim.onclick;
+  const play = $('.lp', pop); if (play) play.onclick = () => { if (M) return; SFX.cast(); closeAdventure(); beginMatch(advSetup(S, C.id, i), null); persist(); };
+}
+function finishAdventureMatch(win, fled, sc) {
+  const setup = M.setup, { ch, i } = setup.adv, L = advLevel(ch, i);
+  const out = advFinish(S, setup, { winner: fled ? 1 : win ? 0 : 1, score: sc, stats: M.agg });
+  S.activeBattle = false; lsDel(STORE_BATTLE); persist();
+  const stars = [0, 1, 2].map(k => `<img class="px advstar ${k < out.stars ? 'on' : ''} ${k >= out.prev && k < out.stars ? 'new' : ''}" style="animation-delay:${0.35 + k * 0.28}s" src="${sprURL('star')}">`).join('');
+  const r = out.r || {}, g = { coins: r.coins || 0, gems: (r.gems || 0) + out.gems };
+  const tiles = rewardTiles({ coins: g.coins, gems: g.gems, keys: r.keys || 0, wild: r.wild || 0 }) + (out.chestType ? `<div class="rewards"><div class="rw new drop"><img src="${chestURL(out.chestType)}"><span>${CHESTS[out.chestType].name.split(' ')[0]}</span><small>chest</small></div></div>` : '');
+  holdRes(g);
+  const m = modal(`${resultHeader(out.stars ? (L.type === 'boss' ? 'BOSS DOWN' : 'LEVEL CLEAR') : 'DEFEAT', out.stars ? 'win' : 'lose')}
+    <p class="center" style="margin:0 0 4px;font-size:24px"><b>${esc(L.name)}</b> <span class="small mute">${sc[0]} – ${sc[1]}${fled ? ' (left)' : ''}</span></p>
+    <div class="advstars">${stars}</div>
+    ${out.gems ? `<p class="center small" style="color:var(--gold);margin:2px 0 6px">${out.gems} new star${out.gems > 1 ? 's' : ''}: +${out.gems} gem${out.gems > 1 ? 's' : ''}</p>` : out.stars && out.stars <= out.prev ? `<p class="center small mute" style="margin:2px 0 6px">Best: ${out.prev} star${out.prev > 1 ? 's' : ''}</p>` : ''}
+    ${g.coins || g.gems || r.keys || r.wild || out.chestType ? tiles : out.stars ? '' : `<p class="center small mute">Stars: win, lose at most 1 round, lose none. Try a different lineup!</p>`}
+    <button class="btn gold full" id="cont">Continue</button>`, { noClose: true });
+  if (out.stars) SFX.coin();
+  $('#cont', m).onclick = () => {
+    const rects = {}; for (const k in g) { const t = m.querySelector(`[data-res="${k}"]`); if (t) rects[k] = t.getBoundingClientRect(); }
+    m.remove(); closeBattle(); openAdventure(ch, out.stars && i + 1 < advLevelCount(ch) ? i + 1 : i);
+    setTimeout(() => { for (const k in g) if (g[k]) flood({ [k]: g[k] }, rects[k] || null); else releaseRes(k, 0); if (out.chest) openSpecChest(CHESTS[out.chestType].name, out.chest); }, 80);
+  };
+}
+function advLevelCount(ch) { return ADVENTURE.find(c => c.id === ch).levels.length; }
 function finishTutorialMatch(win, fled, sc) {
   const first = finishTutorial(S); persist();
   if (fled) { const skipped = M.tutSkipped; tutHook('matchDone', { win: false, fled: true }); TUT = null; coachHide(); closeBattle(); if (first) toast(skipped ? 'Tutorial skipped. A Hero Chest is waiting on your shelf!' : 'A Hero Chest is waiting on your shelf!'); return; }
@@ -4470,7 +4740,7 @@ function boot() {
       if (sv.bh !== BH || (sv.lineups && sv.lineups.some(offBoard)) || (sv.prev && sv.prev.some(offBoard))) { sv.lineups = null; sv.prev = [null, null]; }
       const m = modal(`<h2>Match in progress</h2><p class="center">You left a match against <b>${esc(sv.setup.foeName)}</b> (${sv.score[0]}–${sv.score[1]}). Jump back in?</p><div class="row" style="gap:8px"><button class="btn red grow" id="ff">Forfeit</button><button class="btn gold grow" id="rs">Resume</button></div>`, { noClose: true });
       $('#rs', m).onclick = () => { m.remove(); beginMatch(sv.setup, sv); };
-      $('#ff', m).onclick = () => { m.remove(); finishBattle(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg, flawless: 0, rounds: sv.rounds }, now()); S.activeBattle = false; lsDel(STORE_BATTLE); persist(); render(); toast('Match forfeited'); };
+      $('#ff', m).onclick = () => { m.remove(); if (sv.setup.adv) advFinish(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg }); else finishBattle(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg, flawless: 0, rounds: sv.rounds }, now()); S.activeBattle = false; lsDel(STORE_BATTLE); persist(); render(); toast('Match forfeited'); };
     } catch (e) { S.activeBattle = false; lsDel(STORE_BATTLE); persist(); }
   } else if (S.activeBattle) { S.activeBattle = false; persist(); }
   if (fresh && BUILD === 'test') modal(`<h2>Test Build</h2><p class="center small">All 20 heroes are unlocked with all 3 abilities, plus 999,999 coins, 99,999 gems and 10 keys. This save is separate from the normal preview.</p><p class="center small mute">More tools in ${icon('i_gear','ii')} Settings ${icon('i_right','ii')} Test tools: jump to any arena, reset hero trophies, skip time to test keys, fill the chest shelf.</p><button class="btn gold full" data-close>Show me the heroes</button>`, { onClose: () => go('heroes') });
