@@ -852,3 +852,22 @@ img.sm { width: 12px; height: 12px; }
 
 .playrow { display: flex; flex-direction: column; gap: 10px; }
 @media (max-height: 740px) { .playrow { flex-direction: row; gap: 8px; align-items: stretch; } .playrow .battlebtn { flex: 1; min-width: 0; } }
+/* ---- types ---- */
+.tytag { position: absolute; top: 4px; right: 4px; z-index: 1; width: 20px; height: 20px; border-radius: 6px; background: #0b0716d8; border: 2px solid var(--c); display: flex; align-items: center; justify-content: center; line-height: 0; }
+.tytag img { width: 13px; height: 13px; }
+.tytag.sm { top: auto; bottom: -6px; right: -6px; width: 17px; height: 17px; border-radius: 5px; } .tytag.sm img { width: 11px; height: 11px; }
+.tytag.in { position: static; display: inline-flex; width: 17px; height: 17px; margin-right: 2px; } .tytag.in img { width: 11px; height: 11px; }
+.hcard.capcard .tytag { top: 4px; }
+.typechip { display: inline-flex; align-items: center; gap: 3px; background: #0b0716; border: 2px solid var(--c); color: var(--c); font: inherit; cursor: pointer; }
+.typechip.sel { box-shadow: 0 0 0 2px var(--c); } .typechip img { width: 15px; height: 15px; }
+.capline b { color: var(--gold); }
+/* ---- captain button (fight) ---- */
+#battle .bbtns2 .btn.cmdb { position: relative; background: #3a2a6a; overflow: hidden; color: #fff; }
+.cmdb > img { width: 26px; height: 26px; position: relative; z-index: 1; filter: grayscale(1) brightness(.75); }
+.cmdb small { position: relative; z-index: 1; }
+.cmdb .cring { position: absolute; inset: 0; background: conic-gradient(#ffd23f calc(var(--p, 0) * 360deg), transparent 0); opacity: .35; }
+.cmdb.ready { background: #ffd23f !important; color: #3a2400 !important; animation: cmdPulse .9s ease-in-out infinite; } .cmdb.ready > img { filter: none; } .cmdb.ready .cring { display: none; }
+.cmdb.used, .cmdb.down { background: #2a2440 !important; opacity: .6; } .cmdb.used .cring, .cmdb.down .cring { display: none; }
+.cmdb.idle { background: #4a3a7a !important; } .cmdb.idle > img { filter: none; opacity: .8; }
+@keyframes cmdPulse { 50% { box-shadow: 0 0 0 4px #ffd23f88, 0 0 18px #ffd23f, 0 4px 0 #0009; transform: translateY(-2px); } }
+.capline { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -270,6 +270,8 @@ function bvDraw(V, now) {
       g.globalAlpha = 0.16; g.fillStyle = '#ff4f6b'; g.fillRect(gh.x * TILE + 2, gh.y * TILE + 2, TILE - 4, TILE - 4);
       g.globalAlpha = 0.38 + 0.08 * Math.sin(t * 3 + gh.y); g.save(); g.translate(gx + im.width, gy); g.scale(-1, 1); g.drawImage(im, 0, 0); g.restore();
       if (gh.cap) { g.globalAlpha = 0.5; drawCrown(g, gx + 4, gy - 4); }
+      // the hero you're holding beats this enemy's type: mark it
+      if (rgU && rgU.side === 0 && typeof typeBeats === 'function' && typeBeats(rgU.hid, gh.hid)) { g.globalAlpha = 0.75 + 0.25 * Math.sin(t * 6); g.drawImage(sprCanvas(TYPES[heroType(rgU.hid)].icon), gh.x * TILE + TILE - 10, gh.y * TILE + 1, 9, 9); }
       g.globalAlpha = 1;
     }
     for (const u of rs.units) {

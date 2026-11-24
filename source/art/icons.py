@@ -377,6 +377,15 @@ add('i_poison', {'g': '#7dff6b', 'h': '#d4ffcc', 'G': '#2f9a2a'}, shade([
     '....g....', '...ggg...', '...ggg...', '..ggggg..', '.ggggggg.', 'ggggggggg', 'ggggggggg', 'ggggggggg', '.ggggggg.', '..ggggg..'], 'g', 'h', 'G'))
 add('i_drop', {'g': '#ff3b5c', 'h': '#ffb3c0', 'G': '#a3122a'}, shade([
     '....g....', '...ggg...', '...ggg...', '..ggggg..', '.ggggggg.', 'ggggggggg', 'ggggggggg', 'ggggggggg', '.ggggggg.', '..ggggg..'], 'g', 'h', 'G'))
+# type icons
+add('i_water', {'b': '#4fa3ff', 'h': '#bfe2ff', 'B': '#1f5fb8'}, shade([
+    '....b....', '...bbb...', '...bbb...', '..bbbbb..', '.bbbbbbb.', 'bbbbbbbbb', 'bbbbbbbbb', 'bbbbbbbbb', '.bbbbbbb.', '..bbbbb..'], 'b', 'h', 'B'))
+add('i_leaf', {'g': '#5fd068', 'h': '#b5f5ba', 'G': '#2f8a3a', 'n': '#8a5a32'}, [
+    '......ggg.', '....ggggg.', '...gghgggG', '..ghhgggGG', '.ghggggGG.', '.gggggGG..', 'gnggGGG...', 'n.GGG.....', 'n.........'])
+add('i_sun', {'y': '#ffd23f', 'h': '#fff3b0', 'o': '#ff9f1a'}, [
+    '....y....', '.y..o..y.', '..yyyyy..', '..yhhyy..', 'yoyhyyyoy', '..yyyyo..', '..yyyoo..', '.y..o..y.', '....y....'])
+add('i_moon', {'p': '#c07bff', 'h': '#e6ccff', 'P': '#7a3fc0'}, [
+    '...ppp...', '..pph....', '.pph.....', '.pph.....', 'pphh.....', '.pph....P', '.ppph..PP', '..pppPPP.', '...PPP...'])
 add('i_target', {'r': '#ff4f6b', 'w': '#ffffff'}, [
     '....r....', '..rrrrr..', '.r..r..r.', '.r.....r.', 'rrr.w.rrr', '.r.....r.', '.r..r..r.', '..rrrrr..', '....r....'])
 add('i_food', {'w': '#fff3d6', 'W': '#d9c79a', 'n': '#c9a46a', 'N': '#8a5a32'}, [

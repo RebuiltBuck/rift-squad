@@ -97,7 +97,7 @@ function activeSynergies(hids) {
 function capFxOf(hid) { return hid && HERO[hid] && HERO[hid].cap ? HERO[hid].cap.fx : {}; }
 function mkSt() {
   return { shield: 0, shieldT: 0, stunT: 0, frogT: 0, floatT: 0, slowT: 0, hasteT: 0, fastT: 0, dotT: 0, dotNext: 0, dotKind: null, dotSrc: null,
-    tauntUid: null, tauntT: 0, charmT: 0, vanishT: 0, goneT: 0, shrinkT: 0, vulnT: 0 };
+    tauntUid: null, tauntT: 0, charmT: 0, vanishT: 0, goneT: 0, shrinkT: 0, vulnT: 0, guardT: 0, chargeT: 0 };
 }
 function makeUnit(s, uid, hid, side, ab, x, y, opts) {
   opts = opts || {};
@@ -118,7 +118,7 @@ function newRound(opts) {
     stats: [mkStats(), mkStats()], rnd: mulberry32(opts.seed || 1), revive: [0, 0], started: false, open: 0, zones: [], mines: [], drones: [], feats: [{}, {}] };
   for (let side = 0; side < 2; side++) {
     const S = opts.sides[side];
-    const capFx = capFxOf(S.captain);
+    const capFx = {}; // captains have a button now (see CAP_CMDS), not a passive
     const counts = worldCounts(S.units.map(u => u.hid));
     s.revive[side] = capFx.revive || 0;
     S.units.forEach((d, i) => {
@@ -131,6 +131,9 @@ function newRound(opts) {
     });
   }
   if (s.grid) for (const u of s.units) u.moveCd = moveTime(s, u, false) * GRID_SLOW; // everyone waits one step before moving
+  // captain buttons: both sides fire on their own (AI timing) unless the UI hands side 0 to the player
+  s.cmd = [0, 1].map(side => { const c = HERO[opts.sides[side].captain] && HERO[opts.sides[side].captain].cap; return { id: c && c.cmd || null, used: false }; });
+  s.cmdReq = [false, false]; s.cmdAuto = [true, true]; s.lastFell = [null, null];
   return s;
 }
 function mkStats() { return { dmg: 0, kills: 0, abil: 0, heal: 0, lost: 0 }; }
@@ -177,7 +180,7 @@ function heal(s, u, amt, ev) {
   return h;
 }
 
-function dealDamage(s, src, tgt, amt, ev, kind) {
+function dealDamage(s, src, tgt, amt, ev, kind, sup) {
   if (!tgt.alive) return 0;
   kind = kind || 'hit';
   if (tgt.pas.stone > 0 && (kind === 'hit' || kind === 'abil')) { // Stone Skin
@@ -189,11 +192,12 @@ function dealDamage(s, src, tgt, amt, ev, kind) {
   if (tgt.st.shrinkT > s.t) amt *= 2;
   if (kind === 'abil' && tgt.m.block) amt -= tgt.m.block;
   amt = Math.max(1, amt);
+  if (tgt.st.guardT > s.t) amt = Math.max(0, amt - 1); // Bedrock
   let absorbed = 0;
   if (tgt.st.shield > 0 && tgt.st.shieldT > s.t) { absorbed = Math.min(tgt.st.shield, amt); tgt.st.shield -= absorbed; }
   const dmg = amt - absorbed; const before = tgt.hp; tgt.hp = Math.max(0, tgt.hp - dmg); const dealt = before - tgt.hp;
   if (src) { s.stats[src.side].dmg += dealt + absorbed; src.dealt += dealt + absorbed; }
-  pushEv(ev, { t: 'dmg', uid: tgt.uid, src: src ? src.uid : null, amt: dealt, absorbed, kind });
+  pushEv(ev, { t: 'dmg', uid: tgt.uid, src: src ? src.uid : null, amt: dealt, absorbed, kind, sup: !!sup });
   if (tgt.hp > 0 && lowHp(tgt) && !tgt.pas.low) { // dropping below half health
     tgt.pas.low = true;
     if (tgt.pas.fort) { tgt.pas.fort = 0; tgt.st.shield = Math.max(tgt.st.shield, 4); tgt.st.shieldT = 999; pushEv(ev, { t: 'status', uid: tgt.uid, kind: 'shield' }); cap(ev, tgt, 'built a snow fort: 4 shield'); }
@@ -205,7 +209,7 @@ function dealDamage(s, src, tgt, amt, ev, kind) {
       tgt.hp = Math.ceil(tgt.maxHp * s.revive[tgt.side]); s.revive[tgt.side] = 0; tgt.pas.low = lowHp(tgt);
       pushEv(ev, { t: 'status', uid: tgt.uid, kind: 'revive' });
     } else {
-      tgt.alive = false; if (!tgt.clone) { s.stats[tgt.side].lost++; if (src && src.side !== tgt.side) { s.stats[src.side].kills++; src.kills++; } }
+      tgt.alive = false; if (!tgt.clone && s.lastFell) s.lastFell[tgt.side] = tgt; if (!tgt.clone) { s.stats[tgt.side].lost++; if (src && src.side !== tgt.side) { s.stats[src.side].kills++; src.kills++; } }
       pushEv(ev, { t: 'die', uid: tgt.uid });
       if (src && src.alive && src.ab === 'plunder' && src.side !== tgt.side) { src.bonus++; pushEv(ev, { t: 'status', uid: src.uid, kind: 'rage' }); cap(ev, src, `plundered: now ${dmgOf(src)} damage`); }
     }
@@ -216,8 +220,9 @@ function dealDamage(s, src, tgt, amt, ev, kind) {
 // a normal hit ('atk') does the hero's damage; abilities add their bonus
 function hit(s, src, tgt, bonus, ev, kind) {
   if (!src || !tgt || !tgt.alive) return 0;
-  const d = dmgOf(src) + (kind === 'atk' ? 0 : bonus + src.m.abil);
-  const r = dealDamage(s, src, tgt, d, ev, kind === 'atk' ? 'hit' : 'abil');
+  const sup = kind === 'atk' && typeBeats(src.hid, tgt.hid); // type advantage: +1 on a basic attack
+  const d = dmgOf(src) + (kind === 'atk' ? (sup ? TYPE_BONUS : 0) : bonus + src.m.abil);
+  const r = dealDamage(s, src, tgt, d, ev, kind === 'atk' ? 'hit' : 'abil', sup);
   if (kind === 'atk') {
     if (src.ab === 'poison' && tgt.alive) applyDot(s, tgt, 'poison', 3, src);
     if (src.ab === 'lifedrain' && src.alive) heal(s, src, 1, ev);
@@ -500,6 +505,7 @@ function step(s, ev) {
     if (s.open) pushEv(ev, { t: 'opening', dur: s.open });
   }
   s.t = +(s.t + DT).toFixed(3);
+  cmdTick(s, ev);
   if (s.pending.length) { const due = s.pending.filter(p => p.t <= s.t + 1e-9); s.pending = s.pending.filter(p => p.t > s.t + 1e-9); for (const p of due) p.fn(ev); }
   const tick = Math.floor(s.t / 1.5 + 1e-9) !== Math.floor((s.t - DT) / 1.5 + 1e-9);
   // zones (fire / cauldron), mines, drones
@@ -536,7 +542,7 @@ function step(s, ev) {
     const bad = !u.tgt || !targetable(s, u.tgt) || (u.tgt.side === u.side && !(u.st.charmT > s.t)) || (u.tgt.side !== u.side && u.st.charmT > s.t);
     if (bad || s.t >= u.retgt || (u.st.tauntT > s.t && u.tgt && u.tgt.uid !== u.st.tauntUid)) { u.tgt = chooseTarget(s, u); u.retgt = s.t + 1; }
     if (u.ab && ABILITIES[u.ab].kind === 'charge' && !(u.st.charmT > s.t)) {
-      u.charge += DT * u.m.abilHaste;
+      u.charge += DT * u.m.abilHaste * (u.st.chargeT > s.t ? 2 : 1); // Haste button: double speed for a while
       if (u.charge >= u.cd) { if (castAbility(s, u, ev)) { u.charge = 0; if (u.mt1 > s.t || !u.alive) continue; } else u.charge = u.cd; }
     }
     if (u.boss) { bossTick(s, u, ev); if (!u.alive || s.winner != null) continue; }
@@ -743,3 +749,71 @@ function simulateMatch(deck0, deck1, d0, d1, ctx, seed) {
 }
 
 if (typeof module !== 'undefined') module.exports = { newRound, step, simulateRound, simulateMatch, aiLineup, roleFormation, estimateLineup, activeSynergies, heroStats, eventBoard, startAbility, castAbility };
+
+// ---------- captain buttons ----------
+const CAP_CMDS = {
+  wall:      { name: 'Shield Wall',   icon: 'i_shield' },
+  broadside: { name: 'Broadside',     icon: 'i_cannon' },
+  bedrock:   { name: 'Bedrock',       icon: 'i_stone' },
+  undying:   { name: 'Undying',       icon: 'i_cross' },
+  plating:   { name: 'Titan Plating', icon: 'i_heart' },
+  haste:     { name: 'Haste',         icon: 'i_clock' },
+};
+function cmdCaptain(s, side) { return s.units.find(u => u.side === side && u.cap && !u.clone); }
+function cmdCan(s, side) {
+  const c = s.cmd[side];
+  if (c.id === 'undying') { const f = s.lastFell[side]; return !!(f && !f.alive); }
+  if (c.id === 'broadside') return s.units.some(u => u.side !== side && u.alive);
+  return true;
+}
+// what the button shows: none | wait (filling, p 0..1) | ready | idle (nothing to do yet) | used | down (captain fell)
+function cmdState(s, side) {
+  const c = s.cmd && s.cmd[side]; if (!c || !c.id) return { st: 'none' };
+  if (c.used) return { st: 'used', id: c.id };
+  const cu = cmdCaptain(s, side); if (!cu || !cu.alive) return { st: 'down', id: c.id };
+  if (s.t < CMD_READY) return { st: 'wait', id: c.id, p: s.t / CMD_READY };
+  return cmdCan(s, side) ? { st: 'ready', id: c.id } : { st: 'idle', id: c.id };
+}
+// AI timing (also the player's when the round is skipped)
+function cmdWant(s, side) {
+  const fr = s.units.filter(u => u.side === side && u.alive && !u.clone), fo = s.units.filter(u => u.side !== side && u.alive && !u.clone);
+  const hurt = fr.reduce((a, u) => a + (u.maxHp - u.hp), 0);
+  switch (s.cmd[side].id) {
+    case 'wall': return s.t >= 4 || hurt >= 4;
+    case 'broadside': return fo.length >= 3 || s.t >= 8;
+    case 'bedrock': return s.t >= 4.5;
+    case 'undying': return true;
+    case 'plating': return hurt >= Math.max(4, fr.length * 2) || s.t >= 12;
+    case 'haste': return s.t >= 4;
+  }
+  return s.t >= 5;
+}
+function cmdTick(s, ev) {
+  if (!s.cmd) return;
+  for (let side = 0; side < 2; side++) {
+    const c = s.cmd[side]; if (!c.id || c.used || s.t < CMD_READY) continue;
+    const cu = cmdCaptain(s, side); if (!cu || !cu.alive || !cmdCan(s, side)) continue;
+    if (s.cmdReq[side] || (s.cmdAuto[side] && cmdWant(s, side))) { s.cmdReq[side] = false; c.used = true; c.t = s.t; cmdFire(s, side, cu, ev); }
+  }
+}
+function cmdFire(s, side, cu, ev) {
+  const id = s.cmd[side].id, fr = s.units.filter(u => u.side === side && u.alive);
+  pushEv(ev, { t: 'cmd', side, id, uid: cu.uid });
+  switch (id) {
+    case 'wall': fr.forEach(a => { a.st.shield = Math.max(a.st.shield, 2); a.st.shieldT = 999; pushEv(ev, { t: 'status', uid: a.uid, kind: 'shield' }); }); cap(ev, cu, 'Shield Wall: everyone gets a 2 shield'); break;
+    case 'broadside': {
+      const fo = s.units.filter(u => u.side !== side && u.alive).sort((a, b) => cheb(cu.x, cu.y, a.x, a.y) - cheb(cu.x, cu.y, b.x, b.y) || a.y - b.y).slice(0, 3);
+      fo.forEach((t, k) => { pushEv(ev, { t: 'atk', uid: cu.uid, tuid: t.uid, ranged: true, look: 'cannon', color: '#3a3550', d: 0.2 + k * 0.08 }); later(s, 0.2 + k * 0.08, e2 => { if (t.alive) dealDamage(s, cu, t, 2, e2, 'abil'); }); });
+      cap(ev, cu, `Broadside: ${fo.length} cannonball${fo.length === 1 ? '' : 's'}`); break; }
+    case 'bedrock': fr.forEach(a => { a.st.guardT = s.t + 3; pushEv(ev, { t: 'status', uid: a.uid, kind: 'guard' }); }); cap(ev, cu, 'Bedrock: 1 less damage for 3 seconds'); break;
+    case 'undying': {
+      const t = s.lastFell[side]; if (!t || t.alive) break;
+      const spot = unitAt(s, t.x, t.y) ? nearestFree(s, t.x, t.y, side) : [t.x, t.y]; if (!spot) break;
+      t.alive = true; t.hp = Math.ceil(t.maxHp / 3); t.pas.low = lowHp(t); t.x = t.fx = spot[0]; t.y = t.fy = spot[1]; t.mt0 = t.mt1 = s.t;
+      t.st.stunT = 0; t.st.dotT = 0; t.tgt = null; t.nextAtk = s.t + 0.6; if (s.grid) t.moveCd = s.t + moveTime(s, t, false) * GRID_SLOW;
+      s.stats[side].lost = Math.max(0, s.stats[side].lost - 1);
+      pushEv(ev, { t: 'status', uid: t.uid, kind: 'revive' }); cap(ev, cu, `Undying: ${HERO[t.hid].name} gets back up`); break; }
+    case 'plating': fr.forEach(a => heal(s, a, 3, ev)); cap(ev, cu, 'Titan Plating: heal everyone 3'); break;
+    case 'haste': fr.forEach(a => { if (a.cd < 1e8) { a.charge = a.cd; a.st.chargeT = s.t + 5; pushEv(ev, { t: 'status', uid: a.uid, kind: 'haste' }); } }); cap(ev, cu, 'Haste: every ability is ready, then charges twice as fast'); break;
+  }
+}

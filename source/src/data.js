@@ -94,7 +94,7 @@ const ABILITIES = {
   // Kit
   dash:      { name: 'Shadow Dash',     icon: 'i_dash',     kind: 'start',  desc: 'Leaps behind the enemy back line and strikes for +1.' },
   shuriken:  { name: 'Shuriken Storm',  icon: 'i_shuriken', kind: 'charge', cd: 6, desc: '1 damage to the 3 closest enemies.' },
-  smoke:     { name: 'Smoke Bomb',      icon: 'i_smoke',    kind: 'charge', cd: 8, desc: 'Vanishes for 2 seconds: enemies lose track of him.' },
+  smoke:     { name: 'Smoke Bomb',      icon: 'i_smoke',    kind: 'charge', cd: 5, desc: 'Vanishes for 2 seconds: enemies lose track of him.' },
   // Yuki
   freeze:    { name: 'Freeze',          icon: 'i_snow',     kind: 'charge', cd: 7, desc: 'Freezes an enemy up to 2 tiles away for 2 seconds.' },
   snowfort:  { name: 'Snow Fort',       icon: 'i_shield',   kind: 'passive', desc: 'The first time he drops below half health, he gets a 4 shield.' },
@@ -169,17 +169,17 @@ const WORLDS = {
 // cap = Captain power (Captains only)
 const HEROES = [
   { id: 'bruno',  captain: true, name: 'Sir Bruno',     world: 'kingdom',  origin: 'Knight',           rarity: 'common',    role: 'tank',    color: '#3a6fd8', hp: 15, dmg: 1, as: 1.2, cost: 3, rng: 1, look: 'slash', lc: '#ffffff',
-    cap: { name: 'Shield Wall', desc: 'Team starts each round with a 2 shield.', fx: { shieldStart: 2 } } },
+    cap: { name: 'Shield Wall', desc: 'Tap: every friend gets a 2 shield.', cmd: 'wall' } },
   { id: 'marla',  captain: true, name: 'Captain Marla', world: 'rogues',   origin: 'Pirate',           rarity: 'common',    role: 'fighter', color: '#c0392b', hp: 10, dmg: 2, as: 1.1, cost: 2, rng: 1, look: 'slash2', lc: '#ffe9a8',
-    cap: { name: 'Plunder', desc: 'Team abilities deal +1 damage.', fx: { abilDmg: 1 } } },
+    cap: { name: 'Broadside', desc: 'Tap: cannonballs hit the 3 closest enemies for 2.', cmd: 'broadside' } },
   { id: 'rocco',  captain: true, name: 'Rocco',         world: 'wild',     origin: 'Living Mountain',  rarity: 'common',    role: 'tank',    color: '#9a8f86', hp: 16, dmg: 2, as: 1.8, cost: 3, rng: 1, look: 'smash', lc: '#c8b8a8',
-    cap: { name: 'Bedrock', desc: 'Team takes 1 less damage from abilities.', fx: { abilBlock: 1 } } },
+    cap: { name: 'Bedrock', desc: 'Tap: for 3 seconds your team takes 1 less damage.', cmd: 'bedrock' } },
   { id: 'mumbo',  captain: true, name: 'Mumbo',         world: 'spooky',   origin: 'Mummy King',       rarity: 'epic',      role: 'tank',    color: '#e8dcc0', hp: 14, dmg: 1, as: 1.3, cost: 3, rng: 2, look: 'whip', lc: '#ece0c4',
-    cap: { name: 'Undying', desc: 'First friend to fall gets back up with half health.', fx: { revive: 0.5 } } },
+    cap: { name: 'Undying', desc: 'Tap: the last friend who fell gets back up with a third of its health.', cmd: 'undying' } },
   { id: 'rex',    captain: true, name: 'Titan Rex',     world: 'machines', origin: 'Dino Mech',        rarity: 'legendary', role: 'tank',    color: '#4caf50', hp: 16, dmg: 2, as: 1.6, cost: 4, rng: 1, look: 'chomp', lc: '#ffffff',
-    cap: { name: 'Titan Plating', desc: 'Every hero on the team gets +2 health.', fx: { hp: 2 } } },
+    cap: { name: 'Titan Plating', desc: 'Tap: heal every friend 3.', cmd: 'plating' } },
   { id: 'chrono', captain: true, name: 'Chrono',        world: 'cosmic',   origin: 'Time Wizard',      rarity: 'legendary', role: 'healer',  color: '#3b5bdb', hp: 8, dmg: 1, as: 1.2, cost: 2, rng: 3, look: 'orb', lc: '#7fb2ff',
-    cap: { name: 'Haste', desc: 'Team abilities charge faster.', fx: { abilHaste: 0.6 } } },
+    cap: { name: 'Haste', desc: 'Tap: every friend\'s ability charges up right away, then charges twice as fast for 5 seconds.', cmd: 'haste' } },
   { id: 'zip',    name: 'Zip-9',        world: 'machines', origin: 'Robot',          rarity: 'common',    role: 'ranged',  color: '#4ff0ff', hp: 4, dmg: 1, as: 1.0, cost: 1, rng: 3, look: 'bolt', lc: '#4ff0ff' },
   { id: 'nova',   name: 'Nova',         world: 'cosmic',   origin: 'Space Medic',    rarity: 'common',    role: 'healer',  color: '#ff7ab8', hp: 5, dmg: 1, as: 1.1, cost: 1, rng: 2, look: 'orb', lc: '#ff8ac8' },
   { id: 'gus',    name: 'Gus',          world: 'wild',     origin: 'Goblin',         rarity: 'common',    role: 'fighter', color: '#6cc24a', hp: 6, dmg: 1, as: 0.7, tg: 'back', cost: 1, rng: 1, look: 'stab', lc: '#e8eef5' },
@@ -217,7 +217,7 @@ const ADVENTURE = [
       fixed: [['bruno', 2, 3], ['gus', 2, 2], ['zip', 2, 1], ['nova', 2, 0]], r: { gems: 10 } },
     { name: 'Bandit Camp', desc: 'Rocks everywhere. Watch your paths.', diff: 'normal', hp: 0.85, event: 'rocks', cap: 'marla', team: ['kit', 'vex', 'dusty', 'gus', 'yuki'], r: { coins: 100 } },
     { name: 'Mossy Bridge', desc: 'Healing springs help whoever stands on them.', diff: 'normal', hp: 0.9, event: 'springs', cap: 'rocco', team: ['bao', 'luna', 'volt', 'zorp', 'kit'], r: { chest: 'hero' } },
-    { name: 'Goblin Ambush', type: 'elite', desc: 'Stronger heroes, and they bring 1 extra Rift Orb.', diff: 'hard', hp: 0.9, orbs: 1, event: 'clear', cap: 'mumbo', team: ['gus', 'kit', 'vex', 'hex', 'dusty'], r: { wild: 1, coins: 100, keys: 1 } },
+    { name: 'Goblin Ambush', type: 'elite', desc: 'Stronger heroes, and they bring 1 extra Rift Orb.', diff: 'hard', hp: 0.8, orbs: 1, event: 'clear', cap: 'mumbo', team: ['gus', 'kit', 'vex', 'hex', 'dusty'], r: { wild: 1, coins: 100, keys: 1 } },
     { name: 'Old Windmill', desc: 'Lava pools burn anyone who stands in them.', diff: 'normal', hp: 1, event: 'lava', cap: 'chrono', team: ['ember', 'zip', 'yuki', 'ragnar', 'nova'], r: { coins: 150 } },
     { name: 'Locked Gate', type: 'puzzle', desc: 'A wall of three guards, two snipers in the corners. Their exact spots are shown.', diff: 'hard', hp: 0.9, event: 'clear', cap: 'rocco',
       fixed: [['rocco', 2, 3], ['volt', 1, 3], ['kit', 3, 3], ['dusty', 0, 0], ['zip', 4, 0]], r: { keys: 2 } },
@@ -230,6 +230,24 @@ const ADVENTURE = [
 const ADV_TYPES = { puzzle: { name: 'Puzzle', icon: 'i_target', color: '#4fa3ff' }, elite: { name: 'Elite', icon: 'i_skull', color: '#ff4f6b' }, boss: { name: 'Boss', icon: 'i_crown', color: '#ff4f6b' } };
 const advKey = (ch, i) => ch + '-' + (i + 1);
 const CAPTAIN_IDS = HEROES.filter(h => h.captain).map(h => h.id);
+// Hero types: Fire > Nature > Spark > Water > Fire, and Light and Shadow beat each other.
+// A basic attack on a type you beat does +1 damage.
+const TYPES = {
+  fire:   { name: 'Fire',   color: '#ff6a2a', icon: 'i_flame', beats: ['nature'], verb: 'burns' },
+  nature: { name: 'Nature', color: '#5fd068', icon: 'i_leaf',  beats: ['spark'],  verb: 'grounds' },
+  spark:  { name: 'Spark',  color: '#ffd23f', icon: 'i_bolt',  beats: ['water'],  verb: 'shocks' },
+  water:  { name: 'Water',  color: '#4fa3ff', icon: 'i_water',  beats: ['fire'],   verb: 'puts out' },
+  light:  { name: 'Light',  color: '#fff3b0', icon: 'i_sun',   beats: ['shadow'], verb: 'beats' },
+  shadow: { name: 'Shadow', color: '#c07bff', icon: 'i_moon',  beats: ['light'],  verb: 'beats' },
+};
+const TYPE_OF = { ember: 'fire', bao: 'fire', rex: 'fire', dusty: 'fire', gus: 'nature', rocco: 'nature', golem: 'nature', marla: 'water', yuki: 'water', ragnar: 'water', zip: 'spark', volt: 'spark', zorp: 'spark', bruno: 'light', nova: 'light', chrono: 'light', luna: 'light', mumbo: 'shadow', hex: 'shadow', vex: 'shadow', kit: 'shadow' };
+const TYPE_BONUS = 1;
+function heroType(hid) { return TYPE_OF[hid] || null; }
+function typeBeats(a, b) { const ta = heroType(a), tb = heroType(b); return !!(ta && tb && TYPES[ta].beats.includes(tb)); }
+function typeWeakTo(t) { return Object.keys(TYPES).filter(k => TYPES[k].beats.includes(t)); }
+// Captain buttons: one tap per round, ready a few seconds into the fight
+const CMD_READY = 3;
+
 const START_HEROES = ['bruno', 'zip', 'nova', 'gus', 'dusty', 'bao'];
 // Captains: one big, tough leader per world (their bigger stats are set above). Only Captains can fill the Captain slot.
 const SQUAD_SIZE = 6; // Captain + 5
