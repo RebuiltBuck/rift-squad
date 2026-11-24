@@ -817,6 +817,7 @@ body[data-tut=bench] .bcard.fit { animation: tglow .8s infinite; }
 /* iPhone Home Screen dead band (see fixViewport): iOS paints it with the page background, so make that the tab bar colour */
 html, body { background: var(--bg2); }
 html.vband #battle { border-bottom: 3px solid var(--line); } /* the band under it reads as a footer */
+.toggle span small { display: block; font-size: 15px; color: var(--mute); line-height: 1; }
 </style>
 </head>
 <body>
@@ -3273,7 +3274,10 @@ function musicStop(quick) {
 
 ;
 // ===== Rift Squad: UI + game flow =====
-const STORE_NS = BUILD === 'test' ? 'riftsquad.test' : 'riftsquad';
+// Developer build: everything unlocked, on its own save. The test build is always in it; the others can switch in Settings.
+const DEV_FLAG = 'riftsquad.dev';
+const DEV = BUILD === 'test' || (() => { try { return localStorage.getItem(DEV_FLAG) === '1'; } catch (e) { return false; } })();
+const STORE_NS = DEV ? 'riftsquad.test' : 'riftsquad';
 const STORE = STORE_NS + '.save.v1', STORE_BAK = STORE_NS + '.save.bak', STORE_BATTLE = STORE_NS + '.battle.v1';
 let S = null; let TAB = 'battle';
 const $ = (q, el) => (el || document).querySelector(q);
@@ -3284,7 +3288,7 @@ function fmtDur(ms) {
   if (d) return d + 'd ' + h + 'h'; if (h) return h + 'h ' + m + 'm'; if (m) return m + 'm ' + (s % 60) + 's'; return (s % 60) + 's';
 }
 function esc(t) { return String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
-function now() { return Date.now() + (BUILD === 'test' && S && S.testOffset ? S.testOffset : 0); }
+function now() { return Date.now() + (DEV && S && S.testOffset ? S.testOffset : 0); }
 
 // ---------- storage ----------
 function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -4001,7 +4005,8 @@ function openSettings() {
   const m = modal(`<h2>Settings</h2>
     ${tg('snd', 'Sound effects', S.settings.sound)}${tg('mus', 'Music', S.settings.music)}${tg('fast', 'Fast animations', S.settings.fast)}
     <div class="setbtns"><button class="btn sm" id="hlp">How to play</button><button class="btn sm" id="tut">Tutorial</button><button class="btn sm" id="bku">Backup</button></div>
-    ${BUILD === 'test' ? testToolsHTML() : ''}
+    ${BUILD !== 'test' ? tg('dev', 'Developer build<small>Everything unlocked, separate save</small>', DEV) : ''}
+    ${DEV ? testToolsHTML() : ''}
     <p class="tiny mute center" style="margin:8px 0 0">Rift Squad · offline build · font: Jersey 10 (SIL OFL)</p>`);
   $('#snd', m).onclick = () => { S.settings.sound = !S.settings.sound; persist(); m.close(); openSettings(); };
   $('#mus', m).onclick = () => { S.settings.music = !S.settings.music; persist(); if (!S.settings.music) musicStop(true); else musicPreview(); m.close(); openSettings(); };
@@ -4009,7 +4014,11 @@ function openSettings() {
   $('#tut', m).onclick = () => { m.close(); runTutorial(); };
   $('#hlp', m).onclick = () => { m.close(); openHelp(); };
   $('#bku', m).onclick = () => { m.close(); openBackup(); };
-  if (BUILD === 'test') wireTestTools(m);
+  if (DEV) wireTestTools(m);
+  const dv = $('#dev', m); if (dv) dv.onclick = () => {
+    const on = !DEV, c = modal(`<h2>${on ? 'Developer build' : 'Back to your game'}</h2><p class="center small">${on ? 'Switches to a separate save with every hero, every ability and tons of coins and gems, plus test tools in Settings. Your real progress is kept safe and comes back when you switch this off.' : 'Switches back to your real save. The developer save is kept for next time.'}</p><div class="row" style="gap:8px"><button class="btn gray grow" data-close>Cancel</button><button class="btn ${on ? 'red' : 'gold'} grow" id="dv-go">${on ? 'Switch' : 'Switch back'}</button></div>`);
+    $('#dv-go', c).onclick = () => { persist(); try { if (on) localStorage.setItem(DEV_FLAG, '1'); else localStorage.removeItem(DEV_FLAG); } catch (e) { toast('Could not switch on this device'); return; } location.reload(); };
+  };
 }
 function openBackup() {
   const m = modal(`<h2>Backup</h2>
@@ -4699,9 +4708,9 @@ function pendingEvents() {
 // ---------- boot ----------
 function boot() {
   S = loadSave(); const fresh = !S;
-  if (!S) { S = newSave(now()); if (BUILD === 'test') testSeed(S); }
+  if (!S) { S = newSave(now()); if (DEV) testSeed(S); }
   tick(S, now()); persist();
-  if (BUILD === 'test') { const tg = document.createElement('span'); tg.className = 'tag'; tg.style.cssText = 'background:var(--red);color:#fff;font-size:14px;padding:2px 4px;flex:none'; tg.textContent = 'TEST'; $('#topbar').insertBefore(tg, $('#gear')); }
+  if (DEV) { const tg = document.createElement('span'); tg.className = 'tag'; tg.style.cssText = 'background:var(--red);color:#fff;font-size:14px;padding:2px 4px;flex:none'; tg.textContent = BUILD === 'test' ? 'TEST' : 'DEV'; $('#topbar').insertBefore(tg, $('#gear')); }
   document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { SFX.tap(); go(b.dataset.tab); });
   initTabSwipe();
   $('#gear').innerHTML = icon('i_gear', 'ib'); $('#b-flee').innerHTML = icon('i_x', 'ii');
@@ -4751,7 +4760,7 @@ function boot() {
       $('#ff', m).onclick = () => { m.remove(); if (sv.setup.adv) advFinish(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg }); else finishBattle(S, sv.setup, { winner: 1, score: sv.score, stats: sv.agg, flawless: 0, rounds: sv.rounds }, now()); S.activeBattle = false; lsDel(STORE_BATTLE); persist(); render(); toast('Match forfeited'); };
     } catch (e) { S.activeBattle = false; lsDel(STORE_BATTLE); persist(); }
   } else if (S.activeBattle) { S.activeBattle = false; persist(); }
-  if (fresh && BUILD === 'test') modal(`<h2>Test Build</h2><p class="center small">All 20 heroes are unlocked with all 3 abilities, plus 999,999 coins, 99,999 gems and 10 keys. This save is separate from the normal preview.</p><p class="center small mute">More tools in ${icon('i_gear','ii')} Settings ${icon('i_right','ii')} Test tools: jump to any arena, reset hero trophies, skip time to test keys, fill the chest shelf.</p><button class="btn gold full" data-close>Show me the heroes</button>`, { onClose: () => go('heroes') });
+  if (fresh && DEV) modal(`<h2>${BUILD === 'test' ? 'Test Build' : 'Developer Build'}</h2><p class="center small">All 20 heroes are unlocked with all 3 abilities, plus 999,999 coins, 99,999 gems and 10 keys. This save is separate from your normal game${BUILD === 'test' ? ' preview' : ': switch back any time in Settings'}.</p><p class="center small mute">More tools in ${icon('i_gear','ii')} Settings ${icon('i_right','ii')} Test tools: jump to any arena, reset hero trophies, skip time to test keys, fill the chest shelf.</p><button class="btn gold full" data-close>Show me the heroes</button>`, { onClose: () => go('heroes') });
   else if (!S.tutorialDone && !S.activeBattle) tutorialIntro();
   else pendingEvents();
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { }

@@ -803,3 +803,4 @@ body[data-tut=bench] .bcard.fit { animation: tglow .8s infinite; }
 /* iPhone Home Screen dead band (see fixViewport): iOS paints it with the page background, so make that the tab bar colour */
 html, body { background: var(--bg2); }
 html.vband #battle { border-bottom: 3px solid var(--line); } /* the band under it reads as a footer */
+.toggle span small { display: block; font-size: 15px; color: var(--mute); line-height: 1; }
