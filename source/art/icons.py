@@ -451,6 +451,9 @@ add('i_note', {'p': '#c07bff', 'P': '#7b3fd1'}, [
 
 add('i_wild', {'p': '#c07bff', 'P': '#7b3fd1', 'h': '#f0d8ff', 'w': '#ffffff', 'c': '#4ff0ff', 'y': '#ffd23f'}, [
     'Pp.pppppp.pP', 'Pp.phhwpp.pP', '.PppphpppPP.', '..ppcyycpp..', '...pyccypP..', '....PppPP...', '.....PP.....', '....pppP....', '...pppppP...', '...PPPPPP...'])
+# ===== Rift Orbs (hero cost) =====
+add('i_orb', {'b': '#3aa0ff', 'h': '#9fe8ff', 'w': '#ffffff', 'B': '#1f5fd0'}, ['...bbbbbb...', '..bbbbbbbb..', '.bhhhhbbbbB.', 'bbhwwhhbbbBB', 'bbhwwhbbbbbB', 'bbhhhbbbbbBB', 'bbbhbbbbbBBB', 'bbbbbbbbBBBB', 'bbbbbbbBBBBB', '.bbbbbBBBBB.', '..BBbBBBBB..', '...BBBBBB...'])
+add('i_orb0', {'s': '#221c38', 'r': '#4a4272'}, ['...rrrrrr...', '..rrrssrrr..', '.rrssssssrr.', 'rrssssssssrr', 'rrssssssssrr', 'rssssssssssr', 'rssssssssssr', 'rrssssssssrr', 'rrssssssssrr', '.rrssssssrr.', '..rrrssrrr..', '...rrrrrr...'])
 if __name__ == '__main__':
     path = 'src/sprites.json'
     d = json.load(open(path))

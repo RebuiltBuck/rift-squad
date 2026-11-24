@@ -85,11 +85,11 @@ async function runTutorial() {
   }
   if (!alive()) return;
 
-  // ---- round 2: slots and the faded enemies ----
+  // ---- round 2: Rift Orbs and the faded enemies ----
   await tutWait('setup');
   if (!alive()) return;
   tutGlow('bench');
-  await coach(`You get <b>1 more slot</b> every round. Each hero costs slots: the number on its diamond. <b>Tap a hero on the bench</b> to bring it in!`, { wait: tutWait('benchAdd'), noSkip: true });
+  await coach(`You get <b>1 more Rift Orb</b> every round. Each hero costs the blue orbs on its card. <b>Tap a hero on the bench</b> to bring it in!`, { wait: tutWait('benchAdd'), noSkip: true });
   if (!alive()) return;
   tutGlow('');
   const gh = M.prev && M.prev[1] && M.prev[1].units[0];

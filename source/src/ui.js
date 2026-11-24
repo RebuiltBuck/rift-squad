@@ -261,7 +261,7 @@ function homeHTML() {
   const ft = foeTier(a, d.id);
   const squad = S.squad.map((h, i) => {
     const H = HERO[h], ab = equippedAb(S, h);
-    return `<button class="hcard ${i === 0 ? 'capcard' : ''} ${goldCard(h)}" ${rarStyle(h)} onclick="pickSquad(${i})">${i === 0 ? `<span class="crownb">${icon('i_crown','ii')}</span>` : ''}${costTag(h)}${heroImg(h)}<div class="nm">${esc(H.name)}</div>${lvTag(h)}</button>`;
+    return `<button class="hcard ${i === 0 ? 'capcard' : ''} ${goldCard(h)}" ${rarStyle(h)} onclick="pickSquad(${i})">${i === 0 ? `<span class="crownb">${icon('i_crown','ii')}</span>` : ''}${heroImg(h)}<div class="nm">${esc(H.name)}</div>${orbsHTML(heroCost(h), 'under')}</button>`;
   }).join('');
   const syn = activeSynergies(S.squad).filter(x => x.n >= 2);
   const SH = 4, more = S.shelf.length - SH;
@@ -493,7 +493,7 @@ function heroInfo(hid, pick, opts) {
   }
   const claimN = o ? heroClaimable(S, hid) : 0;
   const detail = k => {
-    if (k === 'cost') return `<div class="abd-h"><i class="cst in big"><span>${heroCost(hid)}</span></i> <b>${heroCost(hid)} slot${heroCost(hid) > 1 ? 's' : ''}</b> <span class="tag sm">Cost</span></div><div class="abd-t">Each round you can put heroes on the board up to your slot limit: ${SLOT_START} in round 1, then 1 more every round (and 1 extra after losing a round). Bigger heroes cost more but are built much stronger.</div>`;
+    if (k === 'cost') return `<div class="abd-h">${orbsHTML(heroCost(hid), 'in big')} <b>${heroCost(hid)} Rift Orb${heroCost(hid) > 1 ? 's' : ''}</b> <span class="tag sm">Cost</span></div><div class="abd-t">Each round you get Rift Orbs to spend on heroes for the board: ${SLOT_START} in round 1, then 1 more every round (and 1 extra after losing a round). Bigger heroes cost more orbs but are built much stronger.</div>`;
     if (k === 'tg') return `<div class="abd-h">${icon('i_bow', 'ii')} <b>Range ${st.rng}</b> <span class="tag sm">Attack</span></div><div class="abd-t">${rangeText(st.rng)} Every hero goes after the closest enemy.</div>`;
     if (k === 'cap') return `<div class="abd-h">${icon('i_crown', 'ii')} <b style="color:var(--gold)">${esc(H.cap.name)}</b> <span class="tag sm">Captain power</span></div><div class="abd-t">${esc(H.cap.desc)}</div><div class="abd-b tiny mute">Always on while ${esc(H.name)} is your Captain.</div>`;
     const ab = HERO_ABILITIES[hid][k], A = ABILITIES[ab], s2 = abilityState(S, hid, k);
@@ -513,7 +513,7 @@ function heroInfo(hid, pick, opts) {
     <div class="hi-top">
       <div class="livewrap sm ${o && o.un[2] ? 'goldc' : ''}" ${rarStyle(hid)}>${o ? liveHero(hid, big ? 5.6 : 4.5) : `<img class="bigspr px" src="${sprURL(hid, null, 'sil', 128)}">`}</div>
       <div class="hi-side"><h2>${esc(H.name)}</h2>
-        <div class="row" style="gap:4px;flex-wrap:wrap"><span class="tag" style="background:${R.color}">${R.name}</span><button class="tag costchip ${selK === 'cost' ? 'sel' : ''}" data-k="cost"><i class="cst in"><span>${heroCost(hid)}</span></i>${heroCost(hid)} slot${heroCost(hid) > 1 ? 's' : ''}</button>${WORLDS_ON ? `<span class="tag" style="background:${W.color}">${icon('w_' + H.world, 'ii')} ${W.name}</span>` : ''}</div>
+        <div class="row" style="gap:4px;flex-wrap:wrap"><span class="tag" style="background:${R.color}">${R.name}</span><button class="tag costchip ${selK === 'cost' ? 'sel' : ''}" data-k="cost">${orbsHTML(heroCost(hid), 'in')}${heroCost(hid)} Rift Orb${heroCost(hid) > 1 ? 's' : ''}</button>${WORLDS_ON ? `<span class="tag" style="background:${W.color}">${icon('w_' + H.world, 'ii')} ${W.name}</span>` : ''}</div>
         <div class="hstats"><span>${icon('i_heart', 'ii')}<b>${st.hp}</b></span><span>${icon('i_swords', 'ii')}<b>${st.atk}</b></span><span>${icon('i_boot', 'ii')}<b>${SPEEDS[heroSpeed(hid)].name}</b></span>
           <button class="tgchip ${selK === 'tg' ? 'sel' : ''}" data-k="tg">${icon('i_bow', 'ii')}<b>Range ${st.rng}</b></button></div>
       </div></div>
@@ -712,7 +712,7 @@ function helpHTML() {
   <p>${icon('i_hand','ib')}<span><b>Drag</b> your heroes where you want them, then tap <b>Fight!</b> They battle on their own.</span></p>
   <p>${icon('i_laser','ib')}<span><b>Round-start abilities</b> go off before anyone moves, so guess where the enemy will stand.</span></p>
   <p>${icon('i_tnear','ib')}<span>Heroes step <b>one tile at a time</b>, never diagonally, and can't walk through anyone. They always go after the <b>closest</b> enemy.</span></p>
-  <p>${icon('i_up','ib')}<span><b>Slots:</b> every hero costs 1 to 4 slots (the number on its diamond). You get ${SLOT_START} slots in round 1 and 1 more every round, plus 1 extra after losing a round. Your captain always fights; tap or drag heroes from the bench to fill the rest.</span></p>
+  <p>${icon('i_orb','ib')}<span><b>Rift Orbs:</b> every hero costs 1 to 4 orbs (the blue orbs on its card). You get ${SLOT_START} orbs in round 1 and 1 more every round, plus a gold one after losing a round. Your captain always fights; tap or drag heroes from the bench to spend the rest.</span></p>
   <p>${icon('i_bow','ib')}<span>Each hero has a <b>range</b> from 1 (right next to the enemy) to 4 tiles. Tap a hero to see the tiles it can hit.</span></p>
   ${WORLDS_ON ? `<p>${icon('i_globe','ib')}<span>Heroes from the <b>same world</b> are stronger together.</span></p>` : ''}
   <p>${icon('i_key','ib')}<span>Every win adds a chest to your shelf. Open chests with keys: you get a new key every 5 hours.</span></p>
@@ -779,7 +779,7 @@ function startBattle() {
     <div class="evcard" style="border-color:${E.color}"><b style="color:${E.color}">${E.name}</b> <span class="small">${E.desc}</span></div>
     <p class="small" style="margin:10px 0 4px"><b>${esc(S.name)}</b></p>${deckRow(setup.myDeck)}
     <p class="small" style="margin:10px 0 4px"><b style="color:${D.color}">${esc(setup.foeName)}</b> <span class="mute">· ${D.name} AI</span></p>${deckRow(setup.foeDeck)}
-    <p class="center small mute" style="margin:10px 0">First to 3 round wins · ${SLOT_START} slots in round 1, +1 every round${setup.older ? ' · older arena: no trophies won or lost' : ''}</p>
+    <p class="center small mute" style="margin:10px 0">First to 3 round wins · ${SLOT_START} Rift Orbs in round 1, +1 every round${setup.older ? ' · older arena: no trophies won or lost' : ''}</p>
     <button class="btn gold big full" id="fight">START MATCH</button>`);
   $('#fight', m).onclick = () => { m.close(); beginMatch(setup, null); };
 }
@@ -833,11 +833,30 @@ function fixViewport() {
 function freeSlots() { return M.caps ? M.caps[0] - slotsUsed(M.sides[0].board) : 0; }
 function benchHTML() {
   const cap = M.caps ? M.caps[0] : 0, used = slotsUsed(M.sides[0].board), bonus = M.lastW === 1 && M.round > 1;
-  const pips = Array.from({ length: cap }, (x, i) => `<i class="${i < used ? '' : 'e'}${bonus && i === cap - 1 ? ' plus' : ''}"></i>`).join('');
+  const was = M.capShown || 0; M.capShown = cap; // sockets added since last time pop in
+  const socks = Array.from({ length: cap }, (x, i) => { const gold = bonus && i === cap - 1, on = i < used;
+    return `<img class="px sk ${on ? 'on' : ''} ${gold ? 'gold' : ''} ${i >= was && was > 0 ? 'new' : ''}" data-i="${i}" src="${on ? (gold ? sprURL('i_orb', ORB_GOLD) : sprURL('i_orb')) : (gold ? sprURL('i_orb0', { r: '#b37a00' }) : sprURL('i_orb0'))}" alt="">`; }).join('');
   const cards = M.sides[0].bench.map(h => `<button class="bcard ${heroCost(h.hid) > cap - used ? 'off' : 'fit'}" data-bh="${h.hid}"><img class="px" src="${sprURL(h.hid)}" alt="">${costTag(h.hid)}</button>`).join('');
-  return `<div class="bslots"><b>Slots</b><span class="pp">${pips}</span><b>${used}/${cap}</b></div><div class="bcards">${cards || '<span class="tiny mute">Everyone is on the board</span>'}</div>`;
+  return `<div class="bslots" aria-label="Rift Orbs ${used} of ${cap}">${socks}</div><div class="bcards">${cards || '<span class="tiny mute">Everyone is on the board</span>'}</div>`;
 }
-function costTag(hid, cls) { return `<i class="cst ${cls || ''}"><span>${heroCost(hid)}</span></i>`; }
+// ----- Rift Orbs (hero cost) -----
+const ORB_GOLD = { b: '#ffd23f', h: '#fff3a8', w: '#ffffff', B: '#b37a00' };
+function orbsHTML(n, cls) { const u = sprURL('i_orb'); return `<i class="orbs ${cls || ''}">${`<img class="px" src="${u}" alt="">`.repeat(n)}</i>`; }
+// orbs fly between a card and the meter (add: card -> sockets a..b-1, back: sockets -> card)
+function orbFly(rects, to, gold) {
+  rects.forEach((fr, k) => {
+    const tr = typeof to === 'function' ? to(k) : to; if (!fr || !tr) return;
+    const p = document.createElement('img'); p.className = 'orbfly px'; p.src = gold && gold(k) ? sprURL('i_orb', ORB_GOLD) : sprURL('i_orb');
+    const sx = fr.left + fr.width / 2 - 8, sy = fr.top + fr.height / 2 - 8; p.style.left = sx + 'px'; p.style.top = sy + 'px'; document.body.appendChild(p);
+    const ex = tr.left + tr.width / 2 - 8 - sx, ey = tr.top + tr.height / 2 - 8 - sy;
+    const a = p.animate([{ transform: 'translate(0,0) scale(.6)' }, { transform: `translate(${ex * .5}px,${ey * .5 - 26}px) scale(1.3)`, offset: .5 }, { transform: `translate(${ex}px,${ey}px) scale(1)` }],
+      { duration: 380, delay: k * 70, easing: 'ease-in-out', fill: 'both' });
+    a.onfinish = () => { p.remove(); if (tr.el) { tr.el.classList.remove('pending'); tr.el.classList.remove('pop'); void tr.el.offsetWidth; tr.el.classList.add('pop'); } tone(1100 + k * 140, 0.04, 'square', 0.025); };
+  });
+}
+const sockEl = i => document.querySelector(`#b-bench .bslots img[data-i="${i}"]`);
+function sockRect(i) { const e = sockEl(i); if (!e) return null; const r = e.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height, el: e }; }
+function costTag(hid, cls) { return orbsHTML(heroCost(hid), 'corner ' + (cls || '')); }
 function wireBench() {
   const el = $('#b-bench'); if (!el) return;
   el.querySelectorAll('[data-bh]').forEach(b => b.onpointerdown = e => benchDown(e, b.dataset.bh));
@@ -848,8 +867,10 @@ function benchAdd(hid, at) {
   const side = M.sides[0], h = side.bench.find(x => x.hid === hid); if (!h) return false;
   const L = M.lineups[0].units, occ = at && L.find(u => u.x === at.x && u.y === at.y);
   let freed = 0; if (occ) { if (occ.hid === side.captain) { toast(`${icon('i_crown', 'ii')} Your captain always fights`); return false; } freed = heroCost(occ.hid); }
-  if (heroCost(hid) > freeSlots() + freed) { toast(`${esc(HERO[hid].name)} needs ${heroCost(hid)} slots. Drag a hero off the board to make room.`); SFX.tap(); buzz(30); return false; }
+  if (heroCost(hid) > freeSlots() + freed) { toast(`${esc(HERO[hid].name)} needs ${heroCost(hid)} Rift Orb${heroCost(hid) > 1 ? 's' : ''}. Drag a hero off the board to free some.`); SFX.tap(); buzz(30); return false; }
+  const card = document.querySelector(`#b-bench [data-bh="${hid}"]`), fromR = card && card.getBoundingClientRect();
   if (occ) benchRemove(occ.hid, true);
+  const u0 = slotsUsed(side.board);
   side.bench = side.bench.filter(x => x !== h); side.board.push(h);
   let p = at && !L.some(u => u.x === at.x && u.y === at.y) ? at : null;
   if (!p) { const used = new Set(L.map(u => u.x + ',' + u.y)), mem = S.formation[hid];
@@ -857,14 +878,20 @@ function benchAdd(hid, at) {
     if (ok(mem)) p = mem; else { const obs2 = M.obs.map((o, i) => (o || used.has((i % BW) + ',' + Math.floor(i / BW))) ? 1 : 0); const f = roleFormation([h], 0, mulberry32(3), false, obs2)[0]; p = f && { x: f.x, y: f.y }; } }
   if (!p) { side.board.pop(); side.bench.push(h); toast('No room on the board'); return false; }
   L.push({ hid, ab: h.ab, x: p.x, y: p.y }); SFX.step(); buzz(10);
-  rebuildPreview(); M.sel = null; panel(); tutHook('benchAdd', hid); return true;
+  rebuildPreview(); M.sel = null; panel();
+  if (fromR) { const n = heroCost(hid), idx = Array.from({ length: n }, (x, k) => u0 + k), bonusI = M.lastW === 1 && M.round > 1 ? M.caps[0] - 1 : -1;
+    idx.forEach(i => { const e = sockEl(i); if (e) e.classList.add('pending'); });
+    orbFly(idx.map(() => fromR), k => sockRect(idx[k]), k => idx[k] === bonusI); }
+  tutHook('benchAdd', hid); return true;
 }
 function benchRemove(hid, quiet) {
   const side = M.sides[0]; if (hid === side.captain) { toast(`${icon('i_crown', 'ii')} Your captain always fights`); return false; }
   const h = side.board.find(x => x.hid === hid); if (!h) return false;
+  const u0 = slotsUsed(side.board), n = heroCost(hid), from = quiet ? [] : Array.from({ length: n }, (x, k) => sockRect(u0 - n + k));
   side.board = side.board.filter(x => x !== h); side.bench.push(h);
   M.lineups[0].units = M.lineups[0].units.filter(u => u.hid !== hid);
-  if (!quiet) { SFX.tap(); rebuildPreview(); M.sel = null; panel(); }
+  if (!quiet) { SFX.tap(); rebuildPreview(); M.sel = null; panel();
+    const c = document.querySelector(`#b-bench [data-bh="${hid}"]`); if (c && from.some(Boolean)) { const r = c.getBoundingClientRect(); orbFly(from.filter(Boolean), { left: r.left, top: r.top, width: r.width, height: r.height, el: c }); } }
   return true;
 }
 // drag a bench card onto the board (a short tap just adds it)
@@ -914,7 +941,7 @@ async function prepRound() {
   if (r === 1) M.scout = { units: aiLineup(M.sides[1].board, 1, D, null, ctx, (M.setup.seed ^ 0x9e37) >>> 0).units, captain: M.sides[1].captain };
   M.lineups = [my, foe];
   M.phase = 'setup'; rebuildPreview(); saveMatch(); hud(); panel(); tutHook('setup', r);
-  if (r > 1) { const free = M.caps[0] - slotsUsed(M.sides[0].board); toast(`${icon('i_up', 'ii')} <b>${M.caps[0]} slots</b> this round${M.lastW === 1 ? ' (+1 for losing the last one)' : ''}${free > 0 && M.sides[0].bench.length ? ` · ${free} free` : ''}`); }
+  if (r > 1) { const free = M.caps[0] - slotsUsed(M.sides[0].board); toast(`${icon('i_orb', 'ii')} <b>${M.caps[0]} Rift Orbs</b> this round${M.lastW === 1 ? ' (gold one for losing the last round)' : ''}${free > 0 && M.sides[0].bench.length ? ` · ${free} to spend` : ''}`); }
 }
 // faded enemies: last round's spots, or before round 1 their usual spots
 function ghostLine() { return M.prev && M.prev[1] ? M.prev[1] : M.round === 1 ? M.scout : null; }
