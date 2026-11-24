@@ -248,6 +248,10 @@ add('i_right', {'w': '#ffffff'}, ARR)
 add('i_left', {'w': '#ffffff'}, [r[::-1] for r in ARR])
 add('i_up', {'w': '#ffffff'}, ['...ww...', '..wwww..', '.wwwwww.', 'wwwwwwww', '..wwww..', '..wwww..', '..wwww..'])
 
+# level-up arrow: green with a dark outline so it reads on any card colour
+add('i_lvup', {'k': '#0b2a12', 'g': '#5fd068', 'h': '#b5f5ba', 'G': '#2f9a3a'}, [
+    '....kk....', '...kggk...', '..kghggk..', '.kghgggGk.', 'kghggggGGk', 'kkkggGGkkk', '...kgGk...', '...kgGk...', '...kgGk...', '...kkkk...'])
+
 # pointing hand (drag)
 add('i_hand', {'s': '#f2c29b', 'h': '#ffe0c4', 'S': '#c47f55'}, shade([
     '...ss......',

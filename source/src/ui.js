@@ -267,7 +267,7 @@ function homeHTML() {
   const ft = foeTier(a, d.id);
   const squad = S.squad.map((h, i) => {
     const H = HERO[h], ab = equippedAb(S, h);
-    return `<button class="hcard ${i === 0 ? 'capcard' : ''} ${goldCard(h)}" ${rarStyle(h)} onclick="pickSquad(${i})">${i === 0 ? `<span class="crownb">${icon('i_crown','ii')}</span>` : ''}${typeTag(h)}${heroImg(h)}<div class="nm">${esc(H.name)}</div>${orbsHTML(heroCost(h), 'under')}</button>`;
+    return `<button class="hcard ${i === 0 ? 'capcard' : ''} ${goldCard(h)}" ${rarStyle(h)} onclick="pickSquad(${i})">${i === 0 ? `<span class="crownb">${icon('i_crown','ii')}</span>` : ''}${costTag(h)}${typeTag(h)}${heroImg(h)}<div class="nm">${esc(H.name)}</div></button>`;
   }).join('');
   const syn = activeSynergies(S.squad).filter(x => x.n >= 2);
   const SH = 4, more = S.shelf.length - SH;
@@ -444,7 +444,8 @@ function pickSquad(slot) {
 }
 // ---------- HEROES ----------
 // hero level badge for cards: Lv 1-9, gold MAX at 10
-function lvTag(hid) { const tr = heroTr(S, hid); return tr >= HERO_MAX ? '<div class="lvl max">MAX</div>' : `<div class="lvl">Lv ${tr}</div>`; }
+function lvTag(hid, up) { const tr = heroTr(S, hid), arrow = up ? `<img class="px lvup" src="${sprURL('i_lvup')}" alt="Upgrade ready">` : '';
+  return tr >= HERO_MAX ? `<div class="lvl max">MAX${arrow}</div>` : `<div class="lvl">Lv ${tr}${arrow}</div>`; }
 function goldCard(hid) { const o = S.heroes[hid]; return o && o.un[2] ? 'goldc' : ''; }
 function roadRewardLabel(R, hid) {
   if (R.kind === 'ab') return hid ? esc(ABILITIES[HERO_ABILITIES[hid][R.k]].name) : 'Ability';
@@ -463,7 +464,7 @@ function heroesHTML() {
     if (!o || o.tr < 1) return `<button class="hcard locked" ${rarStyle(H.id)} onclick="heroInfo('${H.id}')">${heroImg(H.id, 'spr', true)}<div class="nm">???</div><div class="lvl">${RARITIES[H.rarity].name}</div></button>`;
     const ab = equippedAb(S, H.id);
     const cl = heroClaimable(S, H.id);
-    return `<button class="hcard ${goldCard(H.id)}" ${rarStyle(H.id)} onclick="heroInfo('${H.id}')">${cl ? `<span class="up">${cl}</span>` : ''}${costTag(H.id)}${typeTag(H.id)}${heroImg(H.id)}<div class="nm">${esc(H.name)}</div>${lvTag(H.id)}</button>`;
+    return `<button class="hcard ${goldCard(H.id)}" ${rarStyle(H.id)} onclick="heroInfo('${H.id}')">${costTag(H.id)}${typeTag(H.id)}${heroImg(H.id)}<div class="nm">${esc(H.name)}</div>${lvTag(H.id, cl)}</button>`;
   });
   const capCards = cards.filter((c, i) => sorted[i].captain).join(''), regCards = cards.filter((c, i) => !sorted[i].captain).join('');
   const capOwned = sorted.filter(h => h.captain && heroTr(S, h.id) >= 1).length;

@@ -871,3 +871,10 @@ img.sm { width: 12px; height: 12px; }
 .cmdb.idle { background: #4a3a7a !important; } .cmdb.idle > img { filter: none; opacity: .8; }
 @keyframes cmdPulse { 50% { box-shadow: 0 0 0 4px #ffd23f88, 0 0 18px #ffd23f, 0 4px 0 #0009; transform: translateY(-2px); } }
 .capline { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* hero cards (home + Heroes tab): Rift Orbs stack down from the top-left corner */
+.hcard .orbs.corner { flex-direction: column; gap: 2px; top: 5px; left: 5px; padding: 3px 2px; }
+.hcard .orbs.corner img { width: 13px; height: 13px; }
+/* level + green upgrade arrow at the bottom */
+.hcard .lvl { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.hcard .lvl .lvup { width: 18px; height: 18px; animation: lvupBob .8s ease-in-out infinite alternate; filter: drop-shadow(0 1px 0 #000); }
+@keyframes lvupBob { from { transform: translateY(1px); } to { transform: translateY(-3px); } }

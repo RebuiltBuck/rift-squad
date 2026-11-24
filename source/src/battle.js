@@ -284,7 +284,9 @@ function gridTarget(s, u) {
   const cur = u.tgt && foes.includes(u.tgt) ? u.tgt : null, by = (a, b, ka, kb) => ka - kb || a.hp - b.hp || (a.uid < b.uid ? -1 : 1);
   const dist = e => rdTo(u.x, u.y, e) * 10 + mhTo(u.x, u.y, e); // nearest by reach, then by steps
   const inR = foes.filter(e => rdTo(u.x, u.y, e) <= u.rng);
-  if (inR.length) { const near = inR.sort((a, b) => by(a, b, dist(a), dist(b)))[0]; return cur && inR.includes(cur) && dist(cur) <= dist(near) ? cur : near; }
+  // locked on: keep hitting the current target while it's alive and in range, even if someone else gets closer
+  if (cur && inR.includes(cur)) return cur;
+  if (inR.length) return inR.sort((a, b) => by(a, b, dist(a), dist(b)))[0];
   const D = walkMap(s, u), cost = new Map(foes.map(e => [e, walkCost(s, u, e, D)]));
   const best = foes.slice().sort((a, b) => by(a, b, cost.get(a), cost.get(b)))[0];
   if (cur && cost.get(cur) < 1e9 && cost.get(cur) <= cost.get(best) + 1) return cur;
