@@ -4,20 +4,52 @@ const _sprCache = new Map(), _urlCache = new Map();
 
 const HERO_SPR = (typeof SPRITES32 !== 'undefined') ? SPRITES32 : {};
 // bosses reuse a hero's pixels in their own colours: the Rift Golem is Rocco turned to glowing rift stone
-if (HERO_SPR.rocco && !HERO_SPR.golem) HERO_SPR.golem = Object.assign({}, HERO_SPR.rocco, { pal: ['#1b1325', '#c06bff', '#8a3fd8', '#b8a6e8', '#8f7cc8', '#5a2a9a', '#6a5aa8', '#2c2050', '#ff4fd8', '#7a68b8', '#5c4c98', '#3a2c66'] });
+const GOLEM_COL = { '#172e12': '#1b1325', '#94c688': '#c06bff', '#77b869': '#8a3fd8', '#43382d': '#2c2050', '#60a850': '#8a3fd8', '#c6bfb8': '#b8a6e8', '#b2a89f': '#8f7cc8', '#427b35': '#5a2a9a', '#a09488': '#7a68b8', '#81705f': '#5c4c98', '#f8b030': '#ff4fd8', '#3a322e': '#3a2c66', '#191512': '#1b1325', '#a49b94': '#8f7cc8', '#8f847c': '#6a5aa8', '#7a7068': '#5c4c98', '#574c44': '#3a2c66' };
+if (HERO_SPR.rocco && !HERO_SPR.golem) HERO_SPR.golem = Object.assign({}, HERO_SPR.rocco, { pal: HERO_SPR.rocco.pal.map(c => GOLEM_COL[c.toLowerCase()] || '#7a68b8') });
 const EYE_COL = '#283040';
-// heroes whose eyes aren't the standard eye colour: pixels that close when they blink
-const BLINK_EXTRA = { rocco: [[4, 5], [5, 5], [6, 5], [9, 5], [10, 5], [11, 5]], mumbo: [[6, 7], [9, 7]], vex: [[6, 7], [9, 7]], luna: [[6, 7], [9, 7]], zorp: [[4, 7], [11, 7]], volt: [[5, 6], [6, 6], [7, 6], [8, 6]] };
-// One animation frame of a hero: br = breathing (torso down 1px), lift = 0 none / 1 left foot / 2 right foot raised
+// heroes whose eyes aren't the standard eye colour: pixels that close when they blink (a sprite's own "blink" list wins)
+const BLINK_EXTRA = { rocco: [[4, 5], [5, 5], [6, 5], [9, 5], [10, 5], [11, 5]], mumbo: [[6, 7], [9, 7]], vex: [[6, 7], [9, 7]], zorp: [[4, 7], [11, 7]], volt: [[5, 6], [6, 6], [7, 6], [8, 6]] };
+// rows a hero stands on: top = first row with pixels, foot = last row with pixels
+const _sprRows = {};
+function sprRows(hid) {
+  if (_sprRows[hid]) return _sprRows[hid];
+  const H = HERO_SPR[hid]; if (!H) return { top: 0, foot: 15 };
+  let top = 0, foot = H.h - 1;
+  while (top < H.h && !/[^.]/.test(H.rows[top])) top++;
+  while (foot > 0 && !/[^.]/.test(H.rows[foot])) foot--;
+  return (_sprRows[hid] = { top, foot });
+}
+// The sprite split into layers for the idle animation:
+//  legs  = the bottom 3 rows, inside the span of the feet (stay put; left/right halves lift when walking)
+//  body  = everything else (sinks 1px when breathing in)
+//  front = boxes the sprite marks (hands, a held item, a shirt hem): sink with the body but are drawn over the legs
+function heroLayers(hid, mode) {
+  const key = 'Ly|' + hid + '|' + mode; let L = _sprCache.get(key); if (L) return L;
+  const base = sprCanvas(hid, null, mode), w = base.width, h = base.height, H = HERO_SPR[hid];
+  const src = base.getContext('2d').getImageData(0, 0, w, h).data;
+  const { foot } = sprRows(hid);
+  let fx0 = w, fx1 = -1; for (let x = 0; x < w; x++) if (src[(foot * w + x) * 4 + 3]) { fx0 = Math.min(fx0, x); fx1 = Math.max(fx1, x); }
+  const front = (H && H.front) || [], inBox = (x, y) => front.some(b => x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3]);
+  const mk = () => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const out = { body: mk(), legsL: mk(), legsR: mk(), front: mk() }, img = {};
+  for (const k in out) img[k] = out[k].getContext('2d').createImageData(w, h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4; if (!src[i + 3]) continue;
+    const k = inBox(x, y) ? 'front' : (y > foot - 3 && x >= fx0 && x <= fx1) ? (x < w / 2 ? 'legsL' : 'legsR') : 'body';
+    img[k].data.set(src.subarray(i, i + 4), i);
+  }
+  for (const k in out) out[k].getContext('2d').putImageData(img[k], 0, 0);
+  _sprCache.set(key, out); return out;
+}
+// One animation frame of a hero: br = breathing (body down 1px), lift = 0 none / 1 left foot / 2 right foot raised
 function heroFrame(hid, br, lift, blink, white) {
   const key = 'F|' + hid + '|' + br + lift + (blink ? 1 : 0) + (white ? 1 : 0);
   let c = _sprCache.get(key); if (c) return c;
-  const base = sprCanvas(hid, null, white ? 'white' : blink ? 'blink' : '');
-  const w = base.width, h = base.height, L = 4, hw = w >> 1;
-  c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
-  g.drawImage(base, 0, h - L, hw, L, 0, h - L - (lift === 1 ? 1 : 0), hw, L);
-  g.drawImage(base, hw, h - L, w - hw, L, hw, h - L - (lift === 2 ? 1 : 0), w - hw, L);
-  g.drawImage(base, 0, 0, w, h - L, 0, br, w, h - L);
+  const Ly = heroLayers(hid, white ? 'white' : blink ? 'blink' : '');
+  c = document.createElement('canvas'); c.width = Ly.body.width; c.height = Ly.body.height; const g = c.getContext('2d');
+  g.drawImage(Ly.body, 0, br);
+  g.drawImage(Ly.legsL, 0, lift === 1 ? -1 : 0); g.drawImage(Ly.legsR, 0, lift === 2 ? -1 : 0);
+  g.drawImage(Ly.front, 0, br);
   _sprCache.set(key, c); return c;
 }
 const ALPHA32 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -29,7 +61,7 @@ function sprCanvas(name, palOver, mode) {
   if (H) {
     c = document.createElement('canvas'); c.width = H.w; c.height = H.h; const g = c.getContext('2d');
     const colAt = (x, y) => (y < 0 || y >= H.h || H.rows[y][x] === '.') ? null : H.pal[ALPHA32.indexOf(H.rows[y][x])];
-    const extra = mode === 'blink' ? new Set((BLINK_EXTRA[name] || []).map(p => p[0] + ',' + p[1])) : null;
+    const extra = mode === 'blink' ? new Set((H.blink || BLINK_EXTRA[name] || []).map(p => p[0] + ',' + p[1])) : null;
     H.rows.forEach((row, y) => {
       for (let x = 0; x < H.w; x++) {
         const ch = row[x]; if (ch === '.') continue; let col = H.pal[ALPHA32.indexOf(ch)];
@@ -76,10 +108,16 @@ function sprURL(name, palOver, mode, px) {
   px = px || 64;
   const key = name + '|' + (palOver ? JSON.stringify(palOver) : '') + '|' + (mode || '') + '|' + px;
   let u = _urlCache.get(key); if (u) return u;
-  const src = sprCanvas(name, palOver, mode); const c = document.createElement('canvas'); c.width = px; c.height = px;
-  const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
-  const k = Math.max(1, Math.floor(px / Math.max(src.width, src.height))), w = src.width * k, h = src.height * k;
-  g.drawImage(src, Math.floor((px - w) / 2), Math.floor((px - h) / 2), w, h);
+  const src = sprCanvas(name, palOver, mode), c = document.createElement('canvas');
+  if (HERO_SPR[name]) { // heroes: one scale and one ground line for all, whatever their box size (room for 24x23)
+    const k = Math.max(1, Math.floor(px / 21)), C = k * 24, { foot } = sprRows(name); c.width = c.height = C;
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+    g.drawImage(src, Math.floor((C - src.width * k) / 2), C - k - (foot + 1) * k, src.width * k, src.height * k);
+  } else {
+    c.width = px; c.height = px; const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+    const k = Math.max(1, Math.floor(px / Math.max(src.width, src.height))), w = src.width * k, h = src.height * k;
+    g.drawImage(src, Math.floor((px - w) / 2), Math.floor((px - h) / 2), w, h);
+  }
   u = c.toDataURL(); _urlCache.set(key, u); return u;
 }
 function chestURL(type) { return sprURL('chest', CHESTS[type].pal); }
@@ -265,11 +303,11 @@ function bvDraw(V, now) {
   // prediction: where the enemy stood last round (faded), and where your round-start abilities will land
   if (V.mode === 'setup') {
     if (V.ghosts) for (const gh of V.ghosts) {
-      const im = heroFrame(gh.hid, Math.sin(t * 2.2 + gh.x) > 0.4 ? 1 : 0, 0, false, false);
-      const gx = gh.x * TILE + 1, gy = gh.y * TILE + 17 - im.height;
+      const im = heroFrame(gh.hid, Math.sin(t * 2.2 + gh.x) > 0.4 ? 1 : 0, 0, false, false), GR = sprRows(gh.hid);
+      const gx = gh.x * TILE + 9 - im.width / 2, gy = gh.y * TILE + 17 - (GR.foot + 1);
       g.globalAlpha = 0.16; g.fillStyle = '#ff4f6b'; g.fillRect(gh.x * TILE + 2, gh.y * TILE + 2, TILE - 4, TILE - 4);
       g.globalAlpha = 0.38 + 0.08 * Math.sin(t * 3 + gh.y); g.save(); g.translate(gx + im.width, gy); g.scale(-1, 1); g.drawImage(im, 0, 0); g.restore();
-      if (gh.cap) { g.globalAlpha = 0.5; drawCrown(g, gx + 4, gy - 4); }
+      if (gh.cap) { g.globalAlpha = 0.5; drawCrown(g, gh.x * TILE + 5, gy + GR.top - 4); }
       // the hero you're holding beats this enemy's type: mark it
       if (rgU && rgU.side === 0 && typeof typeBeats === 'function' && typeBeats(rgU.hid, gh.hid)) { g.globalAlpha = 0.75 + 0.25 * Math.sin(t * 6); g.drawImage(sprCanvas(TYPES[heroType(rgU.hid)].icon), gh.x * TILE + TILE - 10, gh.y * TILE + 1, 9, 9); }
       g.globalAlpha = 1;
@@ -354,20 +392,24 @@ function bvDraw(V, now) {
     const blink = u.alive && !frozen && now >= v.blinkAt && now < v.blinkAt + 140;
     const frog = u.st.frogT > 0 && u.st.frogT > V.rt, shrink = u.st.shrinkT > 0 && u.st.shrinkT > V.rt;
     const img = frog ? sprCanvas('i_frog') : heroFrame(u.hid, br, lift, blink, false);
-    const BG = u.big ? 2 : 1, sw = (shrink ? Math.round(img.width * 0.6) : img.width) * BG, shh = (shrink ? Math.round(img.height * 0.6) : img.height) * BG;
+    const BG = u.big ? 2 : 1, sc = shrink ? 0.6 : 1, R = frog ? { top: 0, foot: img.height - 1 } : sprRows(u.hid);
     const bx0 = half((ux + ox / TILE) * TILE), by0 = half((uy + oy / TILE) * TILE), cxo = u.big ? TILE : 9, foot = u.big ? TILE + 17 : 17;
-    const px = bx0 + cxo - sw / 2, py = by0 + foot - shh - half(z);
+    // the picture: centred on the tile, its feet on the ground line
+    const dw = Math.round(img.width * sc) * BG, dh = Math.round(img.height * sc) * BG, dx = bx0 + cxo - dw / 2, dy = by0 + foot - Math.round((R.foot + 1) * sc) * BG - half(z);
+    // effects use the classic 16x20 frame standing on the same feet; hp bar and crown sit above the real head
+    const sw = Math.round(16 * sc) * BG, shh = Math.round(20 * sc) * BG, px = bx0 + cxo - sw / 2, py = by0 + foot - shh - half(z);
+    const headH = Math.round((R.foot + 1 - R.top) * sc) * BG;
     g.globalAlpha = alpha;
     // ground shadow + team marker (stay on the floor while hopping)
     const sh = Math.max(6, 12 - Math.round(z / 2)) * BG;
     g.fillStyle = 'rgba(10,6,20,0.35)'; g.fillRect(bx0 + cxo - sh / 2, by0 + foot - 2, sh, 2 * BG);
     g.fillStyle = u.side === 0 ? '#4fa3ff' : '#ff4f6b'; g.fillRect(bx0 + cxo - sh / 2 + 1, by0 + foot - 1, sh - 2, 1);
-    const drawSpr = (im) => { if (face < 0) { g.save(); g.translate(px + sw, py); g.scale(-1, 1); g.drawImage(im, 0, 0, sw, shh); g.restore(); } else g.drawImage(im, px, py, sw, shh); };
+    const drawSpr = (im) => { if (face < 0) { g.save(); g.translate(dx + dw, dy); g.scale(-1, 1); g.drawImage(im, 0, 0, dw, dh); g.restore(); } else g.drawImage(im, dx, dy, dw, dh); };
     drawSpr(img);
     if (!frog && (now < v.flash || (!u.alive && now - v.deadAt < 90))) { g.globalAlpha = 0.5 * alpha; drawSpr(heroFrame(u.hid, br, lift, false, true)); g.globalAlpha = alpha; }
     if (u.alive && u.st.stunT > V.rt && (u.st.stunKind === 'freeze' || u.st.stunKind === 'wrap')) { g.globalAlpha = 0.45 * alpha; drawSpr(heroFrame(u.hid, 0, 0, false, true)); g.globalAlpha = alpha; if (u.st.stunKind === 'wrap') for (let i = 0; i < 3; i++) pxRect(g, px + 1, py + 5 + i * 5, sw - 2, 1, '#b8a88a'); }
     if (u.alive && rs.tiles[u.y * BW + u.x] === 'bush' && k >= 1) drawBushTop(g, u.x * TILE, u.y * TILE);
-    if (u.cap && V.mode !== 'fight') drawCrown(g, px + 4, py - 4 + br);
+    if (u.cap && V.mode !== 'fight') drawCrown(g, px + 4, by0 + foot - headH - half(z) - 4 + br);
     if (u.alive && V.mode === 'fight') {
       if (u.st.shield > 0 && u.st.shieldT > rs.t) { g.globalAlpha = 0.45 + 0.2 * Math.sin(t * 8); g.fillStyle = '#4ff0ff'; g.fillRect(px - 1, py + 2, 1, shh - 4); g.fillRect(px + sw, py + 2, 1, shh - 4); g.fillRect(px + 2, py - 1, sw - 4, 1); g.globalAlpha = alpha; }
       const sk = u.st.stunKind;
@@ -379,7 +421,7 @@ function bvDraw(V, now) {
       if (u.st.tauntT > rs.t) { pxRect(g, px + 7, py - 6, 2, 3, '#ff4f6b'); pxRect(g, px + 7, py - 2, 2, 1, '#ff4f6b'); }
       if (u.st.vulnT > rs.t) { pxRect(g, px + sw - 2, py + 1, 2, 2, '#c07bff'); pxRect(g, px + sw - 1, py, 1, 1, '#ffffff'); }
       // hp bar drains smoothly, leaving a white trail; purple = ability charge (none for round-start abilities)
-      const BWD = u.big ? 26 : 10, bx = bx0 + cxo - BWD / 2 + 1, bty = by0 + foot - shh - 5;
+      const BWD = u.big ? 26 : 10, bx = bx0 + cxo - BWD / 2 + 1, bty = by0 + foot - Math.max(shh, headH) - 5;
       if (v.hpShow == null) v.hpShow = u.hp;
       v.hpShow = v.hpShow > u.hp ? Math.max(u.hp, v.hpShow - (v.hpShow - u.hp) * Math.min(1, dtF * 5) - u.maxHp * 0.2 * dtF) : u.hp;
       const f = Math.max(0, u.hp / u.maxHp), fs = Math.max(0, v.hpShow / u.maxHp);
@@ -406,7 +448,7 @@ function bvDraw(V, now) {
       g.fillStyle = '#1b1325'; g.fillRect(ax - 4, ay - 1, 9, 4); g.fillRect(ax - 2, ay + 3, 5, 2); g.fillRect(ax - 1, ay + 5, 3, 1);
       g.fillStyle = '#ffd23f'; g.fillRect(ax - 3, ay, 7, 2); g.fillRect(ax - 2, ay + 2, 5, 1); g.fillRect(ax - 1, ay + 3, 3, 1); g.fillRect(ax, ay + 4, 1, 1);
       corners(g, mx, my, Math.sin(t * 8) > 0 ? '#ffd23f' : '#ffffff', 0); } }
-  if (V.drag) { const u = V.drag.bench ? { hid: V.drag.hid } : byUid(rs, V.drag.uid); if (u) { const im = heroFrame(u.hid, 0, Math.floor(t * 8) % 2 + 1, false, false); g.globalAlpha = V.drag.toBench ? 0.45 : 0.9; g.drawImage(im, Math.round(V.drag.px - 8), Math.round(V.drag.py - 14), im.width, im.height); g.globalAlpha = 1; } }
+  if (V.drag) { const u = V.drag.bench ? { hid: V.drag.hid } : byUid(rs, V.drag.uid); if (u) { const im = heroFrame(u.hid, 0, Math.floor(t * 8) % 2 + 1, false, false); g.globalAlpha = V.drag.toBench ? 0.45 : 0.9; g.drawImage(im, Math.round(V.drag.px - im.width / 2), Math.round(V.drag.py + 6 - (sprRows(u.hid).foot + 1)), im.width, im.height); g.globalAlpha = 1; } }
   // low-res fx
   BV.fx = BV.fx.filter(f => now < f.t0 + (f.delay || 0) + f.dur);
   for (const f of BV.fx) {
@@ -443,7 +485,7 @@ function bvDraw(V, now) {
       const cx = f.x * TILE + 9, top = f.y * TILE - 14, q = f.up ? k : 1 - k;
       g.globalAlpha = 0.35 * (1 - Math.abs(k - 0.5) * 2) + 0.15; g.fillStyle = '#fff3a8'; g.fillRect(cx - 7, top + 4, 14, f.y * TILE + 18 - top - 4); g.globalAlpha = 1;
       g.drawImage(sprCanvas('i_ufo'), cx - 8, top - 4);
-      const im = heroFrame(f.hid, 0, 0, false, false); g.globalAlpha = 1 - q * 0.8; g.drawImage(im, cx - 8, f.y * TILE + 17 - im.height - q * 18); g.globalAlpha = 1;
+      const im = heroFrame(f.hid, 0, 0, false, false); g.globalAlpha = 1 - q * 0.8; g.drawImage(im, cx - im.width / 2, f.y * TILE + 17 - (sprRows(f.hid).foot + 1) - q * 18); g.globalAlpha = 1;
     } else if (f.type === 'meteor') {
       const tx = f.x * TILE + 9, ty = f.y * TILE + 9, x = tx + (1 - k) * 40, y = ty - (1 - k) * 70;
       for (let i = 1; i < 6; i++) pxRect(g, x + i * 3, y - i * 5, 3, 3, i < 3 ? '#ffd23f' : '#ff8a2a');
@@ -602,7 +644,7 @@ function drawAttackFx(g, f, k, now) {
 // ===== live hero portraits: idle breathing + blinking, hop when tapped (hero card, chest reveals) =====
 // usage: liveHero(hid, k) -> HTML for a <canvas class="live"> drawn at k CSS px per sprite pixel
 const LIVE = new WeakMap();
-function liveHero(hid, k, cls) { return `<canvas class="live px ${cls || ''}" data-hid="${hid}" data-k="${k}" style="width:${16 * k}px;height:${25 * k}px"></canvas>`; }
+function liveHero(hid, k, cls) { return `<canvas class="live px ${cls || ''}" data-hid="${hid}" data-k="${k}" style="width:${24 * k}px;height:${25 * k}px;margin:0 ${-4 * k}px"></canvas>`; }
 function liveHop(cv) { const s = LIVE.get(cv); if (s) { s.hopT = performance.now(); s.blinkAt = 0; } }
 (function liveLoop() {
   const now = performance.now(), t = now / 1000, dpr = Math.min(3, window.devicePixelRatio || 1);
@@ -612,10 +654,10 @@ function liveHop(cv) { const s = LIVE.get(cv); if (s) { s.hopT = performance.now
       s = { seed: Math.random() * 6, blinkAt: now + 500 + Math.random() * 1500, hopT: 0 }; LIVE.set(cv, s);
       cv.addEventListener('click', () => liveHop(cv));
     }
-    const k = +cv.dataset.k, hid = cv.dataset.hid, W = Math.round(16 * k * dpr), Hh = Math.round(25 * k * dpr);
+    const k = +cv.dataset.k, hid = cv.dataset.hid, W = Math.round(24 * k * dpr), Hh = Math.round(25 * k * dpr);
     if (cv.width !== W || cv.height !== Hh) { cv.width = W; cv.height = Hh; }
     const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, W, Hh);
-    const u = W / 16; // device px per sprite pixel
+    const u = W / 24; // device px per sprite pixel
     // hop when tapped
     let z = 0, lift = 0; const hd = now - s.hopT;
     if (s.hopT && hd < 420) { const q = hd / 420; z = Math.sin(q * Math.PI) * 4; lift = q < 0.5 ? 1 : 2; }
@@ -624,9 +666,9 @@ function liveHop(cv) { const s = LIVE.get(cv); if (s) { s.hopT = performance.now
     const blink = now >= s.blinkAt && now < s.blinkAt + 140;
     // ground shadow
     const sw = Math.max(6, 12 - Math.round(z));
-    g.fillStyle = 'rgba(10,6,20,0.35)'; g.fillRect(Math.round((8 - sw / 2) * u), Math.round(23 * u), Math.round(sw * u), Math.round(1.5 * u));
+    g.fillStyle = 'rgba(10,6,20,0.35)'; g.fillRect(Math.round((12 - sw / 2) * u), Math.round(23 * u), Math.round(sw * u), Math.round(1.5 * u));
     const im = heroFrame(hid, br, lift, blink, false);
-    g.drawImage(im, 0, Math.round((24 - im.height - z) * u), Math.round(16 * u), Math.round(im.height * u));
+    g.drawImage(im, Math.round((24 - im.width) / 2 * u), Math.round((24 - (sprRows(hid).foot + 1) - z) * u), Math.round(im.width * u), Math.round(im.height * u));
   }
   requestAnimationFrame(liveLoop);
 })();

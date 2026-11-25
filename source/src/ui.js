@@ -568,7 +568,7 @@ function heroInfo(hid, pick, opts) {
   const m = modal(`<div class="hdots"><i class="${opts.page ? '' : 'on'}"></i><i class="${opts.page ? 'on' : ''}"></i></div><div class="hpager">
    <div class="hpage hinfo ${big ? 'big' : ''}" style="height:${PH}px">
     <div class="hi-top">
-      <div class="livewrap sm ${o && o.un[2] ? 'goldc' : ''}" ${rarStyle(hid)}>${o ? liveHero(hid, big ? 5.6 : 4.5) : `<img class="bigspr px" src="${sprURL(hid, null, 'sil', 128)}">`}</div>
+      <div class="livewrap sm ${o && o.un[2] ? 'goldc' : ''}" ${rarStyle(hid)}>${o ? liveHero(hid, big ? 5 : 4) : `<img class="bigspr px" src="${sprURL(hid, null, 'sil', 128)}">`}</div>
       <div class="hi-side"><h2>${esc(H.name)}</h2>
         <div class="row" style="gap:4px;flex-wrap:wrap"><span class="tag" style="background:${R.color}">${R.name}</span><button class="tag costchip ${selK === 'cost' ? 'sel' : ''}" data-k="cost">${orbsHTML(heroCost(hid), 'in')}${heroCost(hid)} Rift Orb${heroCost(hid) > 1 ? 's' : ''}</button>${heroType(hid) ? `<button class="tag typechip ${selK === 'type' ? 'sel' : ''}" data-k="type" style="--c:${TYPES[heroType(hid)].color}">${icon(TYPES[heroType(hid)].icon, 'ii')}${TYPES[heroType(hid)].name}</button>` : ''}${WORLDS_ON ? `<span class="tag" style="background:${W.color}">${icon('w_' + H.world, 'ii')} ${W.name}</span>` : ''}</div>
         <div class="hstats"><span>${icon('i_heart', 'ii')}<b>${st.hp}</b></span><span>${icon('i_swords', 'ii')}<b>${st.atk}</b></span><span>${speedHTML(hid, icon('i_boot', 'ii'))}</span>
